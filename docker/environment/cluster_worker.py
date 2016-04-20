@@ -25,12 +25,14 @@ class ClusterWorkerConfigurator:
     def pre_start_commands(self, domain):
         return 'escript bamboos/gen_dev/gen_dev.escript /tmp/gen_dev_args.json'
 
+    # Called BEFORE the instance (cluster of workers) is started
     def pre_configure_instance(self, instance, uid, config):
         pass
 
     # Called AFTER the instance (cluster of workers) has been started
     def post_configure_instance(self, bindir, instance, config, container_ids,
-                                output, storages_dockers):
+                                output, storages_dockers=None,
+                                luma_config=None):
         pass
 
     def extra_volumes(self, config, bindir, instance):

@@ -185,6 +185,7 @@ def up(image, bindir, dns_server, uid, config_path, configurator, logdir=None,
     # Workers of every cluster are started together
     # here we call that an instance
     for instance in config[configurator.domains_attribute()]:
+        instance_config = config[configurator.domains_attribute()][instance]
         current_output = {}
 
         gen_dev_cfg = {
@@ -192,23 +193,18 @@ def up(image, bindir, dns_server, uid, config_path, configurator, logdir=None,
                 'input_dir': input_dir,
                 'target_dir': '/root/bin'
             },
-            'nodes': config[configurator.domains_attribute()][instance][
-                configurator.app_name()],
-            'db_driver': _db_driver(
-                config[configurator.domains_attribute()][instance])
+            'nodes': instance_config[configurator.app_name()],
+            'db_driver': _db_driver(instance_config)
         }
 
         # If present, include os_config
-        if 'os_config' in config[configurator.domains_attribute()][instance]:
-            os_config = config[configurator.domains_attribute()][instance][
-                'os_config']
+        if 'os_config' in instance_config:
+            os_config = instance_config['os_config']
             gen_dev_cfg['os_config'] = config['os_configs'][os_config]
 
         # If present, include gui config
-        if 'gui_override' in config[configurator.domains_attribute()][instance]:
-            gui_config = config[configurator.domains_attribute()][instance][
-                'gui_override']
-            gen_dev_cfg['gui_override'] = gui_config
+        if 'gui_override' in instance_config:
+            gen_dev_cfg['gui_override'] = instance_config['gui_override']
 
         # Tweak configs, retrieve list of db nodes to start
         configs = []
@@ -222,8 +218,7 @@ def up(image, bindir, dns_server, uid, config_path, configurator, logdir=None,
 
         db_node_mappings = None
         db_out = None
-        db_driver = _db_driver(
-            config[configurator.domains_attribute()][instance])
+        db_driver = _db_driver(instance_config)
 
         # Start db nodes, obtain mappings
         if db_driver == 'riak':

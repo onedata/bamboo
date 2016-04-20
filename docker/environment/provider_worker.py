@@ -32,8 +32,7 @@ class ProviderWorkerConfigurator:
     def pre_start_commands(self, domain):
         return 'escript bamboos/gen_dev/gen_dev.escript /tmp/gen_dev_args.json'
 
-        # Called BEFORE the instance (cluster of workers) is started
-
+    # Called BEFORE the instance (cluster of workers) is started
     def pre_configure_instance(self, instance, uid, config):
         this_config = config[self.domains_attribute()][instance]
         if 'gui_override' in this_config and isinstance(
@@ -44,8 +43,8 @@ class ProviderWorkerConfigurator:
             gui.override_gui(gui_config, instance, hostname)
 
     # Called AFTER the instance (cluster of workers) has been started
-    def post_configure_instance(self, bindir, instance, config,
-                                container_ids, output, storages_dockers=None,
+    def post_configure_instance(self, bindir, instance, config, container_ids,
+                                output, storages_dockers=None,
                                 luma_config=None):
         this_config = config[self.domains_attribute()][instance]
         # Check if gui livereload is enabled in env and turn it on
@@ -76,7 +75,7 @@ class ProviderWorkerConfigurator:
             posix_storages = []
 
         extra_volumes = [common.volume_for_storage(s) for s in posix_storages]
-        # Check if gui mount is enabled in env and add required volumes
+        # Check if gui override is enabled in env and add required volumes
         if 'gui_override' in config and isinstance(config['gui_override'],
                                                    dict):
             gui_config = config['gui_override']

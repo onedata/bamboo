@@ -74,7 +74,7 @@ sed -i.bak s/onedata.org/{domain}/g /root/bin/node/data/dns.config
 
     def extra_volumes(self, config, bindir, instance):
         extra_volumes = []
-        # Check if gui mount is enabled in env and add required volumes
+        # Check if gui override is enabled in env and add required volumes
         if 'gui_override' in config and isinstance(config['gui_override'],
                                                    dict):
             gui_config = config['gui_override']
