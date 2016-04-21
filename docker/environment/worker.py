@@ -61,7 +61,7 @@ def _tweak_config(config, name, instance, uid, configurator):
     return cfg, sys_config[app_name]['db_nodes']
 
 
-def _node_up(image, bindir, dns_servers, instance, config, db_node_mappings,
+def _node_up(image, bindir, dns_servers, config, db_node_mappings,
              logdir, configurator):
     app_name = configurator.app_name()
     node_name = config['nodes']['node']['vm.args']['name']
@@ -241,9 +241,8 @@ def up(image, bindir, dns_server, uid, config_path, configurator, logdir=None,
         workers = []
         worker_ips = []
         for cfg in configs:
-            worker, node_out = _node_up(image, bindir, dns_servers, instance,
-                                        cfg, db_node_mappings, logdir,
-                                        configurator)
+            worker, node_out = _node_up(image, bindir, dns_servers, cfg,
+                                        db_node_mappings, logdir, configurator)
             workers.append(worker)
             worker_ips.append(common.get_docker_ip(worker))
             common.merge(current_output, node_out)
