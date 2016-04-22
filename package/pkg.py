@@ -242,7 +242,7 @@ def push(package_artifact):
                 repo_dir = os.path.join(APACHE_PREFIX,
                                         YUM_REPO_LOCATION[distro])
                 distro_contents = os.path.join(pkg_dir, distro)
-                call(['cp', '-a', distro_contents, repo_dir])
+                call(['cp', '-a', os.path.join(distro_contents, '.'), repo_dir])
 
                 for type in ['x86_64', 'SRPMS']:
                     dir = os.path.join(distro_contents, type)

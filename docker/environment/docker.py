@@ -59,11 +59,18 @@ def run(image, docker_host=None, detach=False, dns_list=[], add_host={},
         vol = '{0}:{0}:{1}'.format(os.path.abspath(path), read)
         cmd.extend(['-v', vol])
 
+    # Volume can be in one of three forms
+    # 1. 'path_on_docker'
+    # 2. ('path_on_host', 'path_on_docker', 'ro'/'rw')
+    # 3. {'volumes_from': 'volume name'}
     for entry in volumes:
         if isinstance(entry, tuple):
             path, bind, readable = entry
             vol = '{0}:{1}:{2}'.format(os.path.abspath(path), bind, readable)
             cmd.extend(['-v', vol])
+        elif isinstance(entry, dict):
+            volume_name = entry['volumes_from']
+            cmd.extend(['--volumes-from', volume_name])
         else:
             cmd.extend(['-v', entry])
 
@@ -219,3 +226,21 @@ def remove_image(image):
     """Removes docker image."""
 
     subprocess.check_call(['docker', 'rmi', '-f', image])
+
+
+def create_volume(path, name, image, command):
+    cmd = ['docker']
+
+    cmd.append('create')
+    cmd.append('-v')
+    cmd.append(path)
+
+    cmd.append('--name')
+    cmd.append(name)
+
+    cmd.append(image)
+
+    cmd.append(command)
+
+    return subprocess.check_output(cmd, universal_newlines=True,
+                                   stderr=subprocess.STDOUT)
