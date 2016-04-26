@@ -13,7 +13,7 @@ import json
 import time
 from . import appmock, client, common, zone_worker, cluster_manager, \
     worker, provider_worker, cluster_worker, docker, dns, s3, ceph, nfs, \
-    amazon_iam, luma
+    amazon_iam, luma, panel
 
 
 def default(key):
@@ -28,6 +28,7 @@ def default(key):
             'bin_cluster_manager': '{0}/cluster_manager'.format(os.getcwd()),
             'bin_oc': '{0}/oneclient'.format(os.getcwd()),
             'bin_luma': '{0}/luma'.format(os.getcwd()),
+            'bin_onepanel': '{0}/onepanel'.format(os.getcwd()),
             'logdir': None}[key]
 
 
@@ -38,7 +39,7 @@ def up(config_path, image=default('image'), ceph_image=default('ceph_image'),
        bin_op_worker=default('bin_op_worker'),
        bin_cluster_worker=default('bin_cluster_worker'),
        bin_oc=default('bin_oc'), bin_luma=default('bin_luma'),
-       logdir=default('logdir')):
+       bin_onepanel=default('bin_onepanel'), logdir=default('logdir')):
     config = common.parse_json_config_file(config_path)
     uid = common.generate_uid()
 
@@ -50,12 +51,18 @@ def up(config_path, image=default('image'), ceph_image=default('ceph_image'),
         'op_worker_nodes': [],
         'cluster_worker_nodes': [],
         'appmock_nodes': [],
-        'client_nodes': []
+        'client_nodes': [],
+        'onepanel_nodes': []
     }
 
     # Start DNS
     [dns_server], dns_output = dns.maybe_start('auto', uid)
     common.merge(output, dns_output)
+
+    if 'onepanel_domains' in config:
+        op_output = panel.up(image, bin_onepanel, dns_server, uid, config_path,
+                             logdir)
+        common.merge(output, op_output)
 
     # Start appmock instances
     if 'appmock_domains' in config:
