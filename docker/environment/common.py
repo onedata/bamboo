@@ -242,6 +242,8 @@ def volume_for_storage(storage):
 def storage_host_path(storage):
     """Returns path to temporary directory for storage on host
     """
+    if not os.path.exists(HOST_STORAGE_PATH):
+        os.makedirs(HOST_STORAGE_PATH)
     tmpdir = tempfile.mkdtemp(dir=HOST_STORAGE_PATH)
     os.chmod(tmpdir,  stat.S_IRWXU or stat.S_IRWXG or stat.S_IRWXO)
     return tmpdir
