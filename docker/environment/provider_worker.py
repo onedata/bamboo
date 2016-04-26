@@ -76,9 +76,11 @@ class ProviderWorkerConfigurator:
 
         extra_volumes = []
         for s in posix_storages:
-            if s not in storages_dockers['posix'].keys():
+            if not (storages_dockers and s in storages_dockers['posix'].keys()):
                 v = common.volume_for_storage(s)
                 (host_path, docker_path, mode) = v
+                if not storages_dockers:
+                    storages_dockers = {'posix': {}}
                 storages_dockers['posix'][s] = {"host_path": host_path, "docker_path": docker_path}
                 extra_volumes.append(v)
 
