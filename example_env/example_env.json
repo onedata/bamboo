@@ -28,7 +28,10 @@
     "os_configs": {
         "cfg1": {
             "storages": [
-                "/mnt/st1"
+                {
+                    "type": "posix",
+                    "name": "/mnt/st1"
+                }
             ],
             "users": [
                 "user1"
@@ -41,8 +44,14 @@
         },
         "cfg2": {
             "storages": [
-                "/mnt/st1",
-                "/mnt/st2"
+                {
+                    "type": "posix",
+                    "name": "/mnt/st1"
+                },
+                {
+                    "type": "posix",
+                    "name": "/mnt/st2"
+                }
             ],
             "users": [
                 "user1",
@@ -73,7 +82,6 @@
         "p1": {
             "db_driver": "couchdb",
             "os_config": "cfg1",
-            "gui_livereload": "none",
             "cluster_manager": {
                 "cm1": {
                     "vm.args": {
@@ -103,7 +111,7 @@
                                 "dbnode1",
                                 "dbnode2"
                             ],
-                            "zone_domain": "oz",
+                            "oz_domain": "oz",
                             "verify_oz_cert": false
                         }
                     }
@@ -113,7 +121,6 @@
         "p2.oz": {
             "db_driver": "couchdb",
             "os_config": "cfg2",
-            "gui_livereload": "none",
             "cluster_manager": {
                 "cm1": {
                     "vm.args": {
@@ -142,7 +149,7 @@
                             "db_nodes": [
                                 "dbnode1"
                             ],
-                            "zone_domain": "oz",
+                            "oz_domain": "oz",
                             "verify_oz_cert": false
                         }
                     }
@@ -159,7 +166,7 @@
                             "db_nodes": [
                                 "dbnode1"
                             ],
-                            "zone_domain": "oz",
+                            "oz_domain": "oz",
                             "verify_oz_cert": false
                         }
                     }
@@ -209,7 +216,6 @@
     "zone_domains": {
         "oz": {
             "db_driver": "couchdb",
-            "gui_livereload": "none",
             "cluster_manager": {
                 "cm": {
                     "vm.args": {
@@ -276,7 +282,6 @@
         "spaces": {
             "space1": {
                 "displayed_name": "space1",
-                "storage": "/mnt/st1",
                 "users": [
                     "user1",
                     "user2",
@@ -285,28 +290,27 @@
                 "groups": [
                     "group1"
                 ],
-                "providers": [
-                    {
-                        "provider": "p1",
+                "providers": {
+                    "p1": {
+                        "storage": "/mnt/st1",
                         "supported_size": 1000000000
                     }
-                ]
+                }
             },
             "space2": {
                 "displayed_name": "space2",
-                "storage": "/mnt/st1",
                 "users": [
                     "user2"
                 ],
                 "groups": [
                     "group2"
                 ],
-                "providers": [
-                    {
-                        "provider": "p2.oz",
+                "providers": {
+                    "p2.oz": {
+                        "storage": "/mnt/st2",
                         "supported_size": 1000000000
                     }
-                ]
+                }
             }
         }
     },
@@ -328,7 +332,7 @@
         }
     },
     "oneclient": {
-        "client_host_1": {
+        "client-host1": {
             "os_config": "cfg1",
             "clients": {
                 "client1": {
@@ -351,7 +355,7 @@
                 }
             }
         },
-        "client_host_2": {
+        "client-host2": {
             "os_config": "cfg2",
             "clients": {
                 "client1": {
