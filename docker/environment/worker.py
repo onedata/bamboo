@@ -95,7 +95,7 @@ sleep 5'''  # Add sleep so logs can be chowned
         executable=configurator.app_name()
     )
 
-    volumes = [(bindir, DOCKER_BINDIR_PATH, 'ro')]
+    volumes = ['/root/bin', (bindir, DOCKER_BINDIR_PATH, 'ro')]
     volumes += configurator.extra_volumes(config, bindir, domain,
                                           storages_dockers)
 

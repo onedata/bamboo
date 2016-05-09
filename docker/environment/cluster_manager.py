@@ -64,7 +64,7 @@ sleep 5'''  # Add sleep so logs can be chowned
         uid=os.geteuid(),
         gid=os.getegid())
 
-    volumes = [(bindir, '/root/build', 'ro')]
+    volumes = ['/root/bin', (bindir, '/root/build', 'ro')]
 
     if logdir:
         logdir = os.path.join(os.path.abspath(logdir), hostname)
