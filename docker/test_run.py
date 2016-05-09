@@ -54,6 +54,13 @@ parser.add_argument(
     help='Path to JUnit tests report',
     dest='report_path')
 
+parser.add_argument(
+    '--test-type', '-tt',
+    action='store',
+    default="acceptance",
+    help="Type of test (cucumber, acceptance, performance, packaging). Default is: acceptance",
+    dest='test_type')
+
 [args, pass_args] = parser.parse_known_args()
 
 command = '''
@@ -67,7 +74,7 @@ if {shed_privileges}:
     os.setregid({gid}, {gid})
     os.setreuid({uid}, {uid})
 
-command = ['py.test'] + {args} + ['{test_dir}'] + ['--junitxml={report_path}']
+command = ['py.test'] + {args} + ['--test-type={test_type}'] + ['{test_dir}'] + ['--junitxml={report_path}']
 ret = subprocess.call(command)
 sys.exit(ret)
 '''
