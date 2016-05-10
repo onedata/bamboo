@@ -84,7 +84,8 @@ command = command.format(
     gid=os.getegid(),
     test_dir=args.test_dir,
     shed_privileges=(platform.system() == 'Linux'),
-    report_path=args.report_path)
+    report_path=args.report_path,
+    test_type=args.test_type)
 
 ret = docker.run(tty=True,
                  rm=True,
