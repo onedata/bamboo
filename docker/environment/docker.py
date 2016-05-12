@@ -190,6 +190,17 @@ def remove(containers, docker_host=None, force=False,
     subprocess.check_call(cmd)
 
 
+def cp(container, src_path, dest_path, to_container):
+    cmd = ["docker"]
+
+    if to_container:
+        cmd.extend([src_path, "{0}:{1}".format(container, src_path)])
+    else:
+        cmd.extend(["{0}:{1}".format(container, src_path), dest_path])
+
+    subprocess.check_call(cmd)
+
+
 def login(user, password, repository='hub.docker.com'):
     """Logs into docker repository."""
 
