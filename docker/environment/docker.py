@@ -191,10 +191,9 @@ def remove(containers, docker_host=None, force=False,
 
 
 def cp(container, src_path, dest_path, to_container):
-    cmd = ["docker"]
-
+    cmd = ["docker", "cp"]
     if to_container:
-        cmd.extend([src_path, "{0}:{1}".format(container, src_path)])
+        cmd.extend([src_path, "{0}:{1}".format(container, dest_path)])
     else:
         cmd.extend(["{0}:{1}".format(container, src_path), dest_path])
 
