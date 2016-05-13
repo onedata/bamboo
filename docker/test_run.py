@@ -21,11 +21,12 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 def skipped_test_exists(junit_report_path):
     reports = glob.glob(junit_report_path)
     # if there are many reports, check only the last one
-    reports.sort()
-    tree = ElementTree.parse(reports[-1])
-    testsuite = tree.getroot()
-    if testsuite.attrib['skips'] != '0':
-        return True
+    if len(reports) > 0:
+        reports.sort()
+        tree = ElementTree.parse(reports[-1])
+        testsuite = tree.getroot()
+        if testsuite.attrib['skips'] != '0':
+            return True
     return False
 
 
@@ -60,6 +61,11 @@ parser.add_argument(
     default="acceptance",
     help="Type of test (cucumber, acceptance, performance, packaging). Default is: acceptance",
     dest='test_type')
+
+parser.add_argument(
+    '--runxfail',
+    help="Causes test cases marked with xfail to be started normally"
+)
 
 [args, pass_args] = parser.parse_known_args()
 
