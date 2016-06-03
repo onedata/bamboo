@@ -124,26 +124,25 @@ main([InputJson, RegisterInOz, SetUpEntities]) ->
         helpers_init(),
         {ok, _} = start_distribution(),
         Input = mochijson2:decode(InputJson, [{format, proplist}]),
-        OZNode = bin_to_atom(proplists:get_value(<<"oz_node">>, Input)),
-        OZCookie = bin_to_atom(proplists:get_value(<<"oz_cookie">>, Input)),
-        Providers = proplists:get_value(<<"provider_domains">>, Input),
-        Users = proplists:get_value(<<"users">>, Input),
-        Groups = proplists:get_value(<<"groups">>, Input),
-        Spaces = proplists:get_value(<<"spaces">>, Input),
+        OZNode = bin_to_atom(proplists:get_value(<<"oz_node">>, Input, <<"">>)),
+        OZCookie = bin_to_atom(proplists:get_value(<<"oz_cookie">>, Input, <<"">>)),
+        Providers = proplists:get_value(<<"provider_domains">>, Input, <<"">>),
+        Users = proplists:get_value(<<"users">>, Input, <<"">>),
+        Groups = proplists:get_value(<<"groups">>, Input, <<"">>),
+        Spaces = proplists:get_value(<<"spaces">>, Input, <<"">>),
         lists:foreach(
             fun({Provider, Props}) ->
                 ProviderWorkersBin = proplists:get_value(<<"nodes">>, Props),
                 ProviderWorkers = [bin_to_atom(P) || P <- ProviderWorkersBin],
                 Cookie = bin_to_atom(proplists:get_value(<<"cookie">>, Props)),
-                case list_to_binary(string:to_lower(RegisterInOz)) of
+                case list_to_atom(string:to_lower(RegisterInOz)) of
                     true ->
                         register_in_onezone(ProviderWorkers, Cookie, Provider);
                     _ -> ok
                 end,
                 create_space_storage_mapping(hd(ProviderWorkers), Cookie, Spaces, Provider)
             end, Providers),
-
-        case list_to_binary(string:to_lower(SetUpEntities)) of
+        case list_to_atom(string:to_lower(SetUpEntities)) of
             true ->
                 case call_node(OZNode, OZCookie, dev_utils, set_up_test_entities,
                     [Users, Groups, Spaces]) of
