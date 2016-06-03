@@ -36,6 +36,11 @@ class OZWorkerConfigurator:
             domain = worker.cluster_domain(instance, uid)
             sys_config['http_domain'] = {'string': domain}
 
+        if 'location_bootstrap' in sys_config:
+            split = [node.split(':') for node in sys_config['location_bootstrap']]
+            sys_config['location_bootstrap'] = \
+                [worker.cluster_domain(id, uid) + ":" + port for id, port in split]
+
         return cfg
 
     # Called BEFORE the instance (cluster of workers) is started,
