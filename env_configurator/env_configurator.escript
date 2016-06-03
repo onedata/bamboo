@@ -115,11 +115,11 @@
 
 %%--------------------------------------------------------------------
 %% @doc
-%% MAin script function.
+%% Main script function.
 %% @end
 %%--------------------------------------------------------------------
--spec main([InputJSON :: binary()]) -> ok.
-main([InputJson]) ->
+-spec main([list()]) -> ok.
+main([InputJson, RegisterInOz, SetUpEntities]) ->
     try
         helpers_init(),
         {ok, _} = start_distribution(),
@@ -135,19 +135,28 @@ main([InputJson]) ->
                 ProviderWorkersBin = proplists:get_value(<<"nodes">>, Props),
                 ProviderWorkers = [bin_to_atom(P) || P <- ProviderWorkersBin],
                 Cookie = bin_to_atom(proplists:get_value(<<"cookie">>, Props)),
-                register_in_onezone(ProviderWorkers, Cookie, Provider),
+                case list_to_binary(string:to_lower(RegisterInOz)) of
+                    true ->
+                        register_in_onezone(ProviderWorkers, Cookie, Provider);
+                    _ -> ok
+                end,
                 create_space_storage_mapping(hd(ProviderWorkers), Cookie, Spaces, Provider)
             end, Providers),
-        case call_node(OZNode, OZCookie, dev_utils, set_up_test_entities,
-            [Users, Groups, Spaces]) of
-            ok ->
-                ok;
-            Other ->
-                io:format("dev_utils:set_up_test_entities returned: ~p~n",
-                    [Other]),
-                throw(error)
+
+        case list_to_binary(string:to_lower(SetUpEntities)) of
+            true ->
+                case call_node(OZNode, OZCookie, dev_utils, set_up_test_entities,
+                    [Users, Groups, Spaces]) of
+                    ok ->
+                        ok;
+                    Other ->
+                        io:format("dev_utils:set_up_test_entities returned: ~p~n",
+                            [Other]),
+                        throw(error)
+                end,
+                io:format("Global configuration applied sucessfully!~n");
+            _ -> ok
         end,
-        io:format("Global configuration applied sucessfully!~n"),
         halt(0)
     catch
         T:M ->
@@ -156,7 +165,8 @@ main([InputJson]) ->
     end;
 
 main(_) ->
-    io:format("Usage: ~s <input_json>~n", [escript:script_name()]),
+    io:format("Usage: ~s <input_json> <register_in_oz> <set_up_test_entities>~n",
+        [escript:script_name()]),
     halt(0).
 
 

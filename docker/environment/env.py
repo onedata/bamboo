@@ -137,9 +137,9 @@ def up(config_path, image=default('image'), ceph_image=default('ceph_image'),
         print('')
         # Run env configurator with gathered args
         command = '''epmd -daemon
-./env_configurator.escript \'{0}\'
+./env_configurator.escript \'{0}\' {1} {2}
 echo $?'''
-        command = command.format(json.dumps(env_configurator_input))
+        command = command.format(json.dumps(env_configurator_input), True, True)
         docker_output = docker.run(
             image='onedata/builder',
             interactive=True,
