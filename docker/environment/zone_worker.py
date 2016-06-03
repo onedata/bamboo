@@ -36,9 +36,10 @@ class OZWorkerConfigurator:
             domain = worker.cluster_domain(instance, uid)
             sys_config['http_domain'] = {'string': domain}
 
-        if 'location_bootstrap' in sys_config:
-            split = [node.split(':') for node in sys_config['location_bootstrap']]
-            sys_config['location_bootstrap'] = \
+        ls_bootstrap_key = 'location_service_bootstrap_nodes'
+        if ls_bootstrap_key in sys_config:
+            split = [node.split(':') for node in sys_config[ls_bootstrap_key]]
+            sys_config[ls_bootstrap_key] = \
                 [worker.cluster_domain(id, uid) + ":" + port for id, port in split]
 
         return cfg
