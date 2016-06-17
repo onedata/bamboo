@@ -75,7 +75,7 @@ parser.add_argument(
     '--test-type', '-tt',
     action='store',
     default="acceptance",
-    help="Type of test (cucumber, acceptance, performance, packaging). Default is: acceptance",
+    help="Type of test (cucumber, acceptance, performance, packaging, gui). Default is: acceptance",
     dest='test_type')
 
 parser.add_argument(
