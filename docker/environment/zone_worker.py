@@ -37,9 +37,14 @@ class OZWorkerConfigurator:
             sys_config['http_domain'] = {'string': domain}
 
         if 'onepanel_rest_url' in sys_config:
-            node_name, _sep, instance = sys_config['onepanel_rest_url'].partition('.')
+            rest_url = sys_config['onepanel_rest_url']
+            port = rest_url['port']
+            protocol = rest_url['protocol']
+            node_name, _sep, instance = rest_url['domain'].partition('.')
             panel_hostname = panel.panel_hostname(node_name, instance, uid)
-            sys_config["onepanel_rest_url"] = panel_hostname
+            sys_config["onepanel_rest_url"] = {
+                'string': "{0}://{1}:{2}".format(protocol, panel_hostname, port)
+            }
 
         return cfg
 
