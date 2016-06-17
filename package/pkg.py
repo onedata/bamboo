@@ -70,12 +70,16 @@ YUM_REPO_LOCATION = {
     'sl6x-x86_64': 'yum/scientific/6x'
 }
 DEB_PKG_LOCATION = {
+    'trusty': 'apt/ubuntu/pool/main',
     'vivid': 'apt/ubuntu/pool/main',
-    'wily': 'apt/ubuntu/pool/main'
+    'wily': 'apt/ubuntu/pool/main',
+    'xenial': 'apt/ubuntu/pool/main'
 }
 REPO_TYPE = {
+    'trusty': 'deb',
     'vivid': 'deb',
     'wily': 'deb',
+    'xenial': 'deb',
     'fedora-21-x86_64': 'rpm',
     'fedora-23-x86_64': 'rpm',
     'centos-7-x86_64': 'rpm',
