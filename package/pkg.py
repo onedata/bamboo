@@ -70,10 +70,10 @@ YUM_REPO_LOCATION = {
     'sl6x-x86_64': 'yum/scientific/6x'
 }
 DEB_PKG_LOCATION = {
-    'trusty': 'apt/ubuntu/pool/main',
-    'vivid': 'apt/ubuntu/pool/main',
-    'wily': 'apt/ubuntu/pool/main',
-    'xenial': 'apt/ubuntu/pool/main'
+    'trusty': 'apt/ubuntu/trusty/pool/main',
+    'vivid': 'apt/ubuntu/vivid/pool/main',
+    'wily': 'apt/ubuntu/wily/pool/main',
+    'xenial': 'apt/ubuntu/xenial/pool/main'
 }
 REPO_TYPE = {
     'trusty': 'deb',
@@ -240,7 +240,7 @@ def push(package_artifact):
 
                 # update repo
                 execute(['aptly', 'publish', 'update', '-force-overwrite',
-                         distro])
+                         distro, distro])
             elif REPO_TYPE[distro] == 'rpm':
                 # copy packages
                 repo_dir = os.path.join(APACHE_PREFIX,
