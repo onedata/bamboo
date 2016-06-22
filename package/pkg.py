@@ -22,7 +22,7 @@ package/
             cluster-manager_1.0.0.1.ge1a52f4-1_amd64.changes
             cluster-manager_1.0.0.1.ge1a52f4.orig.tar.gz
 
-Available distributions vivid, wily, fedora-21-x86_64, fedora-23-x86_64, centos-7-x86_64, sl6x-x86_64
+Available distributions wily, xenial, fedora-21-x86_64, fedora-23-x86_64, centos-7-x86_64, sl6x-x86_64
 """
 import argparse
 import json
@@ -71,13 +71,11 @@ YUM_REPO_LOCATION = {
 }
 DEB_PKG_LOCATION = {
     'trusty': 'apt/ubuntu/trusty/pool/main',
-    'vivid': 'apt/ubuntu/vivid/pool/main',
     'wily': 'apt/ubuntu/wily/pool/main',
     'xenial': 'apt/ubuntu/xenial/pool/main'
 }
 REPO_TYPE = {
     'trusty': 'deb',
-    'vivid': 'deb',
     'wily': 'deb',
     'xenial': 'deb',
     'fedora-21-x86_64': 'rpm',
