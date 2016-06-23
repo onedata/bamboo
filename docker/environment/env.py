@@ -12,8 +12,7 @@ import copy
 import json
 import time
 from . import appmock, client, common, zone_worker, cluster_manager, \
-    worker, provider_worker, cluster_worker, docker, dns, storages, s3, ceph, nfs, \
-    amazon_iam, luma, panel
+    worker, provider_worker, cluster_worker, docker, dns, storages, panel
 
 
 def default(key):
