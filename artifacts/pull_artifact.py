@@ -52,12 +52,12 @@ ssh.load_system_host_keys()
 
 ssh.connect(args.hostname, port=args.port, username=args.username)
 
-scp = SCPClient(ssh.get_transport())
-try:
-    scp.get(os.path.join(ARTIFACTS_DIR, args.plan, args.branch + ARTIFACTS_EXT),
-            local_path=args.plan.replace("-", '_') + ARTIFACTS_EXT)
-except:
-    print "Artifact specific for branch not found, pulling develop"
-    scp = SCPClient(ssh.get_transport())
-    scp.get(os.path.join(ARTIFACTS_DIR, args.plan, DEFAULT_BRANCH + ARTIFACTS_EXT),
-            local_path=args.plan.replace("-", '_') + ARTIFACTS_EXT)
+with SCPClient(ssh.get_transport()) as scp:
+    try:
+        scp.get(os.path.join(ARTIFACTS_DIR, args.plan, args.branch + ARTIFACTS_EXT),
+                local_path=args.plan.replace("-", '_') + ARTIFACTS_EXT)
+    except:
+        print "Artifact specific for branch not found, pulling develop"
+        with SCPClient(ssh.get_transport()) as scp:
+            scp.get(os.path.join(ARTIFACTS_DIR, args.plan, DEFAULT_BRANCH + ARTIFACTS_EXT),
+                    local_path=args.plan.replace("-", '_') + ARTIFACTS_EXT)

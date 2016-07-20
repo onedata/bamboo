@@ -57,6 +57,6 @@ ssh.load_system_host_keys()
 
 ssh.connect(args.hostname, port=args.port, username=args.username)
 
-scp = SCPClient(ssh.get_transport())
-scp.put(args.artifact, remote_path=os.path.join(ARTIFACTS_DIR, args.plan,
-                                                args.branch + ARTIFACTS_EXT))
+with SCPClient(ssh.get_transport()) as scp:
+    scp.put(args.artifact, remote_path=os.path.join(ARTIFACTS_DIR, args.plan,
+                                                    args.branch + ARTIFACTS_EXT))
