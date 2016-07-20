@@ -2,11 +2,11 @@
 
 import argparse
 import os
-from paramiko import SSHClient, AutoAddPolicy
-from scp import SCPClient
+from paramiko import SSHClient, AutoAddPolicy, SSHException
+from scp import SCPClient, SCPException
 
 ARTIFACTS_DIR = 'artifacts'
-ARTIFACTS_EXT = 'tar.gz'
+ARTIFACTS_EXT = '.tar.gz'
 DEFAULT_BRANCH = 'develop'
 
 parser = argparse.ArgumentParser(
@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(
         description='Push build artifacts.')
 
 parser.add_argument(
-        '---hostname', '-h',
+        '--hostname', '-hn',
         action='store',
         help='Hostname of artifacts repository',
         dest='hostname')
@@ -54,10 +54,10 @@ ssh.connect(args.hostname, port=args.port, username=args.username)
 
 scp = SCPClient(ssh.get_transport())
 try:
-    scp.get(remote_path=os.path.join(ARTIFACTS_DIR, args.plan,
-                                     args.branch, ARTIFACTS_EXT),
-            local_path=os.path.join(args.plan.replace("-", '_'), ARTIFACTS_EXT))
+    scp.get(os.path.join(ARTIFACTS_DIR, args.plan, args.branch + ARTIFACTS_EXT),
+            local_path=args.plan.replace("-", '_') + ARTIFACTS_EXT)
 except:
-    scp.get(remote_path=os.path.join(ARTIFACTS_DIR, args.plan,
-                                     DEFAULT_BRANCH, ARTIFACTS_EXT),
-            local_path=os.path.join(args.plan.replace("-", '_'), ARTIFACTS_EXT))
+    print "Artifact specific for branch not found, pulling develop"
+    scp = SCPClient(ssh.get_transport())
+    scp.get(os.path.join(ARTIFACTS_DIR, args.plan, DEFAULT_BRANCH + ARTIFACTS_EXT),
+            local_path=args.plan.replace("-", '_') + ARTIFACTS_EXT)

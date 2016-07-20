@@ -6,14 +6,14 @@ from paramiko import SSHClient, AutoAddPolicy
 from scp import SCPClient
 
 ARTIFACTS_DIR = 'artifacts'
-ARTIFACTS_EXT = 'tar.gz'
+ARTIFACTS_EXT = '.tar.gz'
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     description='Push build artifacts.')
 
 parser.add_argument(
-    '---hostname', '-h',
+    '--hostname', '-hn',
     action='store',
     help='Hostname of artifacts repository',
     dest='hostname')
@@ -59,4 +59,4 @@ ssh.connect(args.hostname, port=args.port, username=args.username)
 
 scp = SCPClient(ssh.get_transport())
 scp.put(args.artifact, remote_path=os.path.join(ARTIFACTS_DIR, args.plan,
-                                                args.branch, ARTIFACTS_EXT))
+                                                args.branch + ARTIFACTS_EXT))
