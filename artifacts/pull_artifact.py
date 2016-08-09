@@ -4,14 +4,17 @@ Pulls build artifact from external repo.
 
 Run the script with -h flag to learn about script's running options.
 """
+__author__ = "Jakub Kudzia"
+__copyright__ = "Copyright (C) 2016 ACK CYFRONET AGH"
+__license__ = "This software is released under the MIT license cited in " \
+              "LICENSE.txt"
 import argparse
-import os
 from paramiko import SSHClient, AutoAddPolicy
+
 from scp import SCPClient, SCPException
 
-ARTIFACTS_DIR = 'artifacts'
-ARTIFACTS_EXT = '.tar.gz'
-DEFAULT_BRANCH = 'develop'
+from artifact_utils import lock_file, unlock_file, artifact_path, \
+    ARTIFACTS_EXT, DEFAULT_BRANCH
 
 
 def download_specific_or_develop(ssh, plan, branch):
@@ -96,45 +99,9 @@ def download_artifact(ssh, plan, branch):
     :type branch: str
     :return None
     """
-    path = artifact_path(plan, branch)
     with SCPClient(ssh.get_transport()) as scp:
-        scp.get(path, local_path=plan.replace("-", '_') + ARTIFACTS_EXT)
-
-
-def lock_file(ssh, file_name):
-    """
-    Set lock on file_name via ssh. Hangs if file_name is currently locked.
-    :param ssh: sshclient with opened connection
-    :type ssh: paramiko.SSHClient
-    :param file_name: name of file to be locked
-    :type file_name: str
-    :return None
-    """
-    ssh.exec_command("lockfile {}.lock".format(file_name))
-
-
-def unlock_file(ssh, file_name):
-    """
-    Delete lock on file_name via ssh.
-    :param ssh: sshclient with opened connection
-    :type ssh: paramiko.SSHClient
-    :param file_name: name of file to be unlocked
-    :type file_name: str
-    :return None
-    """
-    ssh.exec_command("rm -rf {}.lock".format(file_name))
-
-
-def artifact_path(plan, branch):
-    """
-    Returns path to artifact for specific plan and branch. Path is relative
-    to user's home directory on repository machine.
-    :param plan: name of current bamboo plan
-    :type plan: str
-    :param branch: name of current git branch
-    :type branch: str
-    """
-    return os.path.join(ARTIFACTS_DIR, plan, branch + ARTIFACTS_EXT)
+        scp.get(artifact_path(plan, branch),
+                local_path=plan.replace("-", '_') + ARTIFACTS_EXT)
 
 
 parser = argparse.ArgumentParser(

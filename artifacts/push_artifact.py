@@ -5,13 +5,32 @@ Artifact should be file with extension .tar.gz
 
 Run the script with -h flag to learn about script's running options.
 """
+__author__ = "Jakub Kudzia"
+__copyright__ = "Copyright (C) 2016 ACK CYFRONET AGH"
+__license__ = "This software is released under the MIT license cited in " \
+              "LICENSE.txt"
 import argparse
-import os
 from paramiko import SSHClient, AutoAddPolicy
+
 from scp import SCPClient
 
-ARTIFACTS_DIR = 'artifacts'
-ARTIFACTS_EXT = '.tar.gz'
+from artifact_utils import lock_file, unlock_file, artifact_path, PARTIAL_EXT
+
+
+def upload_artifact_safe(ssh, artifact, plan, branch):
+
+    file_name = artifact_path(plan, branch)
+    partial_file_name = file_name + PARTIAL_EXT
+    lock_file(ssh, partial_file_name)
+    try:
+        upload_artifact(ssh, artifact, plan, branch)
+        rename_uploaded_file(ssh, file_name)
+    except:
+        print "Uploading artifact of plan {0}, on branch {1} failed" \
+            .format(plan, branch)
+        ssh.exec_command("rm -rf {}".format(partial_file_name))
+    finally:
+        unlock_file(ssh, partial_file_name)
 
 
 def upload_artifact(ssh, artifact, plan, branch):
@@ -27,10 +46,15 @@ def upload_artifact(ssh, artifact, plan, branch):
     :type branch: str
     :return None
     """
-    # TODO handle simultaneous pulling and pushing
     with SCPClient(ssh.get_transport()) as scp:
-        scp.put(artifact, remote_path=os.path.join(ARTIFACTS_DIR, plan,
-                                                   branch + ARTIFACTS_EXT))
+        scp.put(artifact, remote_path=artifact_path(plan, branch) + PARTIAL_EXT)
+
+
+def rename_uploaded_file(ssh, file_name):
+    lock_file(ssh, file_name)
+    ssh.exec_command("mv {0}{1} {0}".format(file_name, PARTIAL_EXT))
+    unlock_file(ssh, file_name)
+
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -86,10 +110,6 @@ ssh.set_missing_host_key_policy(AutoAddPolicy())
 ssh.load_system_host_keys()
 ssh.connect(args.hostname, port=args.port, username=args.username)
 
-try:
-    upload_artifact(ssh, args.artifact, args.plan, args.branch)
-except:
-    print "Uploading artifact of plan {0}, on branch {1} failed"\
-        .format(args.plan, args.branch)
+upload_artifact_safe(ssh, args.artifact, args.plan, args.branch)
 
 ssh.close()
