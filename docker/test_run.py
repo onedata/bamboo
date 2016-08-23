@@ -78,10 +78,6 @@ parser.add_argument(
     help="Type of test (acceptance, env_up, performance, packaging, gui)",
     dest='test_type')
 
-parser.add_argument(
-    '--runxfail',
-    help="Causes test cases marked with xfail to be started normally"
-)
 
 parser.add_argument(
     '--copy-etc-hosts',
