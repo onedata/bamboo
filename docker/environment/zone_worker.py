@@ -32,11 +32,10 @@ class OZWorkerConfigurator:
         sys_config = cfg['nodes']['node']['sys.config'][self.app_name()]
         sys_config['external_ip'] = {'string': 'IP_PLACEHOLDER'}
 
-        bootstrap_key = 'location_service_bootstrap_nodes'
-        if bootstrap_key in sys_config:
-            sys_config[bootstrap_key] = map(lambda name:
+        if 'location_service_bootstrap_nodes' in sys_config:
+            sys_config['location_service_bootstrap_nodes'] = map(lambda name:
                 location_service_bootstrap.format_if_test_node(name, uid),
-                sys_config[bootstrap_key])
+                sys_config['location_service_bootstrap_nodes'])
 
         if 'http_domain' in sys_config:
             domain = worker.cluster_domain(instance, uid)
