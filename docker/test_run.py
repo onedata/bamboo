@@ -60,7 +60,7 @@ parser.add_argument(
 parser.add_argument(
     '--test-dir', '-t',
     action='store',
-    default='tests/acceptance',
+    default='tests/cucumber',
     help='Test dir to run.',
     dest='test_dir')
 
@@ -74,8 +74,8 @@ parser.add_argument(
 parser.add_argument(
     '--test-type', '-tt',
     action='store',
-    default="acceptance",
-    help="Type of test (cucumber, acceptance, performance, packaging, gui). Default is: acceptance",
+    default="cucumber",
+    help="Type of test (cucumber, env_up, performance, packaging, gui). Default is: cucumber",
     dest='test_type')
 
 parser.add_argument(
