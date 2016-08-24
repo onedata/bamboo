@@ -96,6 +96,12 @@ sed -i.bak s/onedata.org/{domain}/g /root/bin/node/data/dns.config
             extra_volumes.extend(gui.extra_volumes(gui_config, instance_domain))
         return extra_volumes
 
+    def couchbase_ramsize(self):
+        return 1024
+
+    def couchbase_buckets(self):
+        return {"default": 512, "location_service": 100}
+
     def app_name(self):
         return "oz_worker"
 
