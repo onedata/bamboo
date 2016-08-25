@@ -46,17 +46,6 @@ def skipped_test_exists(junit_report_path):
     return False
 
 
-def pass_env_variables_command(envs):
-    cmd = ""
-    pattern = re.compile(r'\s*(\w+)\s*=\s*(\w+)\s*')
-    for e in envs:
-        m = re.match(pattern, e)
-        if m:
-            cmd = """{cmd}
-    os.environ['{name}']='{value}'
-""".format(cmd=cmd, name=m.group(1), value=m.group(2))
-    return cmd
-
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     description='Run Common Tests.')
@@ -97,15 +86,6 @@ parser.add_argument(
     action='store_true'
 )
 
-parser.add_argument(
-    '--env', '-e',
-    action='append',
-    default=None,
-    help='Environment variables to be passed to testmaster docker. Should '
-         'be passed as "NAME=VALUE"',
-    dest="envs"
-)
-
 [args, pass_args] = parser.parse_known_args()
 
 command = '''
@@ -135,9 +115,6 @@ with open('/etc/hosts', 'a') as f:
     {etc_hosts_content}
 """)
 '''.format(etc_hosts_content=get_local_etc_hosts_entries())
-
-if args.envs:
-    additional_code += pass_env_variables_command(args.envs)
 
 command = command.format(
     args=pass_args,
