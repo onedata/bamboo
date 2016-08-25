@@ -98,12 +98,12 @@ parser.add_argument(
 )
 
 parser.add_argument(
-        '--env', '-e',
-        action='append',
-        default=None,
-        help='Environment variables to be passed to testmaster docker. Should '
-             'be passed as "NAME=VALUE"',
-        dest="envs"
+    '--env', '-e',
+    action='append',
+    default=None,
+    help='Environment variables to be passed to testmaster docker. Should '
+         'be passed as "NAME=VALUE"',
+    dest="envs"
 )
 
 [args, pass_args] = parser.parse_known_args()
