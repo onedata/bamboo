@@ -56,19 +56,20 @@ def _node_up(image, bindir, config, config_path, dns_servers, logdir, storages_d
 
     client_data = {}
 
+    bindir = os.path.abspath(bindir)
     # We want the binary from debug more than relwithdebinfo, and any of these
     # more than from release (ifs are in reverse order so it works when
     # there are multiple dirs).
     command = '''set -e
-[ -d /root/build/release ] && cp /root/build/release/oneclient /root/bin/oneclient
-[ -d /root/build/relwithdebinfo ] && cp /root/build/relwithdebinfo/oneclient /root/bin/oneclient
-[ -d /root/build/debug ] && cp /root/build/debug/oneclient /root/bin/oneclient
+[ -d {0}/release ] && cp {0}/release/oneclient /root/bin/oneclient
+[ -d {0}/relwithdebinfo ] && cp {0}/relwithdebinfo/oneclient /root/bin/oneclient
+[ -d {0}/debug ] && cp {0}/debug/oneclient /root/bin/oneclient
 chmod 777 /tmp
 mkdir /tmp/certs
 mkdir /tmp/keys
 {mount_commands}
 bindfs --create-for-user={uid} --create-for-group={gid} /tmp /tmp
-'''
+'''.format(bindir)
 
     for client in node['clients']:
         # for each client instance we want to have separated certs and keys
@@ -113,7 +114,7 @@ EOF
 
     command += '''bash'''
 
-    volumes = [(bindir, '/root/build', 'ro')]
+    volumes = [(bindir, bindir, 'ro')]
     posix_storages = []
     if os_config['storages']:
         if isinstance(os_config['storages'][0], basestring):

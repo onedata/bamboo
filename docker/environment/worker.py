@@ -12,10 +12,6 @@ import os
 from . import common, docker, riak, couchbase, dns, cluster_manager
 from timeouts import *
 
-# mounting point for op-worker-node docker
-DOCKER_BINDIR_PATH = '/root/build'
-
-
 def cluster_domain(instance, uid):
     """Formats domain for a cluster."""
     return common.format_hostname(instance, uid)
@@ -94,7 +90,8 @@ EOF
         executable=configurator.app_name()
     )
 
-    volumes = ['/root/bin', (bindir, DOCKER_BINDIR_PATH, 'ro')]
+    bindir = os.path.abspath(bindir)
+    volumes = ['/root/bin', (bindir, bindir, 'ro')]
     volumes += configurator.extra_volumes(config, bindir, domain,
                                           storages_dockers)
 
@@ -110,7 +107,7 @@ EOF
         detach=True,
         interactive=True,
         tty=True,
-        workdir=DOCKER_BINDIR_PATH,
+        workdir=bindir,
         volumes=volumes,
         dns_list=dns_servers,
         privileged=True,

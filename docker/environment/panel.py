@@ -58,7 +58,8 @@ escript bamboos/gen_dev/gen_dev.escript /tmp/gen_dev_args.json
         gen_dev_args=json.dumps({'onepanel': config}),
         app_name=app_name)
 
-    volumes = [(bindir, '/root/build', 'ro')]
+    bindir = os.path.abspath(bindir)
+    volumes = [(bindir, bindir, 'ro')]
 
     if logdir:
         logdir = os.path.join(os.path.abspath(logdir), hostname)
@@ -71,7 +72,7 @@ escript bamboos/gen_dev/gen_dev.escript /tmp/gen_dev_args.json
         detach=True,
         interactive=True,
         tty=True,
-        workdir='/root/build',
+        workdir=bindir,
         volumes=volumes,
         dns_list=dns_servers,
         privileged=True,
