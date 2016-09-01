@@ -54,7 +54,7 @@ parser.add_argument(
     '--no-cache',
     action='store_false',
     default=True,
-    help='disable mounting /var/cache/ccache and /var/cache/beamcache',
+    help='disable mounting /var/cache/ccache and /var/cache/rebar3',
     dest='mount_cache')
 
 parser.add_argument(
@@ -176,7 +176,7 @@ reflect = [(args.src, 'rw'), ('/var/run/docker.sock', 'rw')]
 reflect.extend(zip(args.reflect, ['rw'] * len(args.reflect)))
 if args.mount_cache:
     reflect.extend([
-        ('/var/cache/ccache', 'rw'), ('/var/cache/beamcache', 'rw')
+        ('/var/cache/ccache', 'rw'), ('/var/cache/rebar3', 'rw')
     ])
 
 # Mount keys required for git and docker config that holds auth to
