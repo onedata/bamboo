@@ -106,6 +106,13 @@ parser.add_argument(
     help='run the container with --privileged=true',
     dest='privileged')
 
+parser.add_argument(
+    '--cpuset-cpus',
+    action='store',
+    default=None,
+    help='CPUs in which to allow execution (0-3, 0,1)',
+    dest='cpuset_cpus')
+
 [args, pass_args] = parser.parse_known_args()
 
 command = '''
@@ -198,5 +205,6 @@ ret = docker.run(tty=True,
                  workdir=args.workdir if args.workdir else args.src,
                  image=args.image,
                  privileged=args.privileged,
+                 cpuset_cpus=args.cpuset_cpus,
                  command=['python', '-c', command])
 sys.exit(ret)
