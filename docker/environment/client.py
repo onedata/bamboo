@@ -61,15 +61,15 @@ def _node_up(image, bindir, config, config_path, dns_servers, logdir, storages_d
     # more than from release (ifs are in reverse order so it works when
     # there are multiple dirs).
     command = '''set -e
-[ -d {0}/release ] && cp {0}/release/oneclient /root/bin/oneclient
-[ -d {0}/relwithdebinfo ] && cp {0}/relwithdebinfo/oneclient /root/bin/oneclient
-[ -d {0}/debug ] && cp {0}/debug/oneclient /root/bin/oneclient
+[ -d {bindir}/release ] && cp {bindir}/release/oneclient /root/bin/oneclient
+[ -d {bindir}/relwithdebinfo ] && cp {bindir}/relwithdebinfo/oneclient /root/bin/oneclient
+[ -d {bindir}/debug ] && cp {bindir}/debug/oneclient /root/bin/oneclient
 chmod 777 /tmp
 mkdir /tmp/certs
 mkdir /tmp/keys
 {mount_commands}
 bindfs --create-for-user={uid} --create-for-group={gid} /tmp /tmp
-'''.format(bindir)
+'''
 
     for client in node['clients']:
         # for each client instance we want to have separated certs and keys
@@ -99,6 +99,7 @@ EOF
 '''
 
         command = command.format(
+            bindir=bindir,
             client_name=client_name,
             cert_file=open(cert_file_path, 'r').read(),
             key_file=open(key_file_path, 'r').read(),
