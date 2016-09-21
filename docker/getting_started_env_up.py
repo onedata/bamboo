@@ -1,5 +1,21 @@
+#!/usr/bin/env python
+# coding=utf-8
+
+"""Author: Michał Ćwiertnia
+Copyright (C) 2016 ACK CYFRONET AGH
+This software is released under the MIT license cited in 'LICENSE.txt'
+
+Starts scenario 2.0 from onedata's getting started.
+Runs isolated Onedata deployment consisting of:
+- a single node preconfigured Onezone instance
+- a single node preconfigured Oneprovider instance
+
+Run the script with -h flag to learn about script's running options.
+"""
+
 # onepanel_client is generated after running onedata's makefile with command make swaggers
 import sys
+import traceback
 sys.path.append('.')
 
 try:
@@ -9,7 +25,9 @@ try:
     from tests.gui.onepanel_client import OneproviderApi
     from tests.gui.onepanel_client import ProviderModifyRequest
 except ImportError:
-    print 'You have to generate swagger clients using \'make swaggers\' command in onedata directory'
+    print 'Cannot import swagger clients. You have to generate swagger clients using ' \
+          '\'make swaggers\' command in onedata directory'
+    traceback.print_exc()
     exit(1)
 
 from bamboos.docker.environment import docker
@@ -21,73 +39,90 @@ import os
 import json
 
 
-def print_logs(client_name, client_docker_logs):
-    print client_name + ' docker logs '
-    print client_docker_logs
+scenario_2_0_path = os.path.join('getting_started', 'scenarios', '2_0_oneprovider_onezone')
+scenario_2_0_network = '20oneprovideronezone_scenario2'
+timeout = 60 * 5
+start_onezone_args = ['--zone', '--detach', '--with-clean']
+start_oneprovider_args = ['--provider', '--detach', '--without-clean']
+PANEL_REST_PORT = 9443
+PANEL_REST_PATH_PREFIX = "/api/v3/onepanel"
 
-    path = 'getting_started/scenarios/2_0_oneprovider_onezone/config_' + client_name + '/var/log/'
+
+def print_logs(service_name, service_docker_logs):
+    print '{} docker logs '.format(service_name)
+    print service_docker_logs
+
+    path = os.path.join([scenario_2_0_path, 'config_' + service_name, 'var', 'log'])
     try:
         directories = os.listdir(path)
     except IOError:
-        print 'Couldn\'t find ' + path
+        print 'Couldn\'t find {}'.format(path)
         return
 
     for dir in directories:
         try:
-            files = os.listdir(path + dir)
+            files = os.listdir(os.path.join(path, dir))
         except IOError:
-            print 'Couldn\'t find ' + path + dir
+            print 'Couldn\'t find {}'.format(os.path.join(path, dir))
             break
         for file in files:
             try:
-                with open(path + dir + '/' + file, 'r') as logs:
-                    print client_name + ' ' + dir + ' ' + file
+                with open(os.path.join(path, dir, file), 'r') as logs:
+                    print '{service_name} {dir} {file}'.format(service_name=service_name,
+                                                               dir=dir,
+                                                               file=file)
                     print logs.readlines()
             except IOError:
-                print 'Couldn\'t find ' + path + dir + '/' + file
+                print 'Couldn\'t find {}'.format(os.path.join(path, dir, file))
 
 
-def start_client(start_client_path, start_client_args, client_name, timeout):
-    client_process = Popen(['./run_onedata.sh'] + start_client_args, stdout=PIPE, stderr=STDOUT,
-                           cwd=start_client_path)
-    client_process.wait()
-    client_output = client_process.communicate()[0]
-    print client_output
-    splited_client_output = client_output.split('\n')
-    docker_name = [item for item in splited_client_output if re.search('Creating ' + client_name, item)]
+def start_service(start_service_path, start_service_args, service_name, timeout):
+    """
+    service_name argument is one of: onezone, oneprovider
+    Runs ./run_onedata.sh script from onedata's getting started scenario 2.0
+    Returns ip of started service
+    """
+    service_process = Popen(['./run_onedata.sh'] + start_service_args, stdout=PIPE, stderr=STDOUT,
+                            cwd=start_service_path)
+    service_process.wait()
+    service_output = service_process.communicate()[0]
+    print service_output
+    splited_service_output = service_output.split('\n')
+    docker_name = [item for item in splited_service_output if re.search('Creating ' + service_name, item)]
     docker_name = docker_name[0].split()
     docker_name = docker_name[len(docker_name) - 1]
 
     # Wait for client to start
-    client_docker_logs = ''
-    check_if_client_is_up = ['docker', 'logs', docker_name]
+    service_docker_logs = ''
+    check_if_service_is_up = ['docker', 'logs', docker_name]
     timeout = time.time() + timeout
-    while not (re.search('Congratulations', client_docker_logs)):
-        client_process = Popen(check_if_client_is_up, stdout=PIPE, stderr=STDOUT)
-        client_process.wait()
-        client_docker_logs = client_process.communicate()[0]
-        if re.search('Error', client_docker_logs):
-            print 'Error while starting ' + client_name
-            print_logs(client_name, client_docker_logs)
+    while not (re.search('Congratulations', service_docker_logs)):
+        service_process = Popen(check_if_service_is_up, stdout=PIPE, stderr=STDOUT)
+        service_process.wait()
+        service_docker_logs = service_process.communicate()[0]
+        if re.search('Error', service_docker_logs):
+            print 'Error while starting {}'.format(service_name)
+            print_logs(service_name, service_docker_logs)
             exit(1)
         if time.time() > timeout:
-            print 'Timeout while starting ' + client_name
-            print_logs(client_name, client_docker_logs)
+            print 'Timeout while starting {}'.format(service_name)
+            print_logs(service_name, service_docker_logs)
             exit(1)
         time.sleep(2)
-    print client_name + ' has started'
+    print '{} has started'.format(service_name)
 
-    # Get ip of client
-    client_docker_logs = client_docker_logs.split('\n')
-    client_ip = [item for item in client_docker_logs if re.search('IP Address', item)]
-    if len(client_ip) == 0:
-        print 'Couldn\'t find ' + client_name + ' IP address'
-        print_logs(client_name, client_docker_logs)
+    # Get ip of service
+    service_docker_logs = service_docker_logs.split('\n')
+    service_ip = [item for item in service_docker_logs if re.search('IP Address', item)]
+    if len(service_ip) == 0:
+        print 'Couldn\'t find {} IP address'.format(service_name)
+        print_logs(service_name, service_docker_logs)
         exit(1)
-    client_ip = client_ip[0].split()
-    client_ip = client_ip[len(client_ip) - 1]
-    print client_name + ' IP: ' + str(client_ip)
-    return client_ip
+    service_ip = service_ip[0].split()
+    service_ip = service_ip[len(service_ip) - 1]
+    print '{service_name} IP: {service_ip}'.format(service_name=service_name,
+                                                   service_ip=service_ip)
+    return service_ip
 
 
 parser = argparse.ArgumentParser()
@@ -97,53 +132,44 @@ parser.add_argument('--docker-name', action='store', default='',
                     help='Name of docker that will be added to network', required=False)
 args = parser.parse_args()
 
-
-start_clients_path = 'getting_started/scenarios/2_0_oneprovider_onezone'
-start_onezone_args = ['--zone', '--detach', '--with-clean']
-start_oneprovider_args = ['--provider', '--detach', '--without-clean']
-timeout = 60 * 5
-
 print 'Starting onezone'
-onezone_ip = start_client(start_clients_path, start_onezone_args, 'onezone', timeout)
+onezone_ip = start_service(scenario_2_0_path, start_onezone_args, 'onezone', timeout)
 print 'Starting oneprovider'
-oneprovider_ip = start_client(start_clients_path, start_oneprovider_args, 'oneprovider', timeout)
+oneprovider_ip = start_service(scenario_2_0_path, start_oneprovider_args, 'oneprovider', timeout)
 
 if args.docker_name:
-    docker.connect_docker_to_network('20oneprovideronezone_scenario2', args.docker_name)
+    docker.connect_docker_to_network(scenario_2_0_network, args.docker_name)
 
 # Configure environment
 print 'Configuring environment'
-onezone_address = 'https://' + onezone_ip
-oneprovider_address = 'https://' + oneprovider_ip
-
-# Onepanel operations
-OZ_REST_PORT = 8443
-PANEL_REST_PORT = 9443
-PANEL_REST_PATH_PREFIX = "/api/v3/onepanel"
-OZ_REST_PATH_PREFIX = "/api/v3/onezone"
+onezone_address = 'https://{}'.format(onezone_ip)
+oneprovider_address = 'https://{}'.format(oneprovider_ip)
 
 # Create actual REST API endpoint for onepanel
-Onepanel_REST_ENDPOINT = onezone_address + ':' + str(PANEL_REST_PORT) + PANEL_REST_PATH_PREFIX
-Oneprovider_REST_ENDPOINT = oneprovider_address + ':' + str(PANEL_REST_PORT) + PANEL_REST_PATH_PREFIX
+oz_panel_REST_ENDPOINT = '{address}:{REST_PORT}' \
+                         '{REST_PATH_PREFIX}'.format(address=onezone_address,
+                                                     REST_PORT=PANEL_REST_PORT,
+                                                     REST_PATH_PREFIX=PANEL_REST_PATH_PREFIX)
+op_panel_REST_ENDPOINT = '{address}:{REST_PORT}' \
+                         '{REST_PATH_PREFIX}'.format(address=oneprovider_address,
+                                                     REST_PORT=PANEL_REST_PORT,
+                                                     REST_PATH_PREFIX=PANEL_REST_PATH_PREFIX)
 
-print Onepanel_REST_ENDPOINT, Oneprovider_REST_ENDPOINT
 # Only necessary when connecting to a private Onezone instance
 Conf_Onepanel().verify_ssl = False
 
 # Set Configuration in Onepanel for admin 'admin'
 username, password = args.admin_credentials.split(':')
-USERNAME = username
-PASSWORD = password
-Conf_Onepanel().username = USERNAME
-Conf_Onepanel().password = PASSWORD
+Conf_Onepanel().username = username
+Conf_Onepanel().password = password
 
 # Login as admin 'admin' to oneprovider panel
-oneprovider_client = ApiClient_OP(host=Oneprovider_REST_ENDPOINT,
-                                  header_name='authorization',
-                                  header_value=Conf_Onepanel().get_basic_auth_token())
+op_panel_client = ApiClient_OP(host=op_panel_REST_ENDPOINT,
+                               header_name='authorization',
+                               header_value=Conf_Onepanel().get_basic_auth_token())
 
 # Create oneprovider api for admin 'admin'
-oneprovider_api = OneproviderApi(oneprovider_client)
+oneprovider_api = OneproviderApi(op_panel_client)
 
 # Change provider redirection point and name
 provider_modify_request = ProviderModifyRequest(redirection_point=oneprovider_address)

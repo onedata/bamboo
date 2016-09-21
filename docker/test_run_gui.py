@@ -1,7 +1,11 @@
 #!/usr/bin/env python
+# coding=utf-8
 
-"""
-Runs integration and acceptance tests in docker environment.
+"""Author: Michał Ćwiertnia
+Copyright (C) 2016 ACK CYFRONET AGH
+This software is released under the MIT license cited in 'LICENSE.txt'
+
+Runs gui tests in docker environment.
 
 All paths used are relative to script's path, not to the running user's CWD.
 Run the script with -h flag to learn about script's running options.
@@ -270,8 +274,6 @@ parser.add_argument(
 if args.env == 'custom':
     add_hosts_arguments()
     [args, pass_args] = parser.parse_known_args()
-
-if args.env == 'custom':
     custom_env()
 
 if args.env == 'getting_started':
@@ -279,3 +281,4 @@ if args.env == 'getting_started':
 
 if args.env == 'env_up':
     print 'Not implemented yet'
+    exit(2)
