@@ -267,4 +267,6 @@ def create_volume(path, name, image, command):
 
 
 def connect_docker_to_network(network, image):
+    """Connect docker to the network"""
+
     subprocess.check_call(['docker', 'network', 'connect', network, image])
