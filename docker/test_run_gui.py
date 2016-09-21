@@ -73,14 +73,13 @@ def run_docker(command):
                       image=args.image,
                       command=['python', '-c', command])
 
+
 def custom_env():
     additional_code = ''
     command = '''
 import os, subprocess, sys, stat
 
 {additional_code}
-
-subprocess.Popen(['docker', 'network', 'connect', '20oneprovideronezone_scenario2', '{docker_name}'])
 
 if {shed_privileges}:
     os.environ['HOME'] = '/tmp'
