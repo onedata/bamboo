@@ -52,7 +52,7 @@ def print_logs(service_name, service_docker_logs):
     print '{} docker logs '.format(service_name)
     print service_docker_logs
 
-    path = os.path.join([scenario_2_0_path, 'config_' + service_name, 'var', 'log'])
+    path = os.path.join(scenario_2_0_path, 'config_' + service_name, 'var', 'log')
     try:
         directories = os.listdir(path)
     except IOError:
