@@ -75,7 +75,7 @@ parser.add_argument(
     '--test-type', '-tt',
     action='store',
     default="acceptance",
-    help="Type of test (acceptance, env_up, performance, packaging, gui-release, gui-develop, gui-custom)",
+    help="Type of test (acceptance, env_up, performance, packaging, gui)",
     dest='test_type')
 
 
