@@ -95,7 +95,7 @@ def getting_started_local():
 
     command = ['py.test'] + pass_args + \
               ['--test-type={}'.format(args.test_type),
-               '{}'.format(args.test_dir),
+               args.test_dir,
                '--onezone-host={}'.format(hosts_parsed['onezone_host']),
                '--oz-panel-host={}'.format(hosts_parsed['oz_panel_host']),
                '--oneprovider-host={}'.format(hosts_parsed['oneprovider_host']),
