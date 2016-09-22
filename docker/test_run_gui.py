@@ -61,11 +61,11 @@ def add_hosts_arguments():
 
 def copy_etc_hosts():
     return '''
-    with open('/etc/hosts', 'a') as f:
-        f.write("""
-        {etc_hosts_content}
-    """)
-    '''.format(etc_hosts_content=get_local_etc_hosts_entries())
+with open('/etc/hosts', 'a') as f:
+    f.write("""
+    {etc_hosts_content}
+""")
+'''.format(etc_hosts_content=get_local_etc_hosts_entries())
 
 
 def run_docker(command):
@@ -93,10 +93,9 @@ def getting_started_local():
     hosts = split_output[len(split_output) - 2]
     hosts_parsed = json.loads(hosts)
 
-    command = ['py.test', '{}'.format(pass_args),
-               '--test-type={}'.format(args.test_type),
-               args.test_dir,
-               '--junitxml={}'.format(args.report_path),
+    command = ['py.test'] + pass_args + \
+              ['--test-type={}'.format(args.test_type),
+               '{}'.format(args.test_dir),
                '--onezone-host={}'.format(hosts_parsed['onezone_host']),
                '--oz-panel-host={}'.format(hosts_parsed['oz_panel_host']),
                '--oneprovider-host={}'.format(hosts_parsed['oneprovider_host']),
