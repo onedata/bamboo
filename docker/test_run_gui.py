@@ -19,6 +19,8 @@ import sys
 from environment import docker
 import glob
 import xml.etree.ElementTree as ElementTree
+import subprocess
+import json
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -76,6 +78,30 @@ def run_docker(command):
                                ('/var/run/docker.sock', 'rw')],
                       image=args.image,
                       command=['python', '-c', command])
+
+
+def getting_started_local():
+    start_env_command = ['python', '-u', 'getting_started_env_up.py']
+    proc = subprocess.Popen(start_env_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    output = ''
+    for line in iter(proc.stdout.readline, ''):
+        print line,
+        output = output + line
+        sys.stdout.flush()
+
+    split_output = output.split('\n')
+    hosts = split_output[len(split_output) - 2]
+    hosts_parsed = json.loads(hosts)
+
+    command = ['py.test', '{}'.format(pass_args),
+               '--test-type={}'.format(args.test_type),
+               args.test_dir,
+               '--junitxml={}'.format(args.report_path),
+               '--onezone-host={}'.format(hosts_parsed['onezone_host']),
+               '--oz-panel-host={}'.format(hosts_parsed['oz_panel_host']),
+               '--oneprovider-host={}'.format(hosts_parsed['oneprovider_host']),
+               '--op-panel-host={}'.format(hosts_parsed['op_panel_host'])]
+    subprocess.call(command)
 
 
 def custom_env():
@@ -278,6 +304,9 @@ if args.env == 'custom':
 
 if args.env == 'getting_started':
     getting_started_env()
+
+if args.env == 'getting_started_local':
+    getting_started_local()
 
 if args.env == 'env_up':
     print 'Not implemented yet'
