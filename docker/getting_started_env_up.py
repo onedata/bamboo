@@ -39,7 +39,7 @@ except ImportError:
     traceback.print_exc()
     exit(1)
 
-from bamboos.docker.environment import docker
+from environment import docker
 from subprocess import Popen, PIPE, STDOUT, call
 import re
 import time
