@@ -97,9 +97,11 @@ def getting_started_local():
               ['--test-type={}'.format(args.test_type),
                args.test_dir,
                '--onezone-host={}'.format(hosts_parsed['onezone_host']),
+               '--base-url=https://{}'.format(hosts_parsed['onezone_host']),
                '--oz-panel-host={}'.format(hosts_parsed['oz_panel_host']),
                '--oneprovider-host={}'.format(hosts_parsed['oneprovider_host']),
-               '--op-panel-host={}'.format(hosts_parsed['op_panel_host'])]
+               '--op-panel-host={}'.format(hosts_parsed['op_panel_host']),
+               '--user admin password']
     subprocess.call(command)
 
 
@@ -181,10 +183,11 @@ if {shed_privileges}:
     os.setreuid({uid}, {uid})
 
 command = ['py.test'] + {args} + ['--test-type={test_type}'] + ['{test_dir}'] + \\
- ['--junitxml={report_path}'] + ['--onezone-host=' + str(hosts_parsed['onezone_host'])] + \\
- ['--oz-panel-host=' + str(hosts_parsed['oz_panel_host'])] + ['--oneprovider-host=' + \\
- str(hosts_parsed['oneprovider_host'])] + ['--op-panel-host=' + \\
- str(hosts_parsed['op_panel_host'])]
+ ['--base-url=https://' + str(hosts_parsed['onezone_host'])] + \\
+ ['--junitxml={report_path}'] + ['--onezone-host'] + ['z1'] + [str(hosts_parsed['onezone_host'])] + \\
+ ['--oz-panel-host'] + ['z1'] + [str(hosts_parsed['oz_panel_host'])  + ':9443'] + ['--oneprovider-host'] + ['p1'] + \\
+ [str(hosts_parsed['oneprovider_host'])] + ['--user'] + ['admin'] + ['password'] + ['--op-panel-host'] + ['p1'] + \\
+ [str(hosts_parsed['op_panel_host']) + ':9443']
 ret = subprocess.call(command)
 sys.exit(ret)
 '''
