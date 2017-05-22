@@ -69,6 +69,9 @@ with open('/etc/hosts', 'a') as f:
 
 
 def run_docker(command):
+    # 128MB or more required for chrome tests to run with xvfb
+    run_params = ['--shm-size=128m']
+
     return docker.run(tty=True,
                       rm=True,
                       interactive=True,
@@ -77,7 +80,8 @@ def run_docker(command):
                       reflect=[(script_dir, 'rw'),
                                ('/var/run/docker.sock', 'rw')],
                       image=args.image,
-                      command=['python', '-c', command])
+                      command=['python', '-c', command],
+                      run_params=run_params)
 
 
 def getting_started_local():
