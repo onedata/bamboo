@@ -69,6 +69,7 @@ with open('/etc/hosts', 'a') as f:
 
 
 def run_docker(command):
+
     # 128MB or more required for chrome tests to run with xvfb
     run_params = ['--shm-size=128m']
 
@@ -79,6 +80,7 @@ def run_docker(command):
                       workdir=script_dir,
                       reflect=[(script_dir, 'rw'),
                                ('/var/run/docker.sock', 'rw')],
+                      volumes=[('/home/bamboo/.docker/config.json', '/root/.docker/config.json', 'ro')],
                       image=args.image,
                       command=['python', '-c', command],
                       run_params=run_params)
@@ -104,8 +106,7 @@ def getting_started_local():
                '--base-url=https://{}'.format(hosts_parsed['onezone_host']),
                '--oz-panel-host={}'.format(hosts_parsed['oz_panel_host']),
                '--oneprovider-host={}'.format(hosts_parsed['oneprovider_host']),
-               '--op-panel-host={}'.format(hosts_parsed['op_panel_host']),
-               '--user admin password']
+               '--op-panel-host={}'.format(hosts_parsed['op_panel_host'])]
     subprocess.call(command)
 
 
