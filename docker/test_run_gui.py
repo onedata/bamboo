@@ -21,6 +21,7 @@ import glob
 import xml.etree.ElementTree as ElementTree
 import subprocess
 import json
+import os.path
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -80,7 +81,9 @@ def run_docker(command):
                       workdir=script_dir,
                       reflect=[(script_dir, 'rw'),
                                ('/var/run/docker.sock', 'rw')],
-                      volumes=[('/home/bamboo/.docker/config.json', '/root/.docker/config.json', 'ro')],
+                      volumes=[(os.path.join(os.path.expanduser('~'),
+                                             '.docker', 'config.json'),
+                               '/root/.docker/config.json', 'ro')],
                       image=args.image,
                       command=['python', '-c', command],
                       run_params=run_params)
