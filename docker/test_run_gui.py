@@ -194,7 +194,7 @@ command = ['py.test'] + {args} + ['--test-type={test_type}'] + ['{test_dir}'] + 
  ['--base-url=https://' + str(hosts_parsed['onezone_host'])] + \\
  ['--junitxml={report_path}'] + ['--onezone-host'] + ['z1'] + [str(hosts_parsed['onezone_host'])] + \\
  ['--oz-panel-host'] + ['z1'] + [str(hosts_parsed['oz_panel_host'])  + ':9443'] + ['--oneprovider-host'] + ['p1'] + \\
- [str(hosts_parsed['oneprovider_host'])] + ['--user'] + ['admin'] + ['password'] + ['--op-panel-host'] + ['p1'] + \\
+ [str(hosts_parsed['oneprovider_host'])] + ['--op-panel-host'] + ['p1'] + \\
  [str(hosts_parsed['op_panel_host']) + ':9443']
 ret = subprocess.call(command)
 sys.exit(ret)
