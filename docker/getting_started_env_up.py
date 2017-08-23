@@ -2,7 +2,7 @@
 # coding=utf-8
 
 """Author: Michał Ćwiertnia
-Copyright (C) 2016 ACK CYFRONET AGH
+Copyright (C) 2017 ACK CYFRONET AGH
 This software is released under the MIT license cited in 'LICENSE.txt'
 
 This file is mainly used in onedata tests.
@@ -98,7 +98,7 @@ def rm_persistence(path, service_name):
 def start_service(start_service_path, start_service_args, service_name, timeout):
     """
     service_name argument is one of: onezone, oneprovider
-    Runs ./run_onedata.sh script from onedata's getting started scenario 2.0
+    Runs ./run_onedata.sh script from onedata's getting started scenario 2.1
     Returns ip of started service
     """
     service_process = Popen(['./run_onedata.sh'] + start_service_args, stdout=PIPE, stderr=STDOUT,
@@ -113,18 +113,19 @@ def start_service(start_service_path, start_service_args, service_name, timeout)
 
     # Get ip of service
     service_ip = None
+    re_docker_ip = re.compile(r'IP Address:\s*(?P<ip>(\d{1,3}\.?){4})')
     while not service_ip:
         service_process = Popen(['docker', 'logs', docker_name], stdout=PIPE,
                                 stderr=STDOUT)
         docker_logs = service_process.communicate()[0]
-        service_ip = re.search(r'IP Address:\s*(?P<ip>(\d{1,3}\.?){4})',
-                               docker_logs)
+        service_ip = re_docker_ip.search(docker_logs)
         if re.search('Error', docker_logs):
             print 'Error while starting {}'.format(service_name)
             print_logs(service_name, docker_logs)
             exit(1)
         if time.time() > timeout:
-            print 'Couldn\'t find {} IP address'.format(service_name)
+            print ('Timeout while waiting for {}\'s IP '
+                   'address'.format(service_name))
             print_logs(service_name, docker_logs)
             exit(1)
         time.sleep(2)
