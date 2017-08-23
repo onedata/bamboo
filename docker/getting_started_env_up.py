@@ -109,29 +109,26 @@ def start_service(start_service_path, start_service_args, service_name, timeout)
     docker_name = re.search(r'Creating\s*(?P<name>{}[\w-]+)\b'.format(service),
                             service_output).group('name')
 
-    # Wait for client to start
-    docker_logs = ''
     timeout = time.time() + timeout
-    while not (re.search('Starting\s+{}\s+\[\s*OK\s*\]'.format(service_name), docker_logs)):
-        service_process = Popen(['docker', 'logs', docker_name], stdout=PIPE, stderr=STDOUT)
+
+    # Get ip of service
+    service_ip = None
+    while not service_ip:
+        service_process = Popen(['docker', 'logs', docker_name], stdout=PIPE,
+                                stderr=STDOUT)
         docker_logs = service_process.communicate()[0]
+        service_ip = re.search(r'IP Address:\s*(?P<ip>(\d{1,3}\.?){4})',
+                               docker_logs)
         if re.search('Error', docker_logs):
             print 'Error while starting {}'.format(service_name)
             print_logs(service_name, docker_logs)
             exit(1)
         if time.time() > timeout:
-            print 'Timeout while starting {}'.format(service_name)
+            print 'Couldn\'t find {} IP address'.format(service_name)
             print_logs(service_name, docker_logs)
             exit(1)
         time.sleep(2)
-    print '{} has started'.format(service_name)
 
-    # Get ip of service
-    service_ip = re.search(r'IP Address:\s*(?P<ip>(\d{1,3}\.?){4})', docker_logs)
-    if not service_ip:
-        print 'Couldn\'t find {} IP address'.format(service_name)
-        print_logs(service_name, docker_logs)
-        exit(1)
     service_ip = service_ip.group('ip')
     print '{service_name} IP: {service_ip}'.format(service_name=service_name,
                                                    service_ip=service_ip)
