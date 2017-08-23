@@ -2,7 +2,7 @@
 # coding=utf-8
 
 """Author: Michał Ćwiertnia
-Copyright (C) 2017 ACK CYFRONET AGH
+Copyright (C) 2016-2017 ACK CYFRONET AGH
 This software is released under the MIT license cited in 'LICENSE.txt'
 
 This file is mainly used in onedata tests.
