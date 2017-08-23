@@ -90,8 +90,11 @@ def run_docker(command):
 
 
 def getting_started_local():
-    start_env_command = ['python', '-u', 'getting_started_env_up.py']
-    proc = subprocess.Popen(start_env_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    start_env_command = ['python', '-u', 'getting_started_env_up.py',
+                         '--scenario', args.scenario, '--zone_name',
+                         args.zone_name, '--provider_name', args.provider_name]
+    proc = subprocess.Popen(start_env_command, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
     output = ''
     for line in iter(proc.stdout.readline, ''):
         print line,
@@ -169,7 +172,9 @@ import os, subprocess, sys, stat, json
 
 {additional_code}
 
-start_env_command = ['python', '-u', 'getting_started_env_up.py', '--docker-name', '{docker_name}']
+start_env_command = ['python', '-u', 'getting_started_env_up.py', 
+'--docker-name', '{docker_name}', '--scenario', '{scenario}', '--zone_name',
+'{zone_name}', '--provider_name', '{provider_name}']
 proc = subprocess.Popen(start_env_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 output = ''
@@ -212,6 +217,9 @@ sys.exit(ret)
         report_path=args.report_path,
         test_type=args.test_type,
         docker_name=args.docker_name,
+        scenario=args.scenario,
+        zone_name=args.zone_name,
+        provider_name=args.provider_name,
         additional_code=additional_code)
 
     ret = run_docker(command)
@@ -223,7 +231,8 @@ sys.exit(ret)
 
 
 def get_local_etc_hosts_entries():
-    """Get entries from local etc/hosts, excluding commented out, blank and localhost entries
+    """Get entries from local etc/hosts, excluding commented out, blank and
+    localhost entries
     Returns a str - content of etc/hosts except excluded lines.
     """
 
@@ -232,7 +241,8 @@ def get_local_etc_hosts_entries():
         hosts_content = f.read()
 
     re_exclude_entry = re.compile(r'\s*#.*|.*localhost.*|.*broadcasthost.*|^\s*$')
-    entries = filter(lambda line: not re_exclude_entry.match(line), hosts_content.splitlines())
+    entries = filter(lambda line: not re_exclude_entry.match(line),
+                     hosts_content.splitlines())
 
     return '### /etc/hosts from host ###\n' + '\n'.join(entries)
 
@@ -283,7 +293,8 @@ parser.add_argument(
 
 parser.add_argument(
     '--copy-etc-hosts',
-    help="Copies local /etc/hosts file to docker (useful when want to test GUI on locally defined domain)",
+    help="Copies local /etc/hosts file to docker (useful when want to test GUI "
+         "on locally defined domain)",
     dest='copy_etc_hosts',
     action='store_true'
 )
@@ -304,6 +315,35 @@ parser.add_argument(
     default='test_run_gui_docker',
     required=False
 )
+
+parser.add_argument(
+    '--scenario',
+    action='store',
+    help='Getting started scenario\'s name',
+    dest='scenario',
+    default='2_1_oneprovider_onezone_onepanel',
+    required=False
+)
+
+parser.add_argument(
+    '--zone_name',
+    action='store',
+    help='Example zone\'s name',
+    dest='zone_name',
+    default='z1',
+    required=False
+)
+
+
+parser.add_argument(
+    '--provider_name',
+    action='store',
+    help='Examples providers\'s name',
+    dest='provider_name',
+    default='p1',
+    required=False
+)
+
 
 [args, pass_args] = parser.parse_known_args()
 
