@@ -95,6 +95,19 @@ def rm_persistence(path, service_name):
         f.writelines(lines)
 
 
+def add_etc_hosts_entry(docker_name, service_ip):
+    service_process = Popen(['docker', 'inspect',
+                             '--format=\'{{json .Config}}\'', docker_name],
+                            stdout=PIPE, stderr=STDOUT)
+    docker_conf = service_process.communicate()[0]
+    hostname = re.search(r'"Hostname":"(?P<hostname>.*?)"',
+                         docker_conf, re.I).group('hostname')
+    domain = re.search(r'"Domainname":"(?P<domain>.*?)"',
+                       docker_conf, re.I).group('domain')
+    with open('/etc/hosts', 'a') as f:
+        f.write('{} {}.{}\n'.format(service_ip, hostname, domain))
+
+
 def start_service(start_service_path, start_service_args, service_name,
                   timeout):
     """
@@ -134,6 +147,7 @@ def start_service(start_service_path, start_service_args, service_name,
     service_ip = service_ip.group('ip')
     print '{service_name} IP: {service_ip}'.format(service_name=service_name,
                                                    service_ip=service_ip)
+    add_etc_hosts_entry(docker_name, service_ip)
     return service_ip
 
 
