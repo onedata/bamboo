@@ -2,7 +2,7 @@
 # coding=utf-8
 
 """Author: Michał Ćwiertnia
-Copyright (C) 2016 ACK CYFRONET AGH
+Copyright (C) 2016-2017 ACK CYFRONET AGH
 This software is released under the MIT license cited in 'LICENSE.txt'
 
 This file is mainly used in onedata tests.
@@ -114,27 +114,28 @@ def start_service(start_service_path, start_service_args, service_name,
 
     # Get ip of service
     service_ip = None
+    re_docker_ip = re.compile(r'IP Address:\s*(?P<ip>(\d{1,3}\.?){4})')
     while not service_ip:
         service_process = Popen(['docker', 'logs', docker_name], stdout=PIPE,
                                 stderr=STDOUT)
         docker_logs = service_process.communicate()[0]
-        service_ip = re.search(r'IP Address:\s*(?P<ip>(\d{1,3}\.?){4})',
-                               docker_logs)
+        service_ip = re_docker_ip.search(docker_logs)
         if re.search('Error', docker_logs):
             print 'Error while starting {}'.format(service_name)
             print_logs(service_name, docker_logs)
             exit(1)
         if time.time() > timeout:
-            print 'Couldn\'t find {} IP address'.format(service_name)
+            print ('Timeout while waiting for {}\'s IP '
+                   'address'.format(service_name))
             print_logs(service_name, docker_logs)
             exit(1)
-        time.sleep(1)
+        time.sleep(2)
 
     service_ip = service_ip.group('ip')
     print '{service_name} IP: {service_ip}'.format(service_name=service_name,
                                                    service_ip=service_ip)
-
     return service_ip
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--docker-name',
@@ -150,12 +151,12 @@ parser.add_argument('--scenario',
 parser.add_argument('--zone_name',
                     action='store',
                     default='z1',
-                    help='Example zone\'s name',
+                    help='Zone\'s name',
                     required=False)
 parser.add_argument('--provider_name',
                     action='store',
                     default='p1',
-                    help='Example provider\'s name',
+                    help='Provider\'s name',
                     required=False)
 args = parser.parse_args()
 
