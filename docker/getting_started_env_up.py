@@ -105,7 +105,7 @@ def add_etc_hosts_entry(docker_name, service_ip):
     domain = re.search(r'"Domainname":"(?P<domain>.*?)"',
                        docker_conf, re.I).group('domain')
     with open('/etc/hosts', 'a') as f:
-        f.write('{} {}.{}\n'.format(service_ip, hostname, domain))
+        f.write('\n{} {}.{}\n'.format(service_ip, hostname, domain))
 
 
 def start_service(start_service_path, start_service_args, service_name,
@@ -159,7 +159,7 @@ parser.add_argument('--docker-name',
                     required=False)
 parser.add_argument('--scenario',
                     action='store',
-                    default='2_1_oneprovider_onezone_onepanel',
+                    default='2_0_oneprovider_onezone',
                     help='Getting started scenario\'s name',
                     required=False)
 parser.add_argument('--zone_name',

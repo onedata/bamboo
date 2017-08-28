@@ -108,11 +108,11 @@ def getting_started_local():
     command = ['py.test'] + pass_args + \
               ['--test-type={}'.format(args.test_type),
                args.test_dir,
-               '--onezone-host={}'.format(hosts_parsed['onezone_host']),
+               '--onezone-host {} {}'.format(args.zone_name, hosts_parsed['onezone_host']),
                '--base-url=https://{}'.format(hosts_parsed['onezone_host']),
-               '--oz-panel-host={}'.format(hosts_parsed['oz_panel_host']),
-               '--oneprovider-host={}'.format(hosts_parsed['oneprovider_host']),
-               '--op-panel-host={}'.format(hosts_parsed['op_panel_host'])]
+               '--oz-panel-host {} {}'.format(args.zone_name, hosts_parsed['oz_panel_host']),
+               '--oneprovider-host {} {}'.format(args.provider_name, hosts_parsed['oneprovider_host']),
+               '--op-panel-host={} {}'.format(args.provider_name, hosts_parsed['op_panel_host'])]
     subprocess.call(command)
 
 
@@ -132,9 +132,9 @@ if {shed_privileges}:
     os.setreuid({uid}, {uid})
 
 command = ['py.test'] + {args} + ['--test-type={test_type}'] + ['{test_dir}'] + \\
- ['--junitxml={report_path}'] + ['--onezone-host={onezone_host}'] + \\
- ['--oz-panel-host={oz_panel_host}'] + ['--oneprovider-host={oneprovider_host}'] + \\
- ['--op-panel-host={op_panel_host}']
+ ['--junitxml={report_path}'] + ['--onezone-host'] + ['{zone_name}'] + ['{onezone_host}'] + \\
+ ['--oz-panel-host'] + ['{zone_name}'] + ['{oz_panel_host}'] + ['--oneprovider-host'] + ['{provider_name}'] + ['{oneprovider_host}'] + \\
+ ['--op-panel-host'] + ['{provider_name}'] + ['{op_panel_host}']
 ret = subprocess.call(command)
 sys.exit(ret)
 '''
@@ -152,8 +152,10 @@ sys.exit(ret)
         test_type=args.test_type,
         additional_code=additional_code,
         onezone_host=args.onezone_host,
+        zone_name=args.zone_name,
         oz_panel_host=args.oz_panel_host,
         oneprovider_host=args.oneprovider_host,
+        provider_name=args.provider_name,
         op_panel_host=args.op_panel_host,
         docker_name=args.docker_name)
 
@@ -197,9 +199,9 @@ if {shed_privileges}:
 
 command = ['py.test'] + {args} + ['--test-type={test_type}'] + ['{test_dir}'] + \\
  ['--base-url=https://' + str(hosts_parsed['onezone_host'])] + \\
- ['--junitxml={report_path}'] + ['--onezone-host'] + ['z1'] + [str(hosts_parsed['onezone_host'])] + \\
- ['--oz-panel-host'] + ['z1'] + [str(hosts_parsed['oz_panel_host'])  + ':9443'] + ['--oneprovider-host'] + ['p1'] + \\
- [str(hosts_parsed['oneprovider_host'])] + ['--op-panel-host'] + ['p1'] + \\
+ ['--junitxml={report_path}'] + ['--onezone-host'] + ['{zone_name}'] + [str(hosts_parsed['onezone_host'])] + \\
+ ['--oz-panel-host'] + ['{zone_name}'] + [str(hosts_parsed['oz_panel_host'])  + ':9443'] + ['--oneprovider-host'] + ['{provider_name}'] + \\
+ [str(hosts_parsed['oneprovider_host'])] + ['--op-panel-host'] + ['{provider_name}'] + \\
  [str(hosts_parsed['op_panel_host']) + ':9443']
 ret = subprocess.call(command)
 sys.exit(ret)
@@ -321,7 +323,7 @@ parser.add_argument(
     action='store',
     help='Getting started scenario\'s name',
     dest='scenario',
-    default='2_1_oneprovider_onezone_onepanel',
+    default='2_0_oneprovider_onezone',
     required=False
 )
 
