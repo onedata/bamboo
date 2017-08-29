@@ -95,37 +95,25 @@ def rm_persistence(path, service_name):
         f.writelines(lines)
 
 
-def add_etc_hosts_entry(docker_name, service_ip):
+def get_service_url(docker_name, service_ip):
     service_process = Popen(['docker', 'inspect',
                              '--format=\'{{json .Config}}\'', docker_name],
                             stdout=PIPE, stderr=STDOUT)
     docker_conf = service_process.communicate()[0]
     hostname = re.search(r'"Hostname":"(?P<hostname>.*?)"',
                          docker_conf, re.I).group('hostname')
-    domain = re.search(r'"Domainname":"(?P<domain>.*?)"',
+    domain = re.search(r'"Domainname":"(?P<domain>.*?)\."',
                        docker_conf, re.I).group('domain')
+    url = '{}.{}'.format(hostname, domain)
+
     with open('/etc/hosts', 'a') as f:
-        f.write('\n{} {}.{}\n'.format(service_ip, hostname, domain))
+        f.write('\n{} {}\n'.format(service_ip, url))
+
+    return url
 
 
-def start_service(start_service_path, start_service_args, service_name,
-                  timeout):
-    """
-    service_name argument is one of: onezone, oneprovider
-    Runs ./run_onedata.sh script from given onedata's getting started scenario
-    Returns ip of started service
-    """
-    service_process = Popen(['./run_onedata.sh'] + start_service_args,
-                            stdout=PIPE, stderr=STDOUT, cwd=start_service_path)
-    service_output = service_process.communicate()[0]
-    print service_output
-    service = 'onezone' if service_name == 'oz_panel' else 'oneprovider'
-    docker_name = re.search(r'Creating\s*(?P<name>{}[\w-]+)\b'.format(service),
-                            service_output).group('name')
-
+def get_service_ip(docker_name, service_name, timeout):
     timeout = time.time() + timeout
-
-    # Get ip of service
     service_ip = None
     re_docker_ip = re.compile(r'IP Address:\s*(?P<ip>(\d{1,3}\.?){4})')
     while not service_ip:
@@ -143,12 +131,30 @@ def start_service(start_service_path, start_service_args, service_name,
             print_logs(service_name, docker_logs)
             exit(1)
         time.sleep(2)
-
     service_ip = service_ip.group('ip')
     print '{service_name} IP: {service_ip}'.format(service_name=service_name,
                                                    service_ip=service_ip)
-    add_etc_hosts_entry(docker_name, service_ip)
     return service_ip
+
+
+def start_service(start_service_path, start_service_args, service_name,
+                  timeout):
+    """
+    service_name argument is one of: onezone, oneprovider
+    Runs ./run_onedata.sh script from given onedata's getting started scenario
+    Returns ip of started service
+    """
+    service_process = Popen(['./run_onedata.sh'] + start_service_args,
+                            stdout=PIPE, stderr=STDOUT, cwd=start_service_path)
+    service_output = service_process.communicate()[0]
+    print service_output
+    service = 'onezone' if service_name == 'oz_panel' else 'oneprovider'
+    docker_name = re.search(r'Creating\s*(?P<name>{}[\w-]+)\b'.format(service),
+                            service_output).group('name')
+
+    service_ip = get_service_ip(docker_name, service_name, timeout)
+    url = get_service_url(docker_name, service_ip)
+    return url
 
 
 parser = argparse.ArgumentParser()
@@ -184,21 +190,21 @@ scenario_path = os.path.join(SCENARIOS_DIR_PATH, args.scenario)
 scenario_network = '{}_{}'.format(args.scenario.replace('_', ''), 'scenario2')
 print 'Starting onezone'
 rm_persistence(scenario_path, 'onezone')
-oz_panel_ip = start_service(scenario_path, start_onezone_args, 'oz_panel',
-                            TIMEOUT)
+oz_panel_url = start_service(scenario_path, start_onezone_args, 'oz_panel',
+                             TIMEOUT)
 print 'Starting oneprovider'
 rm_persistence(scenario_path, 'oneprovider')
-op_panel_ip = start_service(scenario_path, start_oneprovider_args, 'op_panel',
-                            TIMEOUT)
+op_panel_url = start_service(scenario_path, start_oneprovider_args, 'op_panel',
+                             TIMEOUT)
 
 if args.docker_name:
     docker.connect_docker_to_network(scenario_network, args.docker_name)
 
 output = {
-    'oneprovider_host': op_panel_ip,
-    'onezone_host': oz_panel_ip,
-    'op_panel_host': op_panel_ip,
-    'oz_panel_host': oz_panel_ip
+    'oneprovider_host': op_panel_url,
+    'onezone_host': oz_panel_url,
+    'op_panel_host': op_panel_url,
+    'oz_panel_host': oz_panel_url
 }
 
 print json.dumps(output)
