@@ -92,7 +92,8 @@ def run_docker(command):
 def getting_started_local():
     start_env_command = ['python', '-u', 'getting_started_env_up.py',
                          '--scenario', args.scenario, '--zone_name',
-                         args.zone_name, '--provider_name', args.provider_name]
+                         args.zone_name, '--providers_names',
+                         args.providers_names]
     proc = subprocess.Popen(start_env_command, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
     output = ''
@@ -166,6 +167,14 @@ sys.exit(ret)
 
 
 def getting_started_env():
+    # print "Provider names before parsing: "
+    # print args.providers_names
+    # providers_names = ["'{}, '".format(provider) for provider in
+    #                    args.providers_names[:-1]]
+    # providers_names += "'{}'".format(args.providers_names[-1])
+    # # TODO:
+    # print "Providers names"
+    # print providers_names
     additional_code = ''
     command = '''
 import os, subprocess, sys, stat, json
@@ -174,7 +183,11 @@ import os, subprocess, sys, stat, json
 
 start_env_command = ['python', '-u', 'getting_started_env_up.py', 
 '--docker-name', '{docker_name}', '--scenario', '{scenario}', '--zone_name',
-'{zone_name}', '--provider_name', '{provider_name}']
+'{zone_name}', '--providers_names']
+
+for provider in {providers_names}:
+    start_env_command += [provider] 
+
 proc = subprocess.Popen(start_env_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 output = ''
@@ -197,10 +210,14 @@ if {shed_privileges}:
 
 command = ['py.test'] + {args} + ['--test-type={test_type}'] + ['{test_dir}'] + \\
  ['--base-url=https://' + str(hosts_parsed['onezone_host'])] + \\
- ['--junitxml={report_path}'] + ['--onezone-host'] + ['z1'] + [str(hosts_parsed['onezone_host'])] + \\
- ['--oz-panel-host'] + ['z1'] + [str(hosts_parsed['oz_panel_host'])  + ':9443'] + ['--oneprovider-host'] + ['p1'] + \\
- [str(hosts_parsed['oneprovider_host'])] + ['--op-panel-host'] + ['p1'] + \\
- [str(hosts_parsed['op_panel_host']) + ':9443']
+ ['--junitxml={report_path}'] + ['--onezone-host'] + [str(hosts_parsed['oz_host_alias'])] + [str(hosts_parsed['onezone_host'])] + \\
+ ['--oz-panel-host'] + [str(hosts_parsed['oz_host_alias'])] + \\
+ [str(hosts_parsed['oz_panel_host'])  + ':9443']
+ 
+for alias, ip in zip(hosts_parsed['op_hosts_aliases'], hosts_parsed['op_panel_host']):
+    command += ['--oneprovider-host'] + [alias] + [str(ip)] 
+    command += ['--op-panel-host'] + [alias] + [str(ip) + ':9443']
+    
 ret = subprocess.call(command)
 sys.exit(ret)
 '''
@@ -219,7 +236,7 @@ sys.exit(ret)
         docker_name=args.docker_name,
         scenario=args.scenario,
         zone_name=args.zone_name,
-        provider_name=args.provider_name,
+        providers_names=args.providers_names,
         additional_code=additional_code)
 
     ret = run_docker(command)
@@ -334,13 +351,11 @@ parser.add_argument(
     required=False
 )
 
-
 parser.add_argument(
-    '--provider_name',
-    action='store',
-    help='Examples providers\'s name',
-    dest='provider_name',
+    '--providers_names',
+    nargs='+',
     default='p1',
+    help='Provides names',
     required=False
 )
 

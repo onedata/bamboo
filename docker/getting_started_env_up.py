@@ -102,14 +102,14 @@ def add_etc_hosts_entry(docker_name, service_ip):
     docker_conf = service_process.communicate()[0]
     hostname = re.search(r'"Hostname":"(?P<hostname>.*?)"',
                          docker_conf, re.I).group('hostname')
-    domain = re.search(r'"Domainname":"(?P<domain>.*?)"',
+    domain = re.search(r'"Domainname":"(?P<domain>.*?)\.?"',
                        docker_conf, re.I).group('domain')
     with open('/etc/hosts', 'a') as f:
         f.write('{} {}.{}\n'.format(service_ip, hostname, domain))
 
 
 def start_service(start_service_path, start_service_args, service_name,
-                  timeout):
+                  timeout, provider=None):
     """
     service_name argument is one of: onezone, oneprovider
     Runs ./run_onedata.sh script from given onedata's getting started scenario
@@ -119,9 +119,16 @@ def start_service(start_service_path, start_service_args, service_name,
                             stdout=PIPE, stderr=STDOUT, cwd=start_service_path)
     service_output = service_process.communicate()[0]
     print service_output
-    service = 'onezone' if service_name == 'oz_panel' else 'oneprovider'
-    docker_name = re.search(r'Creating\s*(?P<name>{}[\w-]+)\b'.format(service),
-                            service_output).group('name')
+    service = 'onezone' if service_name == 'oz_panel' else provider
+
+    if service == 'onezone':
+        # TODO: prepare appropriate regex
+        docker_name = re.search(r'(Recreating|Creating|Starting)\s*(?P<name>{}.*?[\w-]+)\b'.format(service),
+                                service_output).group('name')
+    else:
+        docker_name = re.search(
+            r'(Recreating|Creating|Starting)\s*(?P<name>{})\b'.format(provider),
+            service_output).group('name')
 
     timeout = time.time() + timeout
 
@@ -167,18 +174,16 @@ parser.add_argument('--zone_name',
                     default='z1',
                     help='Zone\'s name',
                     required=False)
-parser.add_argument('--provider_name',
-                    action='store',
+parser.add_argument('--providers_names',
+                    nargs='+',
                     default='p1',
-                    help='Provider\'s name',
+                    help='Provides names',
                     required=False)
 args = parser.parse_args()
 
 
 start_onezone_args = ['--zone', '--detach', '--with-clean', '--name',
                       args.zone_name]
-start_oneprovider_args = ['--provider', '--detach', '--without-clean', '--name',
-                          args.provider_name]
 
 scenario_path = os.path.join(SCENARIOS_DIR_PATH, args.scenario)
 scenario_network = '{}_{}'.format(args.scenario.replace('_', ''), 'scenario2')
@@ -186,19 +191,58 @@ print 'Starting onezone'
 rm_persistence(scenario_path, 'onezone')
 oz_panel_ip = start_service(scenario_path, start_onezone_args, 'oz_panel',
                             TIMEOUT)
-print 'Starting oneprovider'
-rm_persistence(scenario_path, 'oneprovider')
-op_panel_ip = start_service(scenario_path, start_oneprovider_args, 'op_panel',
-                            TIMEOUT)
+oz_panel_ip = oz_panel_ip
+oz_host_alias = args.zone_name
+op_panel_ips = []
+op_hosts_aliases = []
+
+for i, provider in enumerate(args.providers_names):
+    filename = os.path.join(SCENARIOS_DIR_PATH, args.scenario,
+                            'docker-compose-oneprovider.yml')
+
+    with open(filename) as f:
+        base_file_str = f.read()
+
+    file_str = re.sub(r'(services:\s*).*', r'\1node1.{}:'.format(provider),
+                      base_file_str)
+    file_str = re.sub(r'(image:.*\s*hostname: ).*',
+                      r'\1node1.{}'.format(provider),
+                      file_str)
+    file_str = re.sub(r'container_name: .*',
+                      r'container_name: {}'.format(provider), file_str)
+    file_str = re.sub(r'(cluster:\s*domainName: ).*',
+                      r'\1"{}"'.format(provider), file_str)
+    file_str = re.sub(r'redirectionPoint: .*',
+                      r'redirectionPoint: "https://node1.{}"'.format(provider),
+                      file_str)
+    file_str = re.sub(r'(storages:\s*).*', r'\1NFS{}:'.format(i), file_str)
+
+    with open(filename, "w") as f:
+        f.write(file_str)
+
+    start_oneprovider_args = ['--provider', '--detach', '--without-clean',
+                              '--name', provider]
+    print 'Starting provider: ' + provider
+    rm_persistence(scenario_path, 'oneprovider')
+    op_panel_ip = start_service(scenario_path, start_oneprovider_args,
+                                'op_panel', TIMEOUT, provider)
+
+    with open(filename, "w") as f:
+        f.write(base_file_str)
+
+    op_hosts_aliases.append(provider)
+    op_panel_ips.append(op_panel_ip)
 
 if args.docker_name:
     docker.connect_docker_to_network(scenario_network, args.docker_name)
 
 output = {
-    'oneprovider_host': op_panel_ip,
+    'oneprovider_host': op_panel_ips,
     'onezone_host': oz_panel_ip,
-    'op_panel_host': op_panel_ip,
-    'oz_panel_host': oz_panel_ip
+    'op_panel_host': op_panel_ips,
+    'oz_panel_host': oz_panel_ip,
+    'oz_host_alias': oz_host_alias,
+    'op_hosts_aliases': op_hosts_aliases
 }
 
 print json.dumps(output)
