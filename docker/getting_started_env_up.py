@@ -95,46 +95,27 @@ def rm_persistence(path, service_name):
         f.writelines(lines)
 
 
-def get_service_url(docker_name, service_ip):
-    service_process = Popen(['docker', 'inspect',
-                             '--format=\'{{json .Config}}\'', docker_name],
-                            stdout=PIPE, stderr=STDOUT)
-    docker_conf = service_process.communicate()[0]
-    hostname = re.search(r'"Hostname":"(?P<hostname>.*?)"',
-                         docker_conf, re.I).group('hostname')
-    domain = re.search(r'"Domainname":"(?P<domain>.*?)\."',
-                       docker_conf, re.I).group('domain')
-    url = '{}.{}'.format(hostname, domain)
-
+def add_etc_hosts_entries(service_ip, service_url):
     with open('/etc/hosts', 'a') as f:
-        f.write('\n{} {}\n'.format(service_ip, url))
-
-    return url
+        f.write('\n{} {}\n'.format(service_ip, service_url))
 
 
-def get_service_ip(docker_name, service_name, timeout):
+def wait_for_service_start(service_name, docker_name, pattern, timeout):
     timeout = time.time() + timeout
-    service_ip = None
-    re_docker_ip = re.compile(r'IP Address:\s*(?P<ip>(\d{1,3}\.?){4})')
-    while not service_ip:
+    docker_logs = ''
+    while not re.search(pattern, docker_logs, re.I):
         service_process = Popen(['docker', 'logs', docker_name], stdout=PIPE,
                                 stderr=STDOUT)
         docker_logs = service_process.communicate()[0]
-        service_ip = re_docker_ip.search(docker_logs)
         if re.search('Error', docker_logs):
             print 'Error while starting {}'.format(service_name)
             print_logs(service_name, docker_logs)
             exit(1)
         if time.time() > timeout:
-            print ('Timeout while waiting for {}\'s IP '
-                   'address'.format(service_name))
+            print 'Timeout while starting {}\'s'.format(service_name)
             print_logs(service_name, docker_logs)
             exit(1)
         time.sleep(2)
-    service_ip = service_ip.group('ip')
-    print '{service_name} IP: {service_ip}'.format(service_name=service_name,
-                                                   service_ip=service_ip)
-    return service_ip
 
 
 def start_service(start_service_path, start_service_args, service_name,
@@ -147,13 +128,36 @@ def start_service(start_service_path, start_service_args, service_name,
     service_process = Popen(['./run_onedata.sh'] + start_service_args,
                             stdout=PIPE, stderr=STDOUT, cwd=start_service_path)
     service_output = service_process.communicate()[0]
+
     print service_output
+
     service = 'onezone' if service_name == 'oz_panel' else 'oneprovider'
     docker_name = re.search(r'Creating\s*(?P<name>{}[\w-]+)\b'.format(service),
                             service_output).group('name')
 
-    service_ip = get_service_ip(docker_name, service_name, timeout)
-    url = get_service_url(docker_name, service_ip)
+    if '2_1' in args.scenario:
+        wait_for_service_start(service_name, docker_name,
+                               r'IP Address:\s*(\d{1,3}\.?){4}',
+                               timeout)
+    else:
+        wait_for_service_start(service_name, docker_name,
+                               r'.*congratulations.*successfully.*started.*',
+                               timeout)
+
+    # get service ip, hostname and domainname
+    format_options = ('\'{{with index .NetworkSettings.Networks "' +
+                      scenario_network + '"}}{{.IPAddress}}{{end}} '
+                      '{{ .Config.Hostname }} {{ .Config.Domainname }}\'')
+
+    service_process = Popen(['docker', 'inspect',
+                             '--format={}'.format(format_options), docker_name],
+                            stdout=PIPE, stderr=STDOUT)
+    docker_conf = service_process.communicate()[0]
+    ip, hostname, domainname = docker_conf.split()
+    url = '{}.{}'.format(hostname, domainname if domainname[-1] != '.' else
+                         domainname[:-1])
+    add_etc_hosts_entries(ip, url)
+
     return url
 
 
