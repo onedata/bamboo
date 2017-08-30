@@ -95,9 +95,9 @@ def rm_persistence(path, service_name):
         f.writelines(lines)
 
 
-def add_etc_hosts_entries(service_ip, service_url):
+def add_etc_hosts_entries(service_ip, service_host):
     with open('/etc/hosts', 'a') as f:
-        f.write('\n{} {}\n'.format(service_ip, service_url))
+        f.write('\n{} {}\n'.format(service_ip, service_host))
 
 
 def wait_for_service_start(service_name, docker_name, pattern, timeout):
@@ -144,7 +144,7 @@ def start_service(start_service_path, start_service_args, service_name,
                                r'.*congratulations.*successfully.*started.*',
                                timeout)
 
-    # get service ip, hostname and domainname
+    # get service ip and hostname
     format_options = ('\'{{with index .NetworkSettings.Networks "' +
                       scenario_network + '"}}{{.IPAddress}}{{end}} '
                       '{{ .Config.Hostname }} {{ .Config.Domainname }}\'')
@@ -153,12 +153,13 @@ def start_service(start_service_path, start_service_args, service_name,
                              '--format={}'.format(format_options), docker_name],
                             stdout=PIPE, stderr=STDOUT)
     docker_conf = service_process.communicate()[0]
-    ip, hostname, domainname = docker_conf.split()
-    url = '{}.{}'.format(hostname, domainname if domainname[-1] != '.' else
-                         domainname[:-1])
-    add_etc_hosts_entries(ip, url)
+    ip, docker_hostname, docker_domain = docker_conf.split()
+    service_host = '{}.{}'.format(docker_hostname,
+                                  docker_domain if docker_domain[-1] != '.'
+                                  else docker_domain[:-1])
+    add_etc_hosts_entries(ip, service_host)
 
-    return url
+    return service_host
 
 
 parser = argparse.ArgumentParser()
@@ -194,21 +195,21 @@ scenario_path = os.path.join(SCENARIOS_DIR_PATH, args.scenario)
 scenario_network = '{}_{}'.format(args.scenario.replace('_', ''), 'scenario2')
 print 'Starting onezone'
 rm_persistence(scenario_path, 'onezone')
-oz_panel_url = start_service(scenario_path, start_onezone_args, 'oz_panel',
-                             TIMEOUT)
+oz_panel_hostname = start_service(scenario_path, start_onezone_args, 'oz_panel',
+                                  TIMEOUT)
 print 'Starting oneprovider'
 rm_persistence(scenario_path, 'oneprovider')
-op_panel_url = start_service(scenario_path, start_oneprovider_args, 'op_panel',
-                             TIMEOUT)
+op_panel_hostname = start_service(scenario_path, start_oneprovider_args,
+                                  'op_panel', TIMEOUT)
 
 if args.docker_name:
     docker.connect_docker_to_network(scenario_network, args.docker_name)
 
 output = {
-    'oneprovider_host': op_panel_url,
-    'onezone_host': oz_panel_url,
-    'op_panel_host': op_panel_url,
-    'oz_panel_host': oz_panel_url
+    'oneprovider_host': op_panel_hostname,
+    'onezone_host': oz_panel_hostname,
+    'op_panel_host': op_panel_hostname,
+    'oz_panel_host': oz_panel_hostname
 }
 
 print json.dumps(output)
