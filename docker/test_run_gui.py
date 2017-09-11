@@ -44,19 +44,19 @@ def add_hosts_arguments():
     )
 
     parser.add_argument(
-        '--oneprovider-host',
-        action='store',
+        '--providers-hosts',
+        nargs='+',
         help='IP address of oneprovider',
         required=True,
-        dest='oneprovider_host'
+        dest='providers_hosts'
     )
 
     parser.add_argument(
-        '--op-panel-host',
-        action='store',
+        '--op-panels-hosts',
+        nargs='+',
         help='IP address of op-panel',
         required=True,
-        dest='op_panel_host'
+        dest='op_panels_hosts'
     )
 
 
@@ -106,14 +106,24 @@ def getting_started_local():
     hosts = split_output[len(split_output) - 2]
     hosts_parsed = json.loads(hosts)
 
+    providers_args = []
+    for alias, hostname in zip(hosts_parsed['op_hosts_aliases'],
+                               hosts_parsed['op_panel_host']):
+        providers_args += ['--oneprovider-host'] + [alias] + [hostname] + \
+                          ['--op-panel-host'] + [alias] + \
+                          ['{}:9443'.format(hostname)]
+
     command = ['py.test'] + pass_args + \
               ['--test-type={}'.format(args.test_type),
                args.test_dir,
-               '--onezone-host={}'.format(hosts_parsed['onezone_host']),
-               '--base-url=https://{}'.format(hosts_parsed['onezone_host']),
-               '--oz-panel-host={}'.format(hosts_parsed['oz_panel_host']),
-               '--oneprovider-host={}'.format(hosts_parsed['oneprovider_host']),
-               '--op-panel-host={}'.format(hosts_parsed['op_panel_host'])]
+               '--onezone-host {} {}'.format(
+                   args.zone_name, hosts_parsed['onezone_host']),
+               '--base-url=https://{}'.format(
+                   hosts_parsed['onezone_host']),
+               '--oz-panel-host {} {}:9443'.format(
+                   args.zone_name, hosts_parsed['oz_panel_host'])] + \
+              providers_args
+
     subprocess.call(command)
 
 
@@ -132,10 +142,19 @@ if {shed_privileges}:
     os.setregid({gid}, {gid})
     os.setreuid({uid}, {uid})
 
+providers_args = []
+for alias, hostname, panel_hostname in zip({providers_names}, 
+                                           {providers_hosts},
+                                           {op_panels_hosts}):
+    providers_args += ['--oneprovider-host'] + [alias] + [hostname] + \\
+                      ['--op-panel-host'] + [alias] + [panel_hostname] 
+    
 command = ['py.test'] + {args} + ['--test-type={test_type}'] + ['{test_dir}'] + \\
- ['--junitxml={report_path}'] + ['--onezone-host={onezone_host}'] + \\
- ['--oz-panel-host={oz_panel_host}'] + ['--oneprovider-host={oneprovider_host}'] + \\
- ['--op-panel-host={op_panel_host}']
+ ['--base-url=https://' + '{onezone_host}'] + \\
+ ['--junitxml={report_path}'] + ['--onezone-host'] + ['{zone_name}'] + \\
+ ['{onezone_host}'] + ['--oz-panel-host'] + ['{zone_name}'] + \\
+ ['{onezone_host}'  + ':9443'] + providers_args 
+
 ret = subprocess.call(command)
 sys.exit(ret)
 '''
@@ -153,9 +172,11 @@ sys.exit(ret)
         test_type=args.test_type,
         additional_code=additional_code,
         onezone_host=args.onezone_host,
+        zone_name=args.zone_name,
         oz_panel_host=args.oz_panel_host,
-        oneprovider_host=args.oneprovider_host,
-        op_panel_host=args.op_panel_host,
+        providers_hosts=args.providers_hosts,
+        providers_names=args.providers_names,
+        op_panels_hosts=args.op_panels_hosts,
         docker_name=args.docker_name)
 
     ret = run_docker(command)
@@ -167,26 +188,15 @@ sys.exit(ret)
 
 
 def getting_started_env():
-    # print "Provider names before parsing: "
-    # print args.providers_names
-    # providers_names = ["'{}, '".format(provider) for provider in
-    #                    args.providers_names[:-1]]
-    # providers_names += "'{}'".format(args.providers_names[-1])
-    # # TODO:
-    # print "Providers names"
-    # print providers_names
     additional_code = ''
     command = '''
 import os, subprocess, sys, stat, json
 
-{additional_code}
+{additional_code}   
 
 start_env_command = ['python', '-u', 'getting_started_env_up.py', 
-'--docker-name', '{docker_name}', '--scenario', '{scenario}', '--zone_name',
-'{zone_name}', '--providers_names']
-
-for provider in {providers_names}:
-    start_env_command += [provider] 
+'--docker-name', '{docker_name}', '--scenario', '{scenario}', '--zone-name',
+'{zone_name}', '--providers-names'] + {providers_names}
 
 proc = subprocess.Popen(start_env_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
@@ -208,15 +218,18 @@ if {shed_privileges}:
     os.setregid({gid}, {gid})
     os.setreuid({uid}, {uid})
 
+providers_args = []
+for alias, hostname in zip(hosts_parsed['op_hosts_aliases'], 
+                           hosts_parsed['op_panel_host']):
+    providers_args += ['--oneprovider-host'] + [alias] + [hostname] + \\
+                      ['--op-panel-host'] + [alias] + [hostname + ':9443'] 
+                  
+
 command = ['py.test'] + {args} + ['--test-type={test_type}'] + ['{test_dir}'] + \\
  ['--base-url=https://' + str(hosts_parsed['onezone_host'])] + \\
  ['--junitxml={report_path}'] + ['--onezone-host'] + [str(hosts_parsed['oz_host_alias'])] + [str(hosts_parsed['onezone_host'])] + \\
  ['--oz-panel-host'] + [str(hosts_parsed['oz_host_alias'])] + \\
- [str(hosts_parsed['oz_panel_host'])  + ':9443']
- 
-for alias, ip in zip(hosts_parsed['op_hosts_aliases'], hosts_parsed['op_panel_host']):
-    command += ['--oneprovider-host'] + [alias] + [str(ip)] 
-    command += ['--op-panel-host'] + [alias] + [str(ip) + ':9443']
+ [str(hosts_parsed['oz_panel_host'])  + ':9443'] + providers_args
     
 ret = subprocess.call(command)
 sys.exit(ret)
@@ -240,6 +253,14 @@ sys.exit(ret)
         additional_code=additional_code)
 
     ret = run_docker(command)
+
+    for provider in args.providers_names:
+        print provider
+        try:
+            docker.inspect(provider)
+            docker.remove([provider], force=True)
+        except subprocess.CalledProcessError:
+            pass
 
     if ret != 0 and not skipped_test_exists(args.report_path):
         ret = 0
@@ -338,12 +359,12 @@ parser.add_argument(
     action='store',
     help='Getting started scenario\'s name',
     dest='scenario',
-    default='2_1_oneprovider_onezone_onepanel',
+    default='2_0_oneprovider_onezone',
     required=False
 )
 
 parser.add_argument(
-    '--zone_name',
+    '--zone-name',
     action='store',
     help='Example zone\'s name',
     dest='zone_name',
@@ -352,10 +373,11 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--providers_names',
+    '--providers-names',
     nargs='+',
-    default='p1',
-    help='Provides names',
+    help='List of providers names separated with space',
+    dest='providers_names',
+    default=['p1'],
     required=False
 )
 
