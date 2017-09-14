@@ -34,7 +34,9 @@ import json
 import argparse
 
 PROVIDER_DOCKER_COMPOSE_FILE = 'docker-compose-oneprovider.yml'
+ZONE_DOCKER_COMPOSE_FILE = 'docker-compose-onezone.yml'
 SCENARIOS_DIR_PATH = os.path.join('getting_started', 'scenarios')
+SERVICE_LOGS = '/volumes/persistence/var/log'
 TIMEOUT = 60 * 10
 
 
@@ -119,11 +121,11 @@ def wait_for_service_start(service_name, docker_name, pattern, timeout):
 
 
 def start_service(start_service_path, start_service_args, service_name,
-                  timeout):
+                  timeout, etc_hosts_entries):
     """
     service_name argument is either 'onezone' or provider name
     Runs ./run_onedata.sh script from given onedata's getting started scenario
-    Returns hostname of started service
+    Returns hostname and docker name of started service
     """
     service_process = Popen(['./run_onedata.sh'] + start_service_args,
                             stdout=PIPE, stderr=STDOUT, cwd=start_service_path)
@@ -156,10 +158,45 @@ def start_service(start_service_path, start_service_args, service_name,
     service_host = '{}.{}'.format(docker_hostname,
                                   docker_domain if docker_domain[-1] != '.'
                                   else docker_domain[:-1])
-    add_etc_hosts_entries(ip, service_host)
 
-    return service_host
+    if args.write_to_etc_hosts:
+        add_etc_hosts_entries(ip, service_host)
+    else:
+        etc_hosts_entries[ip] = service_host
 
+    return service_host, docker_name
+
+
+def set_logs_dir(base_file_str, logs_dir, dockerfile, alias):
+    file_str = re.sub(r'(volumes:)(\s*)',
+                      r'\1\2- "{}:{}"\2'.format(
+                          os.path.join(logs_dir, alias), SERVICE_LOGS),
+                      base_file_str)
+
+    with open(dockerfile, "w") as f:
+        f.write(file_str)
+
+
+def modify_provider_docker_compose(provider_name, base_file_str,
+                                   provider_dockerfile):
+    file_str = re.sub(r'(services:\s*).*', r'\1node1.{}:'.format(provider_name),
+                      base_file_str)
+    file_str = re.sub(r'(image:.*\s*hostname: ).*',
+                      r'\1node1.{}'.format(provider_name),
+                      file_str)
+    file_str = re.sub(r'container_name: .*',
+                      r'container_name: {}'.format(provider_name), file_str)
+    file_str = re.sub(r'(cluster:\s*domainName: ).*',
+                      r'\1"{}"'.format(provider), file_str)
+    file_str = re.sub(r'redirectionPoint: .*',
+                      r'redirectionPoint: "https://node1.{}"'.format(
+                          provider_name), file_str)
+    if args.logs_dir:
+        set_logs_dir(file_str, os.path.join(os.getcwd(), args.logs_dir),
+                     provider_dockerfile, provider_name)
+    else:
+        with open(provider_dockerfile, "w") as f:
+            f.write(file_str)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--docker-name',
@@ -184,68 +221,114 @@ parser.add_argument('--providers-names',
                     dest='providers_names',
                     help='List of providers names separated with space',
                     required=False)
+parser.add_argument('--write-to-etc-hosts',
+                    action='store_true',
+                    dest='write_to_etc_hosts',
+                    help='If given write ip-hostname mappings to '
+                         '/etc/hosts else ip-hostname mappings will'
+                         'be printed to stdout',
+                    required=False)
+parser.add_argument('--l', '--logs_dir',
+                    action='store',
+                    default='',
+                    dest='logs_dir',
+                    help='Directory where logs should be placed',
+                    required=False)
+parser.add_argument('--uid',
+                    action='store',
+                    default=0,
+                    dest='uid',
+                    help='User uid',
+                    required=False)
+parser.add_argument('--gid',
+                    action='store',
+                    default=0,
+                    dest='gid',
+                    help='User gid',
+                    required=False)
+
 args = parser.parse_args()
 
 scenario_path = os.path.join(SCENARIOS_DIR_PATH, args.scenario)
 scenario_network = '{}_{}'.format(args.scenario.replace('_', ''), 'scenario2')
+etc_hosts_entries = {}
 
+
+zone_dockerfile = os.path.join(SCENARIOS_DIR_PATH, args.scenario,
+                               ZONE_DOCKER_COMPOSE_FILE)
 print 'Starting onezone'
 start_onezone_args = ['--zone', '--detach', '--with-clean', '--name',
                       args.zone_name]
 rm_persistence(scenario_path, 'onezone')
-oz_panel_hostname = start_service(scenario_path, start_onezone_args,
-                                  'onezone-1', TIMEOUT)
-oz_host_alias = args.zone_name
 
-op_panel_hostnames = []
-op_hosts_aliases = []
+if args.logs_dir:
+    with open(zone_dockerfile) as f:
+        base_zone_dockerfile = f.read()
+    try:
+        set_logs_dir(base_zone_dockerfile,
+                     os.path.join(os.getcwd(), args.logs_dir), zone_dockerfile,
+                     args.zone_name)
+        oz_hostname, oz_docker_name = start_service(scenario_path,
+                                                    start_onezone_args,
+                                                    'onezone-1', TIMEOUT,
+                                                    etc_hosts_entries)
+    finally:
+        with open(zone_dockerfile, "w") as f:
+                f.write(base_zone_dockerfile)
+else:
+    oz_hostname, oz_docker_name = start_service(scenario_path,
+                                                start_onezone_args,
+                                                'onezone-1', TIMEOUT,
+                                                etc_hosts_entries)
+
+output = {
+    'oz_worker_nodes': [
+        {
+            'alias': args.zone_name,
+            'hostname': oz_hostname,
+            'docker_name': oz_docker_name
+        }
+    ],
+    'op_worker_nodes': [
+    ]
+
+}
 
 provider_dockerfile = os.path.join(SCENARIOS_DIR_PATH, args.scenario,
                                    PROVIDER_DOCKER_COMPOSE_FILE)
 
 with open(provider_dockerfile) as f:
-    base_file_str = f.read()
+    base_provider_dockerfile = f.read()
 
 for provider in args.providers_names:
-    file_str = re.sub(r'(services:\s*).*', r'\1node1.{}:'.format(provider),
-                      base_file_str)
-    file_str = re.sub(r'(image:.*\s*hostname: ).*',
-                      r'\1node1.{}'.format(provider),
-                      file_str)
-    file_str = re.sub(r'container_name: .*',
-                      r'container_name: {}'.format(provider), file_str)
-    file_str = re.sub(r'(cluster:\s*domainName: ).*',
-                      r'\1"{}"'.format(provider), file_str)
-    file_str = re.sub(r'redirectionPoint: .*',
-                      r'redirectionPoint: "https://node1.{}"'.format(provider),
-                      file_str)
-
-    with open(provider_dockerfile, "w") as f:
-        f.write(file_str)
-
+    print 'Starting provider: ' + provider
     start_oneprovider_args = ['--provider', '--detach', '--without-clean',
                               '--name', provider]
-    print 'Starting provider: ' + provider
-    rm_persistence(scenario_path, 'oneprovider')
-    op_panel_hostname = start_service(scenario_path, start_oneprovider_args,
-                                      provider, TIMEOUT)
+    try:
+        modify_provider_docker_compose(provider, base_provider_dockerfile,
+                                       provider_dockerfile)
+        rm_persistence(scenario_path, 'oneprovider')
+        op_hostname, op_docker_name = start_service(
+            scenario_path, start_oneprovider_args, provider, TIMEOUT,
+            etc_hosts_entries)
 
-    with open(provider_dockerfile, "w") as f:
-        f.write(base_file_str)
+    finally:
+        with open(provider_dockerfile, "w") as f:
+            f.write(base_provider_dockerfile)
 
-    op_hosts_aliases.append(provider)
-    op_panel_hostnames.append(op_panel_hostname)
+    output['op_worker_nodes'] += [
+        {
+            'alias': provider,
+            'hostname': op_hostname,
+            'docker_name': op_docker_name
+        }
+    ]
+
 
 if args.docker_name:
     docker.connect_docker_to_network(scenario_network, args.docker_name)
 
-output = {
-    'oneprovider_host': op_panel_hostnames,
-    'onezone_host': oz_panel_hostname,
-    'op_panel_host': op_panel_hostnames,
-    'oz_panel_host': oz_panel_hostname,
-    'oz_host_alias': oz_host_alias,
-    'op_hosts_aliases': op_hosts_aliases
-}
+for ip in etc_hosts_entries:
+    print '{} {}'.format(ip, etc_hosts_entries[ip])
 
 print json.dumps(output)

@@ -195,8 +195,12 @@ import os, subprocess, sys, stat, json
 {additional_code}   
 
 start_env_command = ['python', '-u', 'getting_started_env_up.py', 
-'--docker-name', '{docker_name}', '--scenario', '{scenario}', '--zone-name',
-'{zone_name}', '--providers-names'] + {providers_names}
+'--docker-name', '{docker_name}', '--uid', '{uid}', '--gid', '{gid}',
+'--scenario', '{scenario}', '--l', '{logs_dir}', '--zone-name', '{zone_name}', 
+'--providers-names'] + {providers_names}
+
+if {write_to_etc_hosts}:
+    start_env_command += ['--write-to-etc-hosts']
 
 proc = subprocess.Popen(start_env_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
@@ -219,17 +223,22 @@ if {shed_privileges}:
     os.setreuid({uid}, {uid})
 
 providers_args = []
-for alias, hostname in zip(hosts_parsed['op_hosts_aliases'], 
-                           hosts_parsed['op_panel_host']):
+for provider in hosts_parsed['op_worker_nodes']:
+    alias = provider['alias']
+    hostname = provider['hostname']
     providers_args += ['--oneprovider-host'] + [alias] + [hostname] + \\
                       ['--op-panel-host'] + [alias] + [hostname + ':9443'] 
-                  
 
+onezone_host = ''                  
+zone_args = []
+for zone in hosts_parsed['oz_worker_nodes']:
+    alias = zone['alias']
+    onezone_host = hostname = zone['hostname']
+    zone_args += ['--onezone-host'] + [alias] + [hostname] + \\
+                 ['--oz-panel-host'] + [alias] + [hostname + ':9443']
 command = ['py.test'] + {args} + ['--test-type={test_type}'] + ['{test_dir}'] + \\
- ['--base-url=https://' + str(hosts_parsed['onezone_host'])] + \\
- ['--junitxml={report_path}'] + ['--onezone-host'] + [str(hosts_parsed['oz_host_alias'])] + [str(hosts_parsed['onezone_host'])] + \\
- ['--oz-panel-host'] + [str(hosts_parsed['oz_host_alias'])] + \\
- [str(hosts_parsed['oz_panel_host'])  + ':9443'] + providers_args
+ ['--base-url=https://' + onezone_host] + \\
+ ['--junitxml={report_path}'] + zone_args + providers_args
     
 ret = subprocess.call(command)
 sys.exit(ret)
@@ -250,12 +259,13 @@ sys.exit(ret)
         scenario=args.scenario,
         zone_name=args.zone_name,
         providers_names=args.providers_names,
-        additional_code=additional_code)
+        additional_code=additional_code,
+        write_to_etc_hosts=args.write_to_etc_hosts,
+        logs_dir=args.logs_dir)
 
     ret = run_docker(command)
 
     for provider in args.providers_names:
-        print provider
         try:
             docker.inspect(provider)
             docker.remove([provider], force=True)
@@ -378,6 +388,25 @@ parser.add_argument(
     help='List of providers names separated with space',
     dest='providers_names',
     default=['p1'],
+    required=False
+)
+
+parser.add_argument(
+    '--write-to-etc-hosts',
+    action='store_true',
+    dest='write_to_etc_hosts',
+    help='If given write ip-hostname mappings to '
+         '/etc/hosts else ip-hostname mappings will'
+         'be printed to stdout',
+    required=False
+)
+
+parser.add_argument(
+    '--l', '--logs_dir',
+    action='store',
+    default='',
+    dest='logs_dir',
+    help='Directory where logs should be placed',
     required=False
 )
 
