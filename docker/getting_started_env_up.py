@@ -36,7 +36,6 @@ import argparse
 PROVIDER_DOCKER_COMPOSE_FILE = 'docker-compose-oneprovider.yml'
 ZONE_DOCKER_COMPOSE_FILE = 'docker-compose-onezone.yml'
 SCENARIOS_DIR_PATH = os.path.join('getting_started', 'scenarios')
-SERVICE_LOGS = '/volumes/persistence/var/log'
 TIMEOUT = 60 * 10
 
 
@@ -167,16 +166,6 @@ def start_service(start_service_path, start_service_args, service_name,
     return service_host, docker_name
 
 
-def set_logs_dir(base_file_str, logs_dir, dockerfile, alias):
-    file_str = re.sub(r'(volumes:)(\s*)',
-                      r'\1\2- "{}:{}"\2'.format(
-                          os.path.join(logs_dir, alias), SERVICE_LOGS),
-                      base_file_str)
-
-    with open(dockerfile, "w") as f:
-        f.write(file_str)
-
-
 def modify_provider_docker_compose(provider_name, base_file_str,
                                    provider_dockerfile):
     file_str = re.sub(r'(services:\s*).*', r'\1node1.{}:'.format(provider_name),
@@ -191,12 +180,8 @@ def modify_provider_docker_compose(provider_name, base_file_str,
     file_str = re.sub(r'redirectionPoint: .*',
                       r'redirectionPoint: "https://node1.{}"'.format(
                           provider_name), file_str)
-    if args.logs_dir:
-        set_logs_dir(file_str, os.path.join(os.getcwd(), args.logs_dir),
-                     provider_dockerfile, provider_name)
-    else:
-        with open(provider_dockerfile, "w") as f:
-            f.write(file_str)
+    with open(provider_dockerfile, "w") as f:
+        f.write(file_str)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--docker-name',
@@ -228,24 +213,6 @@ parser.add_argument('--write-to-etc-hosts',
                          '/etc/hosts else ip-hostname mappings will'
                          'be printed to stdout',
                     required=False)
-parser.add_argument('--l', '--logs_dir',
-                    action='store',
-                    default='',
-                    dest='logs_dir',
-                    help='Directory where logs should be placed',
-                    required=False)
-parser.add_argument('--uid',
-                    action='store',
-                    default=0,
-                    dest='uid',
-                    help='User uid',
-                    required=False)
-parser.add_argument('--gid',
-                    action='store',
-                    default=0,
-                    dest='gid',
-                    help='User gid',
-                    required=False)
 
 args = parser.parse_args()
 
@@ -261,25 +228,10 @@ start_onezone_args = ['--zone', '--detach', '--with-clean', '--name',
                       args.zone_name]
 rm_persistence(scenario_path, 'onezone')
 
-if args.logs_dir:
-    with open(zone_compose_file) as f:
-        base_zone_compose_file = f.read()
-    try:
-        set_logs_dir(base_zone_compose_file,
-                     os.path.join(os.getcwd(), args.logs_dir), zone_compose_file,
-                     args.zone_name)
-        oz_hostname, oz_docker_name = start_service(scenario_path,
-                                                    start_onezone_args,
-                                                    'onezone-1', TIMEOUT,
-                                                    etc_hosts_entries)
-    finally:
-        with open(zone_compose_file, "w") as f:
-                f.write(base_zone_compose_file)
-else:
-    oz_hostname, oz_docker_name = start_service(scenario_path,
-                                                start_onezone_args,
-                                                'onezone-1', TIMEOUT,
-                                                etc_hosts_entries)
+oz_hostname, oz_docker_name = start_service(scenario_path,
+                                            start_onezone_args,
+                                            'onezone-1', TIMEOUT,
+                                            etc_hosts_entries)
 
 output = {
     'oz_worker_nodes': [
