@@ -133,6 +133,7 @@ with open('/etc/hosts', 'a') as f:
 """)
 '''.format(etc_hosts_content=get_local_etc_hosts_entries())
 
+
 command = command.format(
     args=pass_args,
     uid=os.geteuid(),
@@ -157,6 +158,8 @@ ret = docker.run(tty=True,
                  reflect=[(script_dir, 'rw'),
                           ('/var/run/docker.sock', 'rw'),
                           (HOST_STORAGE_PATH, 'rw')],
+                 volumes=[(os.path.join(os.path.expanduser('~'),
+                                        '.docker'), '/tmp/.docker', 'rw')],
                  image=args.image,
                  command=['python', '-c', command],
                  run_params=run_params)
