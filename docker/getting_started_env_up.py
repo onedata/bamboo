@@ -23,9 +23,11 @@ Run the script with -h flag to learn about script's running options.
 """
 
 import sys
+
 sys.path.append('.')
 
 from environment import docker
+from environment.common import ensure_provider_oz_connectivity
 from subprocess import Popen, PIPE, STDOUT
 import os
 import re
@@ -60,9 +62,9 @@ def print_logs(service_name, service_docker_logs):
                         with open(os.path.join(path, directory, file), 'r') \
                                 as logs:
                             print '{service_name} {dir} {file}'.format(
-                                                    service_name=service_name,
-                                                    dir=directory,
-                                                    file=file)
+                                service_name=service_name,
+                                dir=directory,
+                                file=file)
 
                             print logs.readlines()
                     except IOError:
@@ -147,7 +149,7 @@ def start_service(start_service_path, start_service_args, service_name,
     # get service ip and hostname
     format_options = ('\'{{with index .NetworkSettings.Networks "' +
                       scenario_network + '"}}{{.IPAddress}}{{end}} '
-                      '{{ .Config.Hostname }} {{ .Config.Domainname }}\'')
+                                         '{{ .Config.Hostname }} {{ .Config.Domainname }}\'')
 
     service_process = Popen(['docker', 'inspect',
                              '--format={}'.format(format_options), docker_name],
@@ -182,6 +184,7 @@ def modify_provider_docker_compose(provider_name, base_file_str,
                           provider_name), file_str)
     with open(provider_dockerfile, "w") as f:
         f.write(file_str)
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--docker-name',
@@ -219,7 +222,6 @@ args = parser.parse_args()
 scenario_path = os.path.join(SCENARIOS_DIR_PATH, args.scenario)
 scenario_network = '{}_{}'.format(args.scenario.replace('_', ''), 'scenario2')
 etc_hosts_entries = {}
-
 
 zone_compose_file = os.path.join(SCENARIOS_DIR_PATH, args.scenario,
                                  ZONE_DOCKER_COMPOSE_FILE)
@@ -276,9 +278,20 @@ for provider in args.providers_names:
         }
     ]
 
-
 if args.docker_name:
     docker.connect_docker_to_network(scenario_network, args.docker_name)
+
+# In scenario 2_0, OP and OZ are created and the provider is registered. In such
+# case, make sure provider instances are connected to their zones before the
+# test starts.
+if '2_0' in args.scenario:
+    print('Waiting for OZ connectivity of providers...')
+    for op_node_output in output['op_worker_nodes']:
+        if not ensure_provider_oz_connectivity(op_node_output['hostname']):
+            raise Exception(
+                'Could not ensure OZ connectivity of provider {0}'.format(
+                    op_node_output['hostname']))
+    print('OZ connectivity established')
 
 for ip in etc_hosts_entries:
     print '{} {}'.format(ip, etc_hosts_entries[ip])
