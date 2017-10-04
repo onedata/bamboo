@@ -220,20 +220,22 @@ def push(package_artifact):
         # for each distribution inside
         for distro in call(['ls', pkg_dir]).split():
             if REPO_TYPE[distro] == 'deb':
-                # push debs
+                # push debs if any were provided
                 binary_dir = os.path.join(pkg_dir, distro, 'binary-amd64')
-                for package in call(['ls', binary_dir]).split():
-                    path = deb_package_path(distro, 'binary-amd64', package)
-                    packages.append(path)
-                execute(['aptly', 'repo', 'add', '-force-replace', distro,
+                if os.path.isdir(binary_dir):
+                    for package in call(['ls', binary_dir]).split():
+                        path = deb_package_path(distro, 'binary-amd64', package)
+                        packages.append(path)
+                    execute(['aptly', 'repo', 'add', '-force-replace', distro,
                          binary_dir])
 
-                # push sources
+                # push sources if any were provided
                 source_dir = os.path.join(pkg_dir, distro, 'source')
-                for package in call(['ls', source_dir]).split():
-                    path = deb_package_path(distro, 'source', package)
-                    packages.append(path)
-                execute(['aptly', 'repo', 'add', '-force-replace', distro,
+                if os.path.isdir(source_dir):
+                    for package in call(['ls', source_dir]).split():
+                        path = deb_package_path(distro, 'source', package)
+                        packages.append(path)
+                    execute(['aptly', 'repo', 'add', '-force-replace', distro,
                          source_dir])
 
                 # update repo
