@@ -222,21 +222,29 @@ def push(package_artifact):
             if REPO_TYPE[distro] == 'deb':
                 # push debs if any were provided
                 binary_dir = os.path.join(pkg_dir, distro, 'binary-amd64')
-                if os.path.isdir(binary_dir):
+                try:
+                    # Check if binary_dir exists in package
+                    execute(['ls', binary_dir])
                     for package in call(['ls', binary_dir]).split():
                         path = deb_package_path(distro, 'binary-amd64', package)
                         packages.append(path)
                     execute(['aptly', 'repo', 'add', '-force-replace', distro,
                          binary_dir])
+                except CalledProcessError:
+                    print("Warning: No binary-amd64 directory in package or empty")
 
                 # push sources if any were provided
                 source_dir = os.path.join(pkg_dir, distro, 'source')
-                if os.path.isdir(source_dir):
+                try:
+                    # Check if source_dir exists in package
+                    execute(['ls', source_dir])
                     for package in call(['ls', source_dir]).split():
                         path = deb_package_path(distro, 'source', package)
                         packages.append(path)
                     execute(['aptly', 'repo', 'add', '-force-replace', distro,
                          source_dir])
+                except CalledProcessError:
+                    print("Warning: No source directory in package or empty")
 
                 # update repo
                 execute(['aptly', 'publish', 'update', '-force-overwrite',
