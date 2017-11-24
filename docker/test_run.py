@@ -136,7 +136,7 @@ with open('/etc/hosts', 'a') as f:
 if '--getting-started' in pass_args:
     additional_code += """
 with open('/etc/sudoers.d/all', 'w+') as file:
-    file.write("ALL       ALL = (ALL) NOPASSWD: ALL\\n")
+    file.write("\\nALL       ALL = (ALL) NOPASSWD: ALL\\n")
 """
 
 command = command.format(

@@ -38,7 +38,7 @@ import argparse
 PROVIDER_DOCKER_COMPOSE_FILE = 'docker-compose-oneprovider.yml'
 ZONE_DOCKER_COMPOSE_FILE = 'docker-compose-onezone.yml'
 SCENARIOS_DIR_PATH = os.path.join('getting_started', 'scenarios')
-SERVICE_LOGS = '/volumes/persistence/var/log'
+SERVICE_LOGS_DIR = '/volumes/persistence/var/log'
 TIMEOUT = 60 * 10
 
 
@@ -172,10 +172,10 @@ def start_service(start_service_path, start_service_args, service_name,
 def set_logs_dir(base_file_str, logs_dir, dockerfile, alias):
     file_str = re.sub(r'(volumes:)(\s*)',
                       r'\1\2- "{}:{}"\2'.format(
-                          os.path.join(logs_dir, alias), SERVICE_LOGS),
+                          os.path.join(logs_dir, alias), SERVICE_LOGS_DIR),
                       base_file_str)
 
-    with open(dockerfile, "w") as f:
+    with open(dockerfile, 'w') as f:
         f.write(file_str)
 
 
@@ -197,7 +197,7 @@ def modify_provider_docker_compose(provider_name, base_file_str,
         set_logs_dir(file_str, os.path.join(os.getcwd(), args.logs_dir),
                      provider_dockerfile, provider_name)
     else:
-        with open(provider_dockerfile, "w") as f:
+        with open(provider_dockerfile, 'w') as f:
             f.write(file_str)
 
 parser = argparse.ArgumentParser()
