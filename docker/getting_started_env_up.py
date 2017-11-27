@@ -158,8 +158,11 @@ def start_service(start_service_path, start_service_args, service_name,
     docker_conf = service_process.communicate()[0]
     ip, docker_hostname, docker_domain = docker_conf.split()
     service_host = '{}.{}'.format(docker_hostname,
-                                  docker_domain if docker_domain[-1] != '.'
+                                  docker_domain if docker_domain[-1] != '\''
                                   else docker_domain[:-1])
+
+    if service_host.endswith('.'):
+        service_host = service_host[:-1]
 
     if args.write_to_etc_hosts:
         add_etc_hosts_entries(ip, service_host)
