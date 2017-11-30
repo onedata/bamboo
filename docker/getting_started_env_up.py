@@ -170,17 +170,17 @@ def start_service(start_service_path, start_service_args, service_name,
 
 def modify_provider_docker_compose(provider_name, base_file_str,
                                    provider_dockerfile):
-    file_str = re.sub(r'(services:\s*).*', r'\1node1.{}:'.format(provider_name),
+    file_str = re.sub(r'(services:\s*).*', r'\1node1.{}.local:'.format(provider_name),
                       base_file_str)
     file_str = re.sub(r'(image:.*\s*hostname: ).*',
-                      r'\1node1.{}'.format(provider_name),
+                      r'\1node1.{}.local'.format(provider_name),
                       file_str)
     file_str = re.sub(r'container_name: .*',
                       r'container_name: {}'.format(provider_name), file_str)
     file_str = re.sub(r'(cluster:\s*domainName: ).*',
-                      r'\1"{}"'.format(provider), file_str)
+                      r'\1"{}.local"'.format(provider), file_str)
     file_str = re.sub(r'domain: .*',
-                      r'domain: "node1.{}.dev"'.format(
+                      r'domain: "node1.{}.local"'.format(
                           provider_name), file_str)
     with open(provider_dockerfile, "w") as f:
         f.write(file_str)
