@@ -184,17 +184,17 @@ def set_logs_dir(base_file_str, logs_dir, dockerfile, alias):
 
 def modify_provider_docker_compose(provider_name, base_file_str,
                                    provider_dockerfile):
-    file_str = re.sub(r'(services:\s*).*', r'\1node1.{}:'.format(provider_name),
+    file_str = re.sub(r'(services:\s*).*', r'\1node1.{}.local:'.format(provider_name),
                       base_file_str)
     file_str = re.sub(r'(image:.*\s*hostname: ).*',
-                      r'\1node1.{}'.format(provider_name),
+                      r'\1node1.{}.local'.format(provider_name),
                       file_str)
     file_str = re.sub(r'container_name: .*',
                       r'container_name: {}'.format(provider_name), file_str)
     file_str = re.sub(r'(cluster:\s*domainName: ).*',
-                      r'\1"{}"'.format(provider), file_str)
-    file_str = re.sub(r'redirectionPoint: .*',
-                      r'redirectionPoint: "https://node1.{}"'.format(
+                      r'\1"{}.local"'.format(provider), file_str)
+    file_str = re.sub(r'domain: .*',
+                      r'domain: "node1.{}.local"'.format(
                           provider_name), file_str)
     if args.logs_dir:
         set_logs_dir(file_str, os.path.join(os.getcwd(), args.logs_dir),
