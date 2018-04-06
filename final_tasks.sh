@@ -14,6 +14,7 @@ do
     fi
 done
 
+echo "Stalled docker containers to remove: "
 echo ${CONTAINERS_TO_REMOVE}
 
 for container in ${CONTAINERS_TO_REMOVE}
@@ -22,8 +23,10 @@ do
     docker rm -fv ${container}
 done
 
-#docker volume rm $(docker volume ls -q)
+echo "Removing stalled docker volumes"
+docker volume rm $(docker volume ls -q)
 
 
 # clear spaces data
+echo "Clearing ${ONEDATA_STORAGE_PATH}"
 rm -rf ${ONEDATA_STORAGE_PATH}/*
