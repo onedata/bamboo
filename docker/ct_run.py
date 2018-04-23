@@ -28,7 +28,7 @@ import glob
 import xml.etree.ElementTree as ElementTree
 
 sys.path.insert(0, 'bamboos/docker')
-from environment import docker
+from environment import docker, dockers_config
 from environment.common import HOST_STORAGE_PATH, remove_dockers_and_volumes
 
 
