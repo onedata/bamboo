@@ -43,13 +43,16 @@ def get_tags():
     tags = []
     commit = cmd(['git', 'rev-parse', 'HEAD'])
     branch = cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
-    ticket = re.search(r'VFS-\d+', branch)
+    ticket = re.search(r'VFS-\d+.*', branch)
 
     git_tags = cmd(['git', 'tag', '--points-at', commit]).split('\n')
     git_tags = filter(lambda tag: tag, git_tags)
 
     if git_tags:
         tags.append(('git-tag', git_tags[0]))
+
+    if branch.startswith('develop'):
+        tags.append(('git-branch', 'develop'))
 
     for prefix in ['release/', 'hotfix/']:
         if branch.startswith(prefix):
