@@ -5,7 +5,7 @@ This software is released under the MIT license cited in 'LICENSE.txt'
 Brings up a set of cluster-worker nodes. They can create separate clusters.
 """
 
-from . import worker
+from . import worker, docker, common
 
 def up(image, bindir, dns_server, uid, config_path, logdir=None,
        storages_dockers=None, luma_config=None):
@@ -56,3 +56,7 @@ class ClusterWorkerConfigurator:
 
     def has_dns_server(self):
         return False
+
+    def ready_check(self, container):
+        ip = docker.inspect(container)['NetworkSettings']['IPAddress']
+        return common.nagios_up(ip, '80', 'http')

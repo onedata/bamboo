@@ -108,3 +108,7 @@ sed -i.bak s/onedata.org/{domain}/g /root/bin/node/data/dns.config
 
     def has_dns_server(self):
         return True
+
+    def ready_check(self, container):
+        ip = docker.inspect(container)['NetworkSettings']['IPAddress']
+        return common.nagios_up(ip, '443', 'https')

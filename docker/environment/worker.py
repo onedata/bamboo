@@ -149,11 +149,6 @@ ln -s {bindir} /root/build
     }
 
 
-def _ready(container):
-    ip = docker.inspect(container)['NetworkSettings']['IPAddress']
-    return common.nagios_up(ip, port='6666', protocol='http')
-
-
 def _riak_up(cluster_name, db_nodes, dns_servers, uid):
     db_node_mappings = {}
     for node in db_nodes:
@@ -289,7 +284,9 @@ def up(image, bindir, dns_server, uid, config_path, configurator, logdir=None,
             common.merge(current_output, node_out)
 
         # Wait for all workers to start
-        common.wait_until(_ready, workers, CLUSTER_WAIT_FOR_NAGIOS_SECONDS)
+
+        common.wait_until(configurator.ready_check, workers,
+                          CLUSTER_WAIT_FOR_NAGIOS_SECONDS)
 
         # Add the domain of current clusters, NS records if the cluster has
         # its own DNS server, A records if not
