@@ -124,6 +124,10 @@ class ProviderWorkerConfigurator:
     def has_dns_server(self):
         return False
 
+    def ready_check(self, container):
+        ip = docker.inspect(container)['NetworkSettings']['IPAddress']
+        return common.nagios_up(ip, '443', 'https')
+
 
 def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
     # copy escript to docker host
