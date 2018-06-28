@@ -54,6 +54,10 @@ def _node_up(image, bindir, config, dns_servers, extra_volumes, logdir):
 
     command = \
         '''set -e
+if [ -x /root/persistence-dir.py ]; then
+    # release dockers need this to restore files in expected places
+    /root/persistence-dir.py --copy-missing-files
+fi
 mkdir -p /root/bin/node/log/
 echo 'while ((1)); do chown -R {uid}:{gid} /root/bin/node/log; sleep 1; done' > /root/bin/chown_logs.sh
 bash /root/bin/chown_logs.sh &
