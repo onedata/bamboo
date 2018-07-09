@@ -31,6 +31,7 @@ def default(key):
 def up(config_path,
        image=dockers_config.default_image('worker'),
        ceph_image=dockers_config.default_image('ceph'),
+       cephrados_image=dockers_config.default_image('cephrados'),
        s3_image=dockers_config.default_image('s3'),
        nfs_image=dockers_config.default_image('nfs'),
        swift_image=dockers_config.default_image('swift'),
@@ -77,7 +78,7 @@ def up(config_path,
 
     # Start storages
     storages_dockers, storages_dockers_ids = \
-        storages.start_storages(config, config_path, ceph_image, s3_image,
+        storages.start_storages(config, config_path, ceph_image, cephrados_image, s3_image,
                                 nfs_image, swift_image, glusterfs_image, image,
                                 uid)
     output['storages'] = storages_dockers
