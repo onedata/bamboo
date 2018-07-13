@@ -134,6 +134,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
     script_names = {'posix': 'create_posix_storage.escript',
                     's3': 'create_s3_storage.escript',
                     'ceph': 'create_ceph_storage.escript',
+                    'cephrados': 'create_cephrados_storage.escript',
                     'swift': 'create_swift_storage.escript',
                     'glusterfs': 'create_glusterfs_storage.escript',
                     'nulldevice': 'create_nulldevice_storage.escript'}
@@ -166,6 +167,15 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
             config = storages_dockers['ceph'][storage['name']]
             pool = storage['pool'].split(':')[0]
             command = ['escript', script_paths['ceph'], cookie,
+                       first_node, storage['name'], 'ceph',
+                       config['host_name'], pool, config['username'],
+                       config['key'], 'true', 'flat']
+            assert 0 is docker.exec_(container, command, tty=True,
+                                     stdout=sys.stdout, stderr=sys.stderr)
+        elif storage['type'] == 'cephrados':
+            config = storages_dockers['cephrados'][storage['name']]
+            pool = storage['pool'].split(':')[0]
+            command = ['escript', script_paths['cephrados'], cookie,
                        first_node, storage['name'], 'ceph',
                        config['host_name'], pool, config['username'],
                        config['key'], 'true', 'flat']

@@ -7,7 +7,7 @@ Contains methods used to bring up storages.
 """
 import sys
 
-from . import common, s3, ceph, nfs, glusterfs, amazon_iam, luma, swift
+from . import common, s3, ceph, cephrados, nfs, glusterfs, amazon_iam, luma, swift
 
 
 def start_luma(config, storages_dockers, image, bin_luma, output, uid):
@@ -39,9 +39,9 @@ def start_luma(config, storages_dockers, image, bin_luma, output, uid):
     return luma_config
 
 
-def start_storages(config, config_path, ceph_image, s3_image, nfs_image,
+def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, nfs_image,
                     swift_image, glusterfs_image, image, uid):
-    storages_dockers = {'ceph': {}, 's3': {}, 'nfs': {}, 'posix': {},
+    storages_dockers = {'ceph': {}, 'cephrados': {}, 's3': {}, 'nfs': {}, 'posix': {},
                         'swift': {}, 'glusterfs': {}}
     docker_ids = []
     if 'os_configs' in config:
@@ -58,6 +58,11 @@ def start_storages(config, config_path, ceph_image, s3_image, nfs_image,
                 if storage['type'] == 'ceph' and storage['name'] not in \
                         storages_dockers['ceph']:
                     _ceph_up(storage, storages_dockers, ceph_image, docker_ids,
+                             uid)
+
+                elif storage['type'] == 'cephrados' and storage['name'] not in \
+                        storages_dockers['cephrados']:
+                    _cephrados_up(storage, storages_dockers, cephrados_image, docker_ids,
                              uid)
 
                 elif storage['type'] == 's3' and storage['name'] not in \
@@ -112,6 +117,14 @@ def _ceph_up(storage, storages_dockers, ceph_image, docker_ids, uid):
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
     storages_dockers['ceph'][storage['name']] = result
+
+
+def _cephrados_up(storage, storages_dockers, cephrados_image, docker_ids, uid):
+    pool = tuple(storage['pool'].split(':'))
+    result = cephrados.up(cephrados_image, [pool], storage['name'], uid)
+    docker_ids.extend(result['docker_ids'])
+    del result['docker_ids']
+    storages_dockers['cephrados'][storage['name']] = result
 
 
 def _s3_up(storage, storages_dockers, s3_image, docker_ids, uid):
