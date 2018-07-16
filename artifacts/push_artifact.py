@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
 Pushes build artifact to external repo.
 Artifact should be file with extension .tar.gz
@@ -34,8 +34,8 @@ def upload_artifact_safe(ssh, artifact, plan, branch):
         upload_artifact(ssh, artifact, partial_file_name)
         rename_uploaded_file(ssh, partial_file_name, file_name)
     except:
-        print "Uploading artifact of plan {0}, on branch {1} failed" \
-            .format(plan, branch)
+        print("Uploading artifact of plan {0}, on branch {1} failed"
+              .format(plan, branch))
         delete_file(ssh, partial_file_name)
 
 

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
 Pulls build artifact from external repo.
 
@@ -18,7 +18,7 @@ import sys
 from artifact_utils import artifact_path, ARTIFACTS_EXT, DEFAULT_BRANCH
 
 
-def download_specific_or_develop(ssh, plan, branch):
+def download_specific_or_develop(ssh, plan, branch, hostname, port, username):
     """
     Downloads build artifact for specific plan and branch from repo.
     If artifact doesn't exist in repo, artifact from default (develop) branch
@@ -32,15 +32,15 @@ def download_specific_or_develop(ssh, plan, branch):
     :return None
     """
     download_artifact_safe(
-        ssh, plan, branch=branch,
+        ssh, plan, branch, hostname, port, username,
         exception_handler=download_develop_artifact,
-        exception_handler_args=(ssh, plan),
+        exception_handler_args=(ssh, plan, hostname, port, username),
         exception_log=
         "Artifact of plan {0}, specific for branch {1} not found"
         ", pulling artifact from branch develop.".format(plan, branch))
 
 
-def download_develop_artifact(ssh, plan):
+def download_develop_artifact(ssh, plan, hostname, port, username):
     """
     Downloads build artifact for specific plan from develop branch.
     :param ssh: sshclient with opened connection
@@ -50,13 +50,14 @@ def download_develop_artifact(ssh, plan):
     :return None
     """
     download_artifact_safe(
-        ssh, plan, DEFAULT_BRANCH,
+        ssh, plan, DEFAULT_BRANCH, hostname, port, username,
         exception_log="Pulling artifact of plan {}, from branch develop "
                       "failed.".format(plan))
 
 
-def download_artifact_safe(ssh, plan, branch, exception_handler=None,
-                           exception_handler_args=(), exception_log=""):
+def download_artifact_safe(ssh, plan, branch, hostname, port, username,
+                           exception_handler=None, exception_handler_args=(),
+                           exception_log=""):
     """
     Downloads artifact from repo. Locks file while it's being downloaded.
     If exception is thrown during download, exception_log is printed and
@@ -79,7 +80,7 @@ def download_artifact_safe(ssh, plan, branch, exception_handler=None,
     """
 
     def signal_handler(_signum, _frame):
-        ssh.connect(args.hostname, port=args.port, username=args.username)
+        ssh.connect(hostname, port=port, username=username)
         sys.exit(1)
 
     signal.signal(signal.SIGINT, signal_handler)
@@ -87,7 +88,7 @@ def download_artifact_safe(ssh, plan, branch, exception_handler=None,
     try:
         download_artifact(ssh, plan, branch)
     except:
-        print exception_log
+        print(exception_log)
         if exception_handler:
             exception_handler(*exception_handler_args)
 
@@ -148,13 +149,20 @@ parser.add_argument(
     dest='plan',
     required=True)
 
-args = parser.parse_args()
 
-ssh = SSHClient()
-ssh.set_missing_host_key_policy(AutoAddPolicy())
-ssh.load_system_host_keys()
-ssh.connect(args.hostname, port=args.port, username=args.username)
+def main():
+    args = parser.parse_args()
 
-download_specific_or_develop(ssh, args.plan, args.branch)
+    ssh = SSHClient()
+    ssh.set_missing_host_key_policy(AutoAddPolicy())
+    ssh.load_system_host_keys()
+    ssh.connect(args.hostname, port=args.port, username=args.username)
 
-ssh.close()
+    download_specific_or_develop(ssh, args.plan, args.branch, args.hostname,
+                                 args.port, args.username)
+
+    ssh.close()
+
+
+if __name__ == '__main__':
+    main()
