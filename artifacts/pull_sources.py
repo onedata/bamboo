@@ -1,3 +1,15 @@
+#! /usr/bin/env python3
+"""
+Pulls artifacts from external repo using branches defined in branchConfig.yaml
+file.
+
+Run the script with -h flag to learn about script's running options.
+"""
+__author__ = "Michal Cwiertnia"
+__copyright__ = "Copyright (C) 2018 ACK CYFRONET AGH"
+__license__ = "This software is released under the MIT license cited in " \
+              "LICENSE.txt"
+
 import os
 import yaml
 import argparse
