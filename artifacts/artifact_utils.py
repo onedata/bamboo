@@ -13,7 +13,7 @@ import time
 ARTIFACTS_DIR = 'artifacts'
 ARTIFACTS_EXT = '.tar.gz'
 PARTIAL_EXT = '.partial'
-DEFAULT_BRANCH = 'develop'
+DEVELOP_BRANCH = 'develop'
 
 
 def artifact_path(plan, branch):

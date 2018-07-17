@@ -16,12 +16,13 @@ import argparse
 from paramiko import SSHClient, AutoAddPolicy
 
 from pull_artifact import (download_artifact_safe,
-                           download_specific_or_develop)
+                           download_specific_or_default)
 
 
 BRANCH_CFG_PATH = 'branchConfig.yaml'
 BAMBOO_BRANCH_NAME = 'bamboo_planRepository_branchName'
 DEFAULT_BRANCH = 'default'
+CURRENT_BRANCH = 'current_branch'
 
 
 parser = argparse.ArgumentParser(
@@ -65,9 +66,7 @@ def main():
         default_branch = branch_cfg.get(DEFAULT_BRANCH)
 
         for plan, branch in branch_cfg.get('branches').items():
-            if branch != DEFAULT_BRANCH or default_branch != 'develop':
-                if branch == DEFAULT_BRANCH:
-                    branch = default_branch
+            if branch != CURRENT_BRANCH:
                 print('Getting artifact for plan {}\'s from branch {}'.
                       format(plan, branch))
                 exception_log = 'Branch {} in plan {} not found.'.format(
@@ -78,10 +77,11 @@ def main():
                                        exception_handler_args=(1,),
                                        exception_log=exception_log)
             else:
-                download_specific_or_develop(ssh, plan,
+                download_specific_or_default(ssh, plan,
                                              os.getenv(BAMBOO_BRANCH_NAME),
                                              args.hostname, args.port,
-                                             args.username)
+                                             args.username,
+                                             default_branch=default_branch)
     ssh.close()
 
 
