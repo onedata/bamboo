@@ -10,6 +10,7 @@ scripts. Supported image types (passed as string):
     * worker
     * dns
     * ceph
+    * cephrados
     * s3
     * swift
     * nfs
@@ -32,6 +33,7 @@ Images can also be overriden using ENV variables
     * WORKER_IMAGE
     * DNS_IMAGE
     * CEPH_IMAGE
+    * CEPHRADOS_IMAGE
     * S3_IMAGE
     * SWIFT_IMAGE
     * NFS_IMAGE
@@ -53,6 +55,7 @@ def default_image(type):
         'worker': 'onedata/worker',
         'dns': 'onedata/dns',
         'ceph': 'onedata/ceph',
+        'cephrados': 'onedata/ceph',
         's3': 'onedata/s3proxy',
         'swift': 'onedata/dockswift',
         'nfs': 'erezhorev/dockerized_nfs_server',
@@ -67,6 +70,7 @@ def image_override_env(type):
         'worker': 'WORKER_IMAGE',
         'dns': 'DNS_IMAGE',
         'ceph': 'CEPH_IMAGE',
+        'cephrados': 'CEPHRADOS_IMAGE',
         's3': 'S3_IMAGE',
         'swift': 'SWIFT_IMAGE',
         'nfs': 'NFS_IMAGE',
