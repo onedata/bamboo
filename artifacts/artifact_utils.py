@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 """
 This file contains utility functions for scripts responsible for pushing
 and pulling build artifacts.
@@ -9,6 +11,8 @@ __license__ = "This software is released under the MIT license cited in " \
 
 import os
 import time
+import paramiko
+
 
 ARTIFACTS_DIR = 'artifacts'
 ARTIFACTS_EXT = '.tar.gz'
@@ -16,32 +20,27 @@ PARTIAL_EXT = '.partial'
 DEVELOP_BRANCH = 'develop'
 
 
-def artifact_path(plan, branch):
+def artifact_path(plan: str, branch: str) -> str:
     """
     Returns path to artifact for specific plan and branch. Path is relative
     to user's home directory on repository machine.
     :param plan: name of current bamboo plan
-    :type plan: str
     :param branch: name of current git branch
-    :type branch: str
     """
     return os.path.join(ARTIFACTS_DIR, plan, branch + ARTIFACTS_EXT)
 
 
-def delete_file(ssh, file_name):
+def delete_file(ssh: paramiko.SSHClient, file_name: str) -> None:
     """
     Delete file named file_name via ssh.
     :param ssh: sshclient with opened connection
-    :type ssh: paramiko.SSHClient
     :param file_name: name of file to be unlocked
-    :type file_name: str
-    :return None
     """
 
     ssh.exec_command("rm -rf {}".format(file_name))
 
 
-def partial_extension():
+def partial_extension() -> str:
     return "{partial}.{timestamp}".format(
         partial=PARTIAL_EXT,
         timestamp=time.time()

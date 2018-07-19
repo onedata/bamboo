@@ -25,35 +25,28 @@ DEFAULT_BRANCH = 'default'
 CURRENT_BRANCH = 'current_branch'
 
 
-parser = argparse.ArgumentParser(
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    description='Pull sources and images lists for branches specified in '
-                'branchConfig.yaml file.')
-
-parser.add_argument(
-    '--hostname', '-hn',
-    action='store',
-    help='Hostname of artifacts repository',
-    dest='hostname',
-    required=True)
-
-parser.add_argument(
-    '--port', '-p',
-    action='store',
-    type=int,
-    help='SSH port to connect to',
-    dest='port',
-    required=True)
-
-parser.add_argument(
-    '--username', '-u',
-    action='store',
-    help='The username to authenticate as',
-    dest='username',
-    required=True)
-
-
 def main():
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Pull sources and images lists for branches specified in '
+                    'branchConfig.yaml file.')
+
+    parser.add_argument(
+        '--hostname', '-hn',
+        help='Hostname of artifacts repository',
+        required=True)
+
+    parser.add_argument(
+        '--port', '-p',
+        type=int,
+        help='SSH port to connect to',
+        required=True)
+
+    parser.add_argument(
+        '--username', '-u',
+        help='The username to authenticate as',
+        required=True)
+
     args = parser.parse_args()
 
     ssh = SSHClient()
@@ -67,8 +60,8 @@ def main():
 
         for plan, branch in branch_cfg.get('branches').items():
             if branch != CURRENT_BRANCH:
-                print('Getting artifact for plan {}\'s from branch {}'.
-                      format(plan, branch))
+                print('Getting artifact for plan {}\'s from branch {}'
+                      .format(plan, branch))
                 exception_log = 'Branch {} in plan {} not found.'.format(
                     branch, plan)
                 download_artifact_safe(ssh, plan, branch, args.hostname,
