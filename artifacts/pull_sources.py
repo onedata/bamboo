@@ -62,13 +62,13 @@ def main():
             if branch != CURRENT_BRANCH:
                 print('Getting artifact for plan {}\'s from branch {}'
                       .format(plan, branch))
-                exception_log = 'Branch {} in plan {} not found.'.format(
-                    branch, plan)
+                exc_log = 'Branch {} in plan {} not found.'.format(branch,
+                                                                   plan)
                 download_artifact_safe(ssh, plan, branch, args.hostname,
                                        args.port, args.username,
-                                       exception_handler=exit,
-                                       exception_handler_args=(1,),
-                                       exception_log=exception_log)
+                                       exc_handler=exit,
+                                       exc_handler_args=(1,),
+                                       exc_log=exc_log)
             else:
                 download_specific_or_default(ssh, plan,
                                              os.getenv(BAMBOO_BRANCH_NAME),
