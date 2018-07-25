@@ -68,8 +68,8 @@ def download_artifact_safe(ssh: SSHClient, plan: str, branch: str,
                            exc_log: str = '') -> None:
     """
     Downloads artifact from repo. Locks file while it's being downloaded.
-    If exception is thrown during download, exception_log is printed and
-    exception_handler function is called.
+    If exception is thrown during download, exc_log is printed and
+    exc_handler function is called.
     :param ssh: sshclient with opened connection
     :param plan: name of current bamboo plan
     :param branch: name of current git branch
@@ -78,7 +78,7 @@ def download_artifact_safe(ssh: SSHClient, plan: str, branch: str,
     :param username: username to authenticate as
     :param exc_handler: function called when exception is thrown while
     artifact is being downloaded
-    :param exc_handler_args: args for exception_handler
+    :param exc_handler_args: args for exc_handler
     :param exc_log: log that is printed when exception is thrown while
     artifact is being downloaded
     """
