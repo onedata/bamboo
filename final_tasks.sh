@@ -8,14 +8,14 @@ docker run -v ${ONEDATA_STORAGE_PATH}:${ONEDATA_STORAGE_PATH} alpine sh -c "rm -
 
 
 K8S_CONTAINER_NAME_LABEL_KEY="io.kubernetes.container.name"
-CONTAINERS=$(docker ps -qa)
-CONTAINERS_TO_REMOVE=${CONTAINERS}
+CONTAINERS_NAMES=$(docker ps --all --format "{{.Names}}")
+CONTAINERS_TO_REMOVE=${CONTAINERS_NAMES}
 
-for container in ${CONTAINERS}
+for container_name in ${CONTAINERS_NAMES}
 do
-    if [ $(docker inspect --format "{{ index .Config.Labels \"io.kubernetes.container.name\"}}" ${container}) ]
+    if [[ ${container_name} == k8s* ]]
     then
-        CONTAINERS_TO_REMOVE=( "${CONTAINERS_TO_REMOVE[@]/$container}" )
+         CONTAINERS_TO_REMOVE=( "${CONTAINERS_TO_REMOVE[@]/$container_name}" )
     fi
 done
 
