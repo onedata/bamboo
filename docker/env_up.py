@@ -49,6 +49,13 @@ parser.add_argument(
     dest='glusterfs_image')
 
 parser.add_argument(
+    '-wi', '--webdav-image',
+    action='store',
+    default=None,
+    help='override of docker image for WebDAV storages',
+    dest='webdav_image')
+
+parser.add_argument(
     '-bw', '--bin-worker',
     action='store',
     default=env.default('bin_op_worker'),
@@ -121,9 +128,11 @@ dockers_config.ensure_image(args, 'image', 'worker')
 dockers_config.ensure_image(args, 'ceph_image', 'ceph')
 dockers_config.ensure_image(args, 's3_image', 's3')
 dockers_config.ensure_image(args, 'glusterfs_image', 'glusterfs')
+dockers_config.ensure_image(args, 'webdav_image', 'webdav')
 
 output = env.up(args.config_path, image=args.image, ceph_image=args.ceph_image,
                 s3_image=args.s3_image, glusterfs_image=args.glusterfs_image,
+                webdav_image=args.webdav_image,
                 bin_am=args.bin_am, bin_oz=args.bin_oz,
                 bin_cluster_manager=args.bin_cluster_manager,
                 bin_op_worker=args.bin_op_worker,
