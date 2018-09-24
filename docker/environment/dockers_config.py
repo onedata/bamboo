@@ -15,6 +15,7 @@ scripts. Supported image types (passed as string):
     * swift
     * nfs
     * glusterfs
+    * webdav
     * riak
 
 To override an image using a config file, place a json file called
@@ -38,6 +39,7 @@ Images can also be overriden using ENV variables
     * SWIFT_IMAGE
     * NFS_IMAGE
     * GLUSTERFS_IMAGE
+    * WEBDAV_IMAGE
     * RIAK_IMAGE
 
 """
@@ -60,6 +62,7 @@ def default_image(type):
         'swift': 'onedata/dockswift',
         'nfs': 'erezhorev/dockerized_nfs_server',
         'glusterfs': 'gluster/gluster-centos:gluster3u7_centos7',
+        'webdav': 'onedata/sabredav:v1',
         'riak': 'onedata/riak'
     }[type]
 
@@ -75,6 +78,7 @@ def image_override_env(type):
         'swift': 'SWIFT_IMAGE',
         'nfs': 'NFS_IMAGE',
         'glusterfs': 'GLUSTERFS_IMAGE',
+        'webdav': 'WEBDAV_IMAGE',
         'riak': 'RIAK_IMAGE'
     }[type]
 
