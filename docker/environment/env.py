@@ -80,7 +80,7 @@ def up(config_path,
     # Start storages
     storages_dockers, storages_dockers_ids = \
         storages.start_storages(config, config_path, ceph_image, cephrados_image, s3_image,
-                                nfs_image, swift_image, glusterfs_image, image,
+                                nfs_image, swift_image, glusterfs_image, webdav_image, image,
                                 uid)
     output['storages'] = storages_dockers
 

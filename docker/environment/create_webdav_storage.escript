@@ -3,8 +3,9 @@
 
 -export([main/1]).
 
-main([Cookie, Node, Name, VerifyServerCertificate, Endpoint, CredentialsType,
-      Credentials, AuthorizationHeader, Insecure, StoragePathType]) ->
+main([Cookie, Node, Name, Endpoint, CredentialsType,
+      Credentials, VerifyServerCertificate, AuthorizationHeader,
+      RangeWriteSupport, Insecure, StoragePathType]) ->
 
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
@@ -15,12 +16,12 @@ main([Cookie, Node, Name, VerifyServerCertificate, Endpoint, CredentialsType,
     ]),
     Helper = safe_call(NodeAtom, helper, new_webdav_helper, [
         list_to_binary(Endpoint),
-        list_to_binary(VerifyServerCertificate),
-        list_to_binary(CredentialsType),
-        list_to_binary(Credentials),
-        #{},
+        #{
+            <<"verifyServerCertificate">> => list_to_binary(VerifyServerCertificate),
+            <<"authorizationHeader">> => list_to_binary(AuthorizationHeader),
+            <<"rangeWriteSupport">> => list_to_binary(RangeWriteSupport)
+        },
         UserCtx,
-        list_to_binary(AuthorizationHeader),
         list_to_atom(Insecure),
         list_to_binary(StoragePathType)
     ]),

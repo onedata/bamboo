@@ -16,9 +16,11 @@ from . import common, docker
 
 def _webdav_ready(container):
     try:
+        settings = docker.inspect(container)
+        host = settings['NetworkSettings']['IPAddress']
         output = docker.exec_(container,
                           ['curl', '-s', '-X', 'OPTIONS', '--head',
-                           '-u', 'admin:password', 'http://localhost:80'],
+                           '-u', 'admin:password', 'http://{}:80'.format(host)],
                           output=True,
                           stdout=sys.stderr)
     except subprocess.CalledProcessError:
@@ -46,7 +48,7 @@ def _node_up(image, name, uid):
     return {
         'docker_ids': [container],
         'credentials': credentials,
-        'host_name': ip
+        'endpoint': "http://{}:80".format(ip)
     }
 
 
