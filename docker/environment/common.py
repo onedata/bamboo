@@ -309,7 +309,7 @@ def call_fun_with_timeout(timeout, fun, *args):
     p.join(timeout)
     if p.is_alive():
         print('Timeout while calling function: {} with '
-              'arguments: {}.'.format(fun, args))
+              'arguments: {}.'.format(fun.__name__, args))
         p.terminate()
         p.join()
 
