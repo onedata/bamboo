@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ONEDATA_STORAGE_PATH="/tmp/onedata"
-TIMEOUT=60
+TIMEOUT=10
 
 execute_with_timeout() {
     CMD=$@
