@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
 ONEDATA_STORAGE_PATH="/tmp/onedata"
+TIMEOUT=60
+
+execute_with_timeout() {
+    CMD=$@
+    timeout --kill-after ${TIMEOUT} ${TIMEOUT} ${CMD}
+}
 
 # clear spaces data
 echo "Clearing ${ONEDATA_STORAGE_PATH}"
@@ -25,8 +31,8 @@ echo "Removing stalled docker containers"
 
 for container in ${CONTAINERS_TO_REMOVE}
 do
-    docker kill ${container}
-    docker rm -fv ${container}
+    execute_with_timeout docker kill ${container}
+    execute_with_timeout docker rm -fv ${container}
 done
 
 
@@ -38,7 +44,7 @@ echo "Removing stalled docker volumes"
 
 for volume in ${STALLED_DOCKER_VOLUMES}
 do
-    docker volume rm ${volume}
+    execute_with_timeout docker volume rm ${volume}
 done
 
 echo "Done"

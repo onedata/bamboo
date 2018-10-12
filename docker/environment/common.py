@@ -19,6 +19,7 @@ from timeouts import *
 import tempfile
 import stat
 import pytest
+import multiprocessing
 
 try:
     import xml.etree.cElementTree as eTree
@@ -33,6 +34,7 @@ OZ_CONNECTIVITY_CHECK_INTERVAL = 5
 OZ_CONNECTIVITY_CHECK_TIMEOUT = 10
 OZ_CONNECTIVITY_CHECK_RETRIES = 25
 
+DOCKER_CMD_TIMEOUT = 60
 HOST_STORAGE_PATH = "/tmp/onedata"
 BAMBOO_AGENT_ID_VAR = "bamboo_agentId"
 K8S_CONTAINER_NAME_LABEL_KEY = "io.kubernetes.container.name"
@@ -299,6 +301,17 @@ def _check_provider_oz_connectivity(host):
         return body_json['status'] == 'ok'
     except requests.exceptions.RequestException as e:
         return False
+
+
+def call_fun_with_timeout(timeout, fun, *args):
+    p = multiprocessing.Process(target=fun, args=args)
+    p.start()
+    p.join(timeout)
+    if p.is_alive():
+        print('Timeout while calling function: {} with '
+              'arguments: {}.'.format(fun, args))
+        p.terminate()
+        p.join()
 
 
 def remove_dockers_and_volumes():
