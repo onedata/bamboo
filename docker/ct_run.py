@@ -29,7 +29,9 @@ import xml.etree.ElementTree as ElementTree
 
 sys.path.insert(0, 'bamboos/docker')
 from environment import docker, dockers_config
-from environment.common import HOST_STORAGE_PATH, remove_dockers_and_volumes
+from environment.common import (HOST_STORAGE_PATH, DOCKER_CMD_TIMEOUT,
+                                remove_dockers_and_volumes,
+                                call_fun_with_timeout)
 
 
 def skipped_test_exists(junit_report_path):
@@ -310,7 +312,7 @@ volumes = []
 if os.path.isdir(expanduser('~/.docker')):
     volumes += [(expanduser('~/.docker'), '/tmp/docker_config', 'ro')]
 
-remove_dockers_and_volumes()
+call_fun_with_timeout(DOCKER_CMD_TIMEOUT, remove_dockers_and_volumes)
 
 ret = docker.run(tty=True,
                  rm=True,

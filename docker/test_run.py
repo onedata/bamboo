@@ -14,7 +14,9 @@ import platform
 import sys
 import time
 
-from environment.common import HOST_STORAGE_PATH, remove_dockers_and_volumes
+from environment.common import (DOCKER_CMD_TIMEOUT, HOST_STORAGE_PATH,
+                                remove_dockers_and_volumes,
+                                call_fun_with_timeout)
 from environment import docker, dockers_config
 import glob
 import xml.etree.ElementTree as ElementTree
@@ -164,7 +166,7 @@ command = command.format(
 # 128MB or more required for chrome tests to run with xvfb
 run_params = ['--shm-size=128m']
 
-remove_dockers_and_volumes()
+call_fun_with_timeout(DOCKER_CMD_TIMEOUT, remove_dockers_and_volumes)
 
 reflect=[(script_dir, 'rw'),
          ('/var/run/docker.sock', 'rw'),
