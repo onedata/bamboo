@@ -14,10 +14,11 @@ import sys
 
 # noinspection PyDefaultArgument
 def run(image, docker_host=None, detach=False, dns_list=[], add_host={},
-        envs={}, hostname=None, interactive=False, link={}, tty=False, rm=False,
-        reflect=[], volumes=[], name=None, workdir=None, user=None, group=None,
-        group_add=[], cpuset_cpus=None, privileged=False, publish=[], run_params=[], command=None,
-        output=False, stdin=None, stdout=None, stderr=None):
+        envs={}, hostname=None, interactive=False, link={}, tty=False,
+        rm=False, reflect=[], volumes=[], name=None, workdir=None, user=None,
+        group=None, group_add=[], cpuset_cpus=None, privileged=False,
+        publish=[], run_params=[], command=None, output=False, stdin=None,
+        stdout=None, stderr=None):
     cmd = ['docker']
 
     cmd.append('run')

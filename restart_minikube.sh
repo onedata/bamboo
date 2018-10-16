@@ -2,7 +2,9 @@
 
 TIMEOUT=300
 BAMBOO_USER="bamboo"
-
+UBUNTU_USER="ubuntu"
+BAMBOO_HOME="/home/bamboo"
+UBUNTU_HOME="/home/ubuntu"
 
 print_horizontal_line() {
     printf '%*s\n' "${COLUMNS:-$(tput cols || echo 100)}" '' | tr ' ' -
@@ -37,17 +39,15 @@ if [ ${GET_PODS_CMD_CODE} -eq 0 ]; then
 else
     echo "K8s is not running."
     echo "Restarting..."
-	execute sudo kubeadm reset -f
-
-	execute sudo kubeadm init
-
-	execute mkdir -p ${HOME}/.kube
-	execute sudo cp /etc/kubernetes/admin.conf ${HOME}/.kube/config
-	execute chown $(id -u ${BAMBOO_USER}):$(id -g ${BAMBOO_USER}) ${HOME}/.kube/config
-
-	execute kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
-
-	execute kubectl taint nodes --all node-role.kubernetes.io/master-
+	sudo minikube delete
+	export MINIKUBE_HOME=${BAMBOO_HOME}
+    export KUBECONFIG=${BAMBOO_HOME}/.kube/config
+	execute sudo minikube start --vm-driver none
+    execute sudo cp -r ${BAMBOO_HOME}/.kube ${UBUNTU_HOME}
+    execute sudo cp -r ${BAMBOO_HOME}/.minikube ${UBUNTU_HOME}
+    execute sed -i "s|${BAMBOO_HOME}|${UBUNTU_HOME}|g" ${UBUNTU_HOME}/.kube/config
+    execute sudo chown -R ${UBUNTU_USER} ${UBUNTU_HOME}/.kube
+    execute sudo chown -R   ${UBUNTU_USER} ${UBUNTU_HOME}/.minikube
 
 	execute kubectl create clusterrolebinding serviceaccounts-cluster-admin \
 	  --clusterrole=cluster-admin \
