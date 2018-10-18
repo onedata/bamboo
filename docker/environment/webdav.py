@@ -33,7 +33,7 @@ def _node_up(image, name, uid):
     hostname = common.format_hostname([name, 'webdav'], uid)
 
     container = docker.run(
-            image=image,
+            image='onedata/sabredav:v1',
             hostname=hostname,
             name=hostname,
             privileged=True,
@@ -41,14 +41,19 @@ def _node_up(image, name, uid):
 
     common.wait_until(_webdav_ready, [container], WEBDAV_READY_WAIT_SECONDS)
 
-    credentials = 'admin:password'
     settings = docker.inspect(container)
     ip = settings['NetworkSettings']['IPAddress']
 
     return {
         'docker_ids': [container],
-        'credentials': credentials,
-        'endpoint': "http://{}:80".format(ip)
+        'endpoint': "http://{}:80".format(ip),
+        'credentials': 'admin:password',
+        'credentials_type': 'basic',
+        'range_write_support': 'sabredav',
+        'authorization_header': '',
+        'verify_server_certificate': 'false',
+        'connection_pool_size': '10',
+        'maximum_upload_size': '0'
     }
 
 
