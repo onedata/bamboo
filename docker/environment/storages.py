@@ -7,7 +7,7 @@ Contains methods used to bring up storages.
 """
 import sys
 
-from . import common, s3, ceph, cephrados, nfs, glusterfs, amazon_iam, luma, swift
+from . import common, s3, ceph, cephrados, nfs, glusterfs, webdav, amazon_iam, luma, swift
 
 
 def start_luma(config, storages_dockers, image, bin_luma, output, uid):
@@ -40,9 +40,9 @@ def start_luma(config, storages_dockers, image, bin_luma, output, uid):
 
 
 def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, nfs_image,
-                    swift_image, glusterfs_image, image, uid):
+                    swift_image, glusterfs_image, webdav_image, image, uid):
     storages_dockers = {'ceph': {}, 'cephrados': {}, 's3': {}, 'nfs': {}, 'posix': {},
-                        'swift': {}, 'glusterfs': {}}
+            'swift': {}, 'glusterfs': {}, 'webdav': {}}
     docker_ids = []
     if 'os_configs' in config:
         start_iam_mock = False
@@ -83,6 +83,11 @@ def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, n
                 elif storage['type'] == 'glusterfs' and storage['name'] not in \
                         storages_dockers['glusterfs']:
                     _glusterfs_up(storage, storages_dockers, glusterfs_image,
+                                  docker_ids, uid)
+
+                elif storage['type'] == 'webdav' and storage['name'] not in \
+                        storages_dockers['webdav']:
+                    _webdav_up(storage, storages_dockers, webdav_image,
                                   docker_ids, uid)
 
         if start_iam_mock:
@@ -169,3 +174,9 @@ def _glusterfs_up(storage, storages_dockers, glusterfs_image, docker_ids, uid):
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
     storages_dockers['glusterfs'][storage['name']] = result
+
+def _webdav_up(storage, storages_dockers, webdav_image, docker_ids, uid):
+    result = webdav.up(webdav_image, storage['name'], uid)
+    docker_ids.extend(result['docker_ids'])
+    del result['docker_ids']
+    storages_dockers['webdav'][storage['name']] = result

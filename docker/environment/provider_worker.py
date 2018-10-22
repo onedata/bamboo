@@ -137,6 +137,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                     'cephrados': 'create_cephrados_storage.escript',
                     'swift': 'create_swift_storage.escript',
                     'glusterfs': 'create_glusterfs_storage.escript',
+                    'webdav': 'create_webdav_storage.escript',
                     'nulldevice': 'create_nulldevice_storage.escript'}
     pwd = common.get_script_dir()
     for script_name in script_names.values():
@@ -209,6 +210,17 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        config['transport'],
                        config['mountpoint'],
                        'cluster.write-freq-threshold=100;', 'true', 'flat']
+            assert 0 is docker.exec_(container, command, tty=True,
+                                     stdout=sys.stdout, stderr=sys.stderr)
+        elif storage['type'] == 'webdav':
+            config = storages_dockers['webdav'][storage['name']]
+            command = ['escript', script_paths['webdav'], cookie,
+                       first_node, storage['name'], config['endpoint'],
+                       config.get('credentials_type', 'basic'), config['credentials'],
+                       'false', config.get('authorization_header', ''),
+                       config.get('range_write_support', 'sabredav'),
+                       config.get('connection_pool_size', '10'),
+                       config.get('maximum_upload_size', '0'), 'true', 'canonical']
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'nulldevice':
