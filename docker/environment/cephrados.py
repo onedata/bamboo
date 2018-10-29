@@ -44,7 +44,8 @@ def _node_up(image, pools, name, uid):
         'docker_ids': [container],
         'username': username,
         'key': key,
-        'host_name': ip
+        'host_name': ip,
+        'container_id': container
     }
 
 
