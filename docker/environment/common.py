@@ -19,7 +19,7 @@ from timeouts import *
 import tempfile
 import stat
 import pytest
-import multiprocessing
+import subprocess
 
 try:
     import xml.etree.cElementTree as eTree
@@ -34,7 +34,7 @@ OZ_CONNECTIVITY_CHECK_INTERVAL = 5
 OZ_CONNECTIVITY_CHECK_TIMEOUT = 10
 OZ_CONNECTIVITY_CHECK_RETRIES = 25
 
-DOCKER_CMD_TIMEOUT = 60
+DOCKER_CMD_TIMEOUT = 10
 HOST_STORAGE_PATH = "/tmp/onedata"
 BAMBOO_AGENT_ID_VAR = "bamboo_agentId"
 K8S_CONTAINER_NAME_LABEL_KEY = "io.kubernetes.container.name"
@@ -303,17 +303,6 @@ def _check_provider_oz_connectivity(host):
         return False
 
 
-def call_fun_with_timeout(timeout, fun, *args):
-    p = multiprocessing.Process(target=fun, args=args)
-    p.start()
-    p.join(timeout)
-    if p.is_alive():
-        print('Timeout while calling function: {} with '
-              'arguments: {}.'.format(fun.__name__, args))
-        p.terminate()
-        p.join()
-
-
 def remove_dockers_and_volumes():
     if BAMBOO_AGENT_ID_VAR in os.environ:
         containers = docker.ps(all=True, quiet=True)
@@ -321,11 +310,16 @@ def remove_dockers_and_volumes():
 
         for container in containers:
             try:
-                container_config = docker.inspect(container)
+                container_config = docker.inspect(container,
+                                                  timeout=DOCKER_CMD_TIMEOUT,
+                                                  stderr=subprocess.STDOUT)
                 if K8S_CONTAINER_NAME_LABEL_KEY in container_config['Config']['Labels']:
                     k8s_containers.append(container)
             except KeyError:
                 pass
+            except subprocess.CalledProcessError as e:
+                print(e)
+                print("Captured output: %s" % e.output)
             except Exception as e:
                 print("Inspecting docker container %s failed due to %s" % (
                 container, e))
@@ -337,8 +331,13 @@ def remove_dockers_and_volumes():
         for container in stalled_containers:
             try:
                 print("Removing docker container", container)
-                docker.remove(container, force=True, volumes=True)
+                docker.remove(container, force=True, volumes=True,
+                              timeout=DOCKER_CMD_TIMEOUT,
+                              stderr=subprocess.STDOUT)
                 print("Successfully removed docker container", container)
+            except subprocess.CalledProcessError as e:
+                print(e)
+                print("Captured output: %s" % e.output)
             except Exception as e:
                 print("Removing docker container %s failed due to %s" % (container, e))
 
@@ -347,7 +346,11 @@ def remove_dockers_and_volumes():
         for volume in volumes:
             try:
                 print("Removing docker volume", volume)
-                docker.remove_volumes(volume)
+                docker.remove_volumes(volume, timeout=DOCKER_CMD_TIMEOUT,
+                                      stderr=subprocess.STDOUT)
                 print("Successfully removed docker volume", volume)
+            except subprocess.CalledProcessError as e:
+                print(e)
+                print("Captured output: %s" % e.output)
             except Exception as e:
                 print("Removing docker volume %s failed due to %s" % (volume, e))

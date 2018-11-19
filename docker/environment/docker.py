@@ -137,7 +137,7 @@ def exec_(container, command, docker_host=None, user=None, group=None,
     return subprocess.call(cmd, stdin=stdin, stderr=stderr, stdout=stdout)
 
 
-def inspect(container, docker_host=None):
+def inspect(container, docker_host=None, timeout=None, stderr=None):
     cmd = ['docker']
 
     cmd.extend(['inspect', container])
@@ -145,7 +145,10 @@ def inspect(container, docker_host=None):
     if docker_host:
         cmd = wrap_in_ssh_call(cmd, docker_host)
 
-    out = subprocess.check_output(cmd, universal_newlines=True)
+    if timeout is not None:
+        cmd = add_timeout_cmd(cmd, timeout)
+
+    out = subprocess.check_output(cmd, universal_newlines=True, stderr=stderr)
     return json.loads(out)[0]
 
 
@@ -162,7 +165,7 @@ def logs(container, docker_host=None):
 
 
 def remove(containers, docker_host=None, force=False,
-           link=False, volumes=False):
+           link=False, volumes=False, timeout=None, stderr=None):
     cmd = ['docker']
 
     cmd.append('rm')
@@ -184,7 +187,10 @@ def remove(containers, docker_host=None, force=False,
     if docker_host:
         cmd = wrap_in_ssh_call(cmd, docker_host)
 
-    subprocess.check_call(cmd)
+    if timeout is not None:
+        cmd = add_timeout_cmd(cmd, timeout)
+
+    subprocess.check_call(cmd, stderr=stderr)
 
 
 def cp(container, src_path, dest_path, to_container=False, docker_host=None):
@@ -286,7 +292,7 @@ def list_volumes(quiet=True):
     return subprocess.check_output(cmd,  universal_newlines=True).split()
 
 
-def remove_volumes(volumes):
+def remove_volumes(volumes, timeout=None, stderr=None):
     """
     Remove volumes
     """
@@ -295,7 +301,11 @@ def remove_volumes(volumes):
         cmd.append(volumes)
     else:
         cmd.extend(volumes)
-    return subprocess.check_call(cmd)
+        
+    if timeout is not None:
+        cmd = add_timeout_cmd(cmd, timeout)
+        
+    return subprocess.check_call(cmd, stderr=stderr)
 
 
 def connect_docker_to_network(network, container):
@@ -328,3 +338,8 @@ def wrap_in_ssh_call(docker_cmd, docker_host):
     hostname = docker_host['ssh_hostname']
     port = docker_host['ssh_port'] if 'ssh_port' in docker_host else 22
     return ['ssh', '-p', port, '{0}@{1}'.format(username, hostname), ' '.join(docker_cmd)]
+
+
+def add_timeout_cmd(cmd, timeout):
+    timeout_cmd = ['timeout', '--kill-after', str(timeout), str(timeout)]
+    return timeout_cmd + cmd
