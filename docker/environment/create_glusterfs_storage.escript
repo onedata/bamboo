@@ -9,11 +9,15 @@ main([Cookie, Node, Name, Volume, Hostname, Port, Transport, MountPoint, XlatorO
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
 
-    {ok, UserCtx} = safe_call(NodeAtom, helper, new_glusterfs_user_ctx, [0, 0]),
-    {ok, Helper} = safe_call(NodeAtom, helper, new_glusterfs_helper, [
-        list_to_binary(Volume),
-        list_to_binary(Hostname),
+    UserCtx = #{
+        <<"uid">> => <<"0">>,
+        <<"gid">> => <<"0">>
+    },
+    Helper = safe_call(NodeAtom, helper, new_helper, [
+        <<"glusterfs">>,
         #{
+            <<"volume">> => list_to_binary(Volume),
+            <<"hostname">> => list_to_binary(Hostname),
             <<"port">> => list_to_binary(Port),
             <<"transport">> => list_to_binary(Transport),
             <<"mountPoint">> => list_to_binary(MountPoint),
