@@ -10,6 +10,7 @@ import json
 import os
 import subprocess
 import sys
+from six import string_types
 
 
 # noinspection PyDefaultArgument
@@ -29,7 +30,7 @@ def run(image, docker_host=None, detach=False, dns_list=[], add_host={},
     for addr in dns_list:
         cmd.extend(['--dns', addr])
 
-    for key, value in add_host.iteritems():
+    for key, value in add_host.items():
         cmd.extend(['--add-host', '{0}:{1}'.format(key, value)])
 
     for key in envs:
@@ -318,9 +319,9 @@ def connect_docker_to_network(network, container):
 
 
 def format_command(docker_cmd, entry_point, docker_host):
-    if isinstance(entry_point, basestring) and docker_host is not None:
+    if isinstance(entry_point, string_types) and docker_host is not None:
         docker_cmd.extend(['sh', '-c', '\"' + entry_point + '\"'])
-    elif isinstance(entry_point, basestring):
+    elif isinstance(entry_point, string_types):
         docker_cmd.extend(['sh', '-c', entry_point])
     elif isinstance(entry_point, list):
         docker_cmd.extend(entry_point)
