@@ -42,7 +42,8 @@ else
 	sudo minikube delete
 	export MINIKUBE_HOME=${BAMBOO_HOME}
     export KUBECONFIG=${BAMBOO_HOME}/.kube/config
-	execute sudo minikube start --vm-driver none
+	execute sudo minikube start --vm-driver none --kubernetes-version v1.13.0 \
+	    --extra-config=kubelet.eviction-hard="imagefs.available<5%,nodefs.available<5%,"
     execute sudo cp -r ${BAMBOO_HOME}/.kube ${UBUNTU_HOME}
     execute sudo cp -r ${BAMBOO_HOME}/.minikube ${UBUNTU_HOME}
     execute sed -i "s|${BAMBOO_HOME}|${UBUNTU_HOME}|g" ${UBUNTU_HOME}/.kube/config
