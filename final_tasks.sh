@@ -1,27 +1,59 @@
 #!/usr/bin/env bash
 
 ONEDATA_STORAGE_PATH="/tmp/onedata"
-TIMEOUT=10
+DOCKER_CMD_TIMEOUT=10
+DELETE_HELM_RELEASE_TIMEOUT=60
+DELETE_K8S_NAMESPACE_TIMEOUT=60
+DELETE_PV_TIMEOUT=20
+
 
 execute_with_timeout() {
+    TIMEOUT=$1
+    shift 1
     CMD=$@
     timeout --kill-after ${TIMEOUT} ${TIMEOUT} ${CMD}
 }
+
 
 # clear spaces data
 echo "Clearing ${ONEDATA_STORAGE_PATH}"
 docker run -v ${ONEDATA_STORAGE_PATH}:${ONEDATA_STORAGE_PATH} alpine sh -c "rm -rf ${ONEDATA_STORAGE_PATH}/*"
 
 
-K8S_CONTAINER_NAME_LABEL_KEY="io.kubernetes.container.name"
-CONTAINERS_NAMES=$(docker ps --all --format "{{.Names}}")
-CONTAINERS_TO_REMOVE=${CONTAINERS_NAMES}
-
-for container_name in ${CONTAINERS_NAMES}
+# clear k8s
+HELM_RELEASES=$(helm ls --all --short)
+for release in ${HELM_RELEASES}
 do
-    if [[ ${container_name} == k8s* ]]
+    execute_with_timeout ${DELETE_HELM_RELEASE_TIMEOUT} helm delete --purge ${release}
+done
+
+NAMESPACES=$(kubectl get ns -o jsonpath="{.items[*].metadata.name}" | grep -v kube-system)
+for namespace in ${NAMESPACES};
+do
+    execute_with_timeout ${DELETE_K8S_NAMESPACE_TIMEOUT} kubectl delete ns ${namespace}
+done
+
+# pv are not in any namespace so we have to delete them separately
+PVS=$(kubectl get pv)
+for pv in ${PVS}
+do
+    execute_with_timeout ${DELETE_PV_TIMEOUT} kubectl delete pv ${pv}
+done
+
+
+# clear docker
+CONTAINERS=$(docker ps -qa)
+CONTAINERS_TO_REMOVE=${CONTAINERS}
+
+for container in ${CONTAINERS}
+do
+    NAMESPACE=$(docker inspect --format "{{ index .Config.Labels \"io.kubernetes.pod.namespace\"}}" ${container})
+    if [ ${NAMESPACE} ]
     then
-         CONTAINERS_TO_REMOVE=( "${CONTAINERS_TO_REMOVE[@]/$container_name}" )
+        if [ "${NAMESPACE}" ==  "kube-system" ]
+        then
+            CONTAINERS_TO_REMOVE=( "${CONTAINERS_TO_REMOVE[@]/$container}" )
+        fi
     fi
 done
 
@@ -31,10 +63,9 @@ echo "Removing stalled docker containers"
 
 for container in ${CONTAINERS_TO_REMOVE}
 do
-    execute_with_timeout docker kill ${container}
-    execute_with_timeout docker rm -fv ${container}
+    execute_with_timeout ${DOCKER_CMD_TIMEOUT} docker kill ${container}
+    execute_with_timeout ${DOCKER_CMD_TIMEOUT} docker rm -fv ${container}
 done
-
 
 STALLED_DOCKER_VOLUMES=$(docker volume ls -q)
 
@@ -44,7 +75,7 @@ echo "Removing stalled docker volumes"
 
 for volume in ${STALLED_DOCKER_VOLUMES}
 do
-    execute_with_timeout docker volume rm ${volume}
+    execute_with_timeout ${DOCKER_CMD_TIMEOUT} docker volume rm ${volume}
 done
 
 echo "Done"
