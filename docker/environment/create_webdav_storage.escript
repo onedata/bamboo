@@ -11,11 +11,11 @@ main([Cookie, Node, Name, Endpoint, CredentialsType,
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
 
-    UserCtx = safe_call(NodeAtom, helper, new_webdav_user_ctx, [
+    {ok, UserCtx} = safe_call(NodeAtom, helper, new_webdav_user_ctx, [
         list_to_binary(CredentialsType),
         list_to_binary(Credentials)
     ]),
-    Helper = safe_call(NodeAtom, helper, new_webdav_helper, [
+    {ok, Helper} = safe_call(NodeAtom, helper, new_webdav_helper, [
         list_to_binary(Endpoint),
         #{
             <<"verifyServerCertificate">> => list_to_binary(VerifyServerCertificate),

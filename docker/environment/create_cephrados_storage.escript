@@ -9,11 +9,11 @@ main([Cookie, Node, Name, ClusterName, MonitorHostname, PoolName, Username,
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
 
-    UserCtx = safe_call(NodeAtom, helper, new_cephrados_user_ctx, [
+    {ok, UserCtx} = safe_call(NodeAtom, helper, new_cephrados_user_ctx, [
         list_to_binary(Username),
         list_to_binary(Key)
     ]),
-    Helper = safe_call(NodeAtom, helper, new_cephrados_helper, [
+    {ok, Helper} = safe_call(NodeAtom, helper, new_cephrados_helper, [
         list_to_binary(MonitorHostname),
         list_to_binary(ClusterName),
         list_to_binary(PoolName),
