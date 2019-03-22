@@ -9,11 +9,11 @@ main([Cookie, Node, Name, AuthUrl, ContainerName, TenantName, Username, Password
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
 
-    UserCtx = safe_call(NodeAtom, helper, new_swift_user_ctx, [
+    {ok, UserCtx} = safe_call(NodeAtom, helper, new_swift_user_ctx, [
         list_to_binary(Username),
         list_to_binary(Password)
     ]),
-    Helper = safe_call(NodeAtom, helper, new_swift_helper, [
+    {ok, Helper} = safe_call(NodeAtom, helper, new_swift_helper, [
         list_to_binary(AuthUrl),
         list_to_binary(ContainerName),
         list_to_binary(TenantName),

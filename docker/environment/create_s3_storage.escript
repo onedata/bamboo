@@ -9,11 +9,11 @@ main([Cookie, Node, Name, Hostname, Scheme, BucketName, AccessKey, SecretKey,
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
 
-    UserCtx = safe_call(NodeAtom, helper, new_s3_user_ctx, [
+    {ok, UserCtx} = safe_call(NodeAtom, helper, new_s3_user_ctx, [
         list_to_binary(AccessKey),
         list_to_binary(SecretKey)
     ]),
-    Helper = safe_call(NodeAtom, helper, new_s3_helper, [
+    {ok, Helper} = safe_call(NodeAtom, helper, new_s3_helper, [
         list_to_binary(Hostname),
         list_to_binary(BucketName),
         Scheme =:= "https",
