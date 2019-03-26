@@ -312,10 +312,10 @@
         },
         "providers": {
             "provider1": {
-                "admin": "user1"
+                "creator": "user1"
             },
             "provider2": {
-                "admin": "user2"
+                "creator": "user2"
             }
         }
     }

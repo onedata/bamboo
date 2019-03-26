@@ -263,7 +263,7 @@
         },
         "providers": {
             "p1": {
-                "admin": "user1"
+                "creator": "user1"
             }
         }
     }

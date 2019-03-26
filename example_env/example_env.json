@@ -309,10 +309,10 @@
         },
         "providers": {
             "p1": {
-                "admin": "user1"
+                "creator": "user1"
             },
             "p2.oz": {
-                "admin": "user2"
+                "creator": "user2"
             }
         }
     },
