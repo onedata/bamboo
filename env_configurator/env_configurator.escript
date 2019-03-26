@@ -14,7 +14,7 @@
 %%% It has the following structure:
 %%%
 %%% {
-%%%     'oz_worker_node': 'gr1@gr1.1436272392.test',
+%%%     'oz_worker_node': 'oz1@oz1.1436272392.test',
 %%%     'oz_cookie': 'cookie0',
 %%%     'provider_domains': {
 %%%         'p1': {
@@ -73,7 +73,7 @@
 %%%                     'storage': '/mnt/st2',
 %%%                     'supported_size': 1000000000
 %%%                 }
-%%%             ]
+%%%             }
 %%%         },
 %%%         's2': {
 %%%             'users': [
@@ -88,6 +88,14 @@
 %%%                     'supported_size': 1000000000
 %%%                 }
 %%%             }
+%%%         }
+%%%     },
+%%%     'providers': {
+%%%         'p1': {
+%%%             'admin': 'user1'
+%%%         },
+%%%         'p2': {
+%%%             'admin': 'user2'
 %%%         }
 %%%     }
 %%% }
@@ -124,32 +132,53 @@ main([InputJson, RegisterInOz, SetUpEntities]) ->
         Input = mochijson2:decode(InputJson, [{format, proplist}]),
         OZNode = bin_to_atom(proplists:get_value(<<"oz_node">>, Input, <<"">>)),
         OZCookie = bin_to_atom(proplists:get_value(<<"oz_cookie">>, Input, <<"">>)),
-        Providers = proplists:get_value(<<"provider_domains">>, Input, <<"">>),
-        Users = proplists:get_value(<<"users">>, Input, <<"">>),
-        Groups = proplists:get_value(<<"groups">>, Input, <<"">>),
-        Spaces = proplists:get_value(<<"spaces">>, Input, <<"">>),
+        ProviderDomains = proplists:get_value(<<"provider_domains">>, Input, []),
+        Users = proplists:get_value(<<"users">>, Input, []),
+        Groups = proplists:get_value(<<"groups">>, Input, []),
+        Spaces = proplists:get_value(<<"spaces">>, Input, []),
+        Providers = proplists:get_value(<<"providers">>, Input, []),
+
+        case call_node(OZNode, OZCookie, dev_utils, set_up_users, [Users]) of
+            ok ->
+                ok;
+            Other1 ->
+                io:format("dev_utils:set_up_users returned: ~p~n",
+                    [Other1]),
+                throw(set_up_users_failed)
+        end,
+
         lists:foreach(
             fun({Provider, Props}) ->
                 ProviderWorkersBin = proplists:get_value(<<"nodes">>, Props),
                 ProviderWorkers = [bin_to_atom(P) || P <- ProviderWorkersBin],
                 Cookie = bin_to_atom(proplists:get_value(<<"cookie">>, Props)),
+                ProviderCfg = proplists:get_value(Provider, Providers, []),
+                {DefaultAdmin, _} = hd(lists:sort(Users)),
+                Admin = proplists:get_value(<<"admin">>, ProviderCfg, DefaultAdmin),
+                {ok, Root} = call_node(OZNode, OZCookie, entity_logic, root_client, []),
+                {ok, Macaroon} = call_node(OZNode, OZCookie, user_logic, create_provider_registration_token, [
+                    Root, Admin
+                ]),
+                {ok, Token} = call_node(OZNode, OZCookie, onedata_macaroons, serialize, [
+                    Macaroon
+                ]),
                 case list_to_atom(string:to_lower(RegisterInOz)) of
                     true ->
-                        register_in_onezone(ProviderWorkers, Cookie, Provider);
+                        register_in_onezone(ProviderWorkers, Cookie, Provider, Token);
                     _ -> ok
                 end,
                 create_space_storage_mapping(hd(ProviderWorkers), Cookie, Spaces, Provider)
-            end, Providers),
+            end, ProviderDomains),
         case list_to_atom(string:to_lower(SetUpEntities)) of
             true ->
                 case call_node(OZNode, OZCookie, dev_utils, set_up_test_entities,
                     [Users, Groups, Spaces]) of
                     ok ->
                         ok;
-                    Other ->
+                    Other2 ->
                         io:format("dev_utils:set_up_test_entities returned: ~p~n",
-                            [Other]),
-                        throw(error)
+                            [Other2]),
+                        throw(set_up_test_entities_failed)
                 end,
                 io:format("Global configuration applied sucessfully!~n");
             _ -> ok
@@ -245,10 +274,10 @@ bin_to_atom(Bin) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec register_in_onezone(Workers :: [node()], Cookie :: atom(),
-    Provider :: binary()) -> ok.
-register_in_onezone(Workers, Cookie, Provider) ->
-    {ok, Provider} = call_node(hd(Workers), Cookie, oneprovider,
-        register_in_oz_dev, [Workers, Provider]),
+    Provider :: binary(), Token :: binary()) -> ok.
+register_in_onezone(Workers, Cookie, ProviderId, Token) ->
+    {ok, ProviderId} = call_node(hd(Workers), Cookie, oneprovider,
+        register_in_oz_dev, [Workers, ProviderId, Token]),
     ok.
 
 
