@@ -47,7 +47,7 @@ CONTAINERS_TO_REMOVE=${CONTAINERS}
 
 for container in ${CONTAINERS}
 do
-    NAMESPACE=$(docker inspect --format "{{ index .Config.Labels \"io.kubernetes.pod.namespace\"}}" ${container})
+    NAMESPACE=$(execute_with_timeout ${DOCKER_CMD_TIMEOUT} docker inspect --format "{{ index .Config.Labels \"io.kubernetes.pod.namespace\"}}" ${container})
     if [ ${NAMESPACE} ]
     then
         if [ "${NAMESPACE}" ==  "kube-system" ]
