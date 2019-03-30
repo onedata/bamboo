@@ -33,7 +33,7 @@ def _node_up(image, name, uid):
     hostname = common.format_hostname([name, 'webdav'], uid)
 
     container = docker.run(
-            image='onedata/sabredav:v1',
+            image=image,
             hostname=hostname,
             name=hostname,
             privileged=True,
