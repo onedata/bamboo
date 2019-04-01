@@ -11,7 +11,7 @@ execute_with_timeout() {
     TIMEOUT=$1
     shift 1
     CMD=$@
-    timeout --kill-after ${TIMEOUT} ${TIMEOUT} ${CMD}
+    timeout --kill-after ${TIMEOUT} ${TIMEOUT} bash -c "${CMD}"
 }
 
 
@@ -47,10 +47,10 @@ CONTAINERS_TO_REMOVE=${CONTAINERS}
 
 for container in ${CONTAINERS}
 do
-    NAMESPACE=$(execute_with_timeout ${DOCKER_CMD_TIMEOUT} docker inspect --format "{{ index .Config.Labels \"io.kubernetes.pod.namespace\"}}" ${container})
-    if [ ${NAMESPACE} ]
+    NAMESPACE=$(execute_with_timeout ${DOCKER_CMD_TIMEOUT} docker inspect --format '"{{ index .Config.Labels \"io.kubernetes.pod.namespace\"}}"' ${container})
+    if [[ ${NAMESPACE} ]]
     then
-        if [ "${NAMESPACE}" ==  "kube-system" ]
+        if [[ "${NAMESPACE}" ==  "kube-system" ]]
         then
             CONTAINERS_TO_REMOVE=( "${CONTAINERS_TO_REMOVE[@]/$container}" )
         fi
