@@ -309,6 +309,14 @@
                     }
                 }
             }
+        },
+        "providers": {
+            "provider1": {
+                "creator": "user1"
+            },
+            "provider2": {
+                "creator": "user2"
+            }
         }
     }
 }
