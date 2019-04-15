@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 ONEDATA_STORAGE_PATH="/tmp/onedata"
+ONE_ENV_DEPLOYMENT_DIR="/home/bamboo/.one-env"
+
 DOCKER_CMD_TIMEOUT=10
 DELETE_HELM_RELEASE_TIMEOUT=60
 DELETE_K8S_NAMESPACE_TIMEOUT=60
@@ -15,9 +17,11 @@ execute_with_timeout() {
 }
 
 
-# clear spaces data
-echo "Clearing ${ONEDATA_STORAGE_PATH}"
-docker run -v ${ONEDATA_STORAGE_PATH}:${ONEDATA_STORAGE_PATH} alpine sh -c "rm -rf ${ONEDATA_STORAGE_PATH}/*"
+# clear spaces data and one-env deployment dir
+echo "Clearing ${ONEDATA_STORAGE_PATH} and ${ONE_ENV_DEPLOYMENT_DIR}"
+docker run -v ${ONEDATA_STORAGE_PATH}:${ONEDATA_STORAGE_PATH} \
+           -v ${ONE_ENV_DEPLOYMENT_DIR}:${ONE_ENV_DEPLOYMENT_DIR} \
+           alpine sh -c "rm -rf ${ONEDATA_STORAGE_PATH}/* ${ONE_ENV_DEPLOYMENT_DIR}/*"
 
 
 # clear k8s
