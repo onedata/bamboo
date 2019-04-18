@@ -8,12 +8,12 @@ This software is released under the MIT license cited in 'LICENSE.txt'
 Pushes .tar.gz package archives in onedata's bamboo artifact format:
 i. e.
 package/
-    fedora-23-x86_64
+    centos-7-x86_64
         SRPMS
             cluster-manager-1.0.0.1.ge1a52f4-1.fc23.src.rpm
         x86_64
             cluster-manager-1.0.0.1.ge1a52f4-1.fc23.x86_64.rpm
-    wily
+    xenial
         binary-amd64
             cluster-manager_1.0.0.1.ge1a52f4-1_amd64.deb
         source
@@ -22,7 +22,7 @@ package/
             cluster-manager_1.0.0.1.ge1a52f4-1_amd64.changes
             cluster-manager_1.0.0.1.ge1a52f4.orig.tar.gz
 
-Available distributions wily, xenial, fedora-21-x86_64, fedora-23-x86_64, centos-7-x86_64, sl6x-x86_64
+Available distributions xenial, bionic, centos-7-x86_64, fedora-29-x86_64
 """
 import argparse
 import json
@@ -63,25 +63,38 @@ Host packages
  '''
 
 APACHE_PREFIX = '/var/www/onedata'
+
+# Paths for legacy RPM repositories (prior to release 1802)
 YUM_REPO_LOCATION = {
     'fedora-21-x86_64': 'yum/fedora/21',
     'fedora-23-x86_64': 'yum/fedora/23',
     'centos-7-x86_64': 'yum/centos/7x',
     'sl6x-x86_64': 'yum/scientific/6x'
 }
+
+# Paths for Software Collection RPM repositories
+YUM_SCL_REPO_LOCATION = {
+    'fedora-29-x86_64': 'yum/{}/fedora/29',
+    'centos-7-x86_64': 'yum/{}/centos/7x'
+}
+
 DEB_PKG_LOCATION = {
     'trusty': 'apt/ubuntu/trusty/pool/main',
     'wily': 'apt/ubuntu/wily/pool/main',
-    'xenial': 'apt/ubuntu/xenial/pool/main'
+    'xenial': 'apt/ubuntu/xenial/pool/main',
+    'zesty': 'apt/ubuntu/zesty/pool/main',
+    'bionic': 'apt/ubuntu/bionic/pool/main',
+    'disco': 'apt/ubuntu/disco/pool/main'
 }
+
 REPO_TYPE = {
-    'trusty': 'deb',
     'wily': 'deb',
     'xenial': 'deb',
-    'fedora-21-x86_64': 'rpm',
-    'fedora-23-x86_64': 'rpm',
-    'centos-7-x86_64': 'rpm',
-    'sl6x-x86_64': 'rpm'
+    'zesty': 'deb',
+    'bionic': 'deb',
+    'disco': 'deb',
+    'fedora-29-x86_64': 'rpm',
+    'centos-7-x86_64': 'rpm'
 }
 
 # create the top-level parser
@@ -106,6 +119,13 @@ parser.add_argument(
     action='store',
     help='Private key.',
     dest='identity')
+
+parser.add_argument(
+    '--scl',
+    default=None,
+    action='store',
+    help='Name of Software Collection for RPM based distributions. Example: onedata1802',
+    dest='scl')
 
 # create the parser for the "config" command
 parser_config = subparsers.add_parser(
@@ -251,8 +271,14 @@ def push(package_artifact):
                          distro, distro])
             elif REPO_TYPE[distro] == 'rpm':
                 # copy packages
-                repo_dir = os.path.join(APACHE_PREFIX,
-                                        YUM_REPO_LOCATION[distro])
+                repo_dir = None
+                if args.scl:
+                    repo_dir = os.path.join(APACHE_PREFIX,
+                        YUM_SCL_REPO_LOCATION[distro].format(args.scl,))
+                else:
+                    repo_dir = os.path.join(APACHE_PREFIX,
+                        YUM_REPO_LOCATION[distro])
+
                 distro_contents = os.path.join(pkg_dir, distro)
 
                 print("Signing packages ...")
