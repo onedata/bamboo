@@ -121,11 +121,14 @@ parser.add_argument(
     dest='identity')
 
 parser.add_argument(
-    '--scl',
+    '--release',
     default=None,
     action='store',
-    help='Name of Software Collection for RPM based distributions. Example: onedata1802',
-    dest='scl')
+    help="""Name of major Onedata release.
+            For RPM distributions this is equivalent to a Software Collection.
+            For DEB distributions this is a prefix in a repository.
+            Example: 1802""",
+    dest='release')
 
 # create the parser for the "config" command
 parser_config = subparsers.add_parser(
@@ -240,6 +243,14 @@ def push(package_artifact):
         # for each distribution inside
         for distro in call(['ls', pkg_dir]).split():
             if REPO_TYPE[distro] == 'deb':
+                release = args.release
+                # repository names for deb are in the form
+                # relase-distro, e.g. '1802-xenial'
+                if release:
+                    repo = '{}-{}'.format(release, distro)
+                else:
+                    repo = distro
+                    release = distro
                 # push debs if any were provided
                 binary_dir = os.path.join(pkg_dir, distro, 'binary-amd64')
                 try:
@@ -248,7 +259,7 @@ def push(package_artifact):
                     for package in call(['ls', binary_dir]).split():
                         path = deb_package_path(distro, 'binary-amd64', package)
                         packages.append(path)
-                    execute(['aptly', 'repo', 'add', '-force-replace', distro,
+                    execute(['aptly', 'repo', 'add', '-force-replace', repo,
                          binary_dir])
                 except CalledProcessError:
                     print("Warning: No binary-amd64 directory in package or empty")
@@ -261,20 +272,21 @@ def push(package_artifact):
                     for package in call(['ls', source_dir]).split():
                         path = deb_package_path(distro, 'source', package)
                         packages.append(path)
-                    execute(['aptly', 'repo', 'add', '-force-replace', distro,
+                    execute(['aptly', 'repo', 'add', '-force-replace', repo,
                          source_dir])
                 except CalledProcessError:
                     print("Warning: No source directory in package or empty")
 
                 # update repo
                 execute(['aptly', 'publish', 'update', '-force-overwrite',
-                         distro, distro])
+                         distro, release])
             elif REPO_TYPE[distro] == 'rpm':
                 # copy packages
                 repo_dir = None
-                if args.scl:
+                scl = args.release
+                if scl:
                     repo_dir = os.path.join(APACHE_PREFIX,
-                        YUM_SCL_REPO_LOCATION[distro].format(args.scl,))
+                        YUM_SCL_REPO_LOCATION[distro].format(scl,))
                 else:
                     repo_dir = os.path.join(APACHE_PREFIX,
                         YUM_REPO_LOCATION[distro])
