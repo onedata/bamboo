@@ -20,11 +20,7 @@ cp -r rel gui_static
 tar -zcf gui_static.tar.gz gui_static
 rm -r gui_static
 
-PKG_SHA_SUM=`shasum -a 256 gui_static.tar.gz`
-echo "Package SHA: ${PKG_SHA_SUM}"
+PKG_SHA_SUM=`shasum -a 256 gui_static.tar.gz | cut -f1 -d ' '`
+echo "Package SHA-256: ${PKG_SHA_SUM}"
 
-${SCRIPT_DIR}/../docker/docker_build.py --repository docker.onedata.org \
-                  --tag "SHA-${PKG_SHA_SUM}" \
-                  --name $(basename "$PWD")
-                  # --publish --remove . \ 
-                  $@
+${SCRIPT_DIR}/../docker/docker_build.py --repository docker.onedata.org --tag "SHA-${PKG_SHA_SUM}" --name $(basename "$PWD") --publish --remove $@ .
