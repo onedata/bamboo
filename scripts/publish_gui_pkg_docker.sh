@@ -16,13 +16,14 @@
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-cp -r rel gui_static
-tar -zcf gui_static.tar.gz gui_static
-rm -r gui_static
+rm -rf gui_static gui_static.tar.gz
+cp -r rel gui_static || exit $?
+tar -zcf gui_static.tar.gz gui_static || exit $?
+rm -rf gui_static
 
 PKG_SHA_SUM=`shasum -a 256 gui_static.tar.gz | cut -f1 -d ' '`
 echo "Package SHA-256: ${PKG_SHA_SUM}"
 
 ${SCRIPT_DIR}/../docker/docker_build.py --repository docker.onedata.org --tag "SHA256-${PKG_SHA_SUM}" --name $(basename "$PWD") --publish --remove $@ .
 
-rm gui_static.tar.gz
+rm -f gui_static.tar.gz
