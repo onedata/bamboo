@@ -216,8 +216,35 @@ def deb_package_path(distro, type, package):
             os.path.join(distro, type))
 
 
+def deb_release_package_path(distro, release, type, package):
+    name = package.split('_')[0]
+
+    # Determine path name and the first letter to index in the
+    # apt repository based on the package name
+    first_letter = name[0]
+    if name.startswith('python-onedatafs'):
+        name = 'oneclient-base'
+        first_letter = name[0]
+    elif name.startswith('python3-onedatafs'):
+        name = 'oneclient-base'
+        first_letter = name[0]
+    elif name.startswith('python-'):
+        first_letter = name[len('python-')]
+    elif name.startswith('python3-'):
+        first_letter = name[len('python3-')]
+
+    return (os.path.join('apt/ubuntu/{release}/pool/main'.format(release=release),
+                         first_letter, name, package),
+            os.path.join(distro, type))
+
+
 def yum_package_path(distro, type, package):
     return (os.path.join(YUM_REPO_LOCATION[distro], type, package),
+            os.path.join(distro, type))
+
+
+def yum_release_package_path(distro, release, type, package):
+    return (os.path.join(YUM_SCL_REPO_LOCATION[distro].format(release,), type, package),
             os.path.join(distro, type))
 
 
@@ -250,14 +277,17 @@ def push(package_artifact):
                     repo = '{}-{}'.format(release, distro)
                 else:
                     repo = distro
-                    release = distro
                 # push debs if any were provided
                 binary_dir = os.path.join(pkg_dir, distro, 'binary-amd64')
                 try:
                     # Check if binary_dir exists in package
                     execute(['ls', binary_dir])
                     for package in call(['ls', binary_dir]).split():
-                        path = deb_package_path(distro, 'binary-amd64', package)
+                        if release:
+                            path = deb_release_package_path(distro, release,
+                                                            'binary-amd64', package)
+                        else:
+                            path = deb_package_path(distro, 'binary-amd64', package)
                         packages.append(path)
                     execute(['aptly', 'repo', 'add', '-force-replace', repo,
                          binary_dir])
@@ -270,7 +300,11 @@ def push(package_artifact):
                     # Check if source_dir exists in package
                     execute(['ls', source_dir])
                     for package in call(['ls', source_dir]).split():
-                        path = deb_package_path(distro, 'source', package)
+                        if release:
+                            path = deb_release_package_path(distro, release,
+                                                            'source', package)
+                        else:
+                            path = deb_package_path(distro, 'source', package)
                         packages.append(path)
                     execute(['aptly', 'repo', 'add', '-force-replace', repo,
                          source_dir])
@@ -303,7 +337,10 @@ def push(package_artifact):
                 for type in ['x86_64', 'SRPMS']:
                     dir = os.path.join(distro_contents, type)
                     for package in call(['ls', dir]).split():
-                        path = yum_package_path(distro, type, package)
+                        if scl:
+                            path = yum_release_package_path(distro, scl, type, package)
+                        else:
+                            path = yum_package_path(distro, type, package)
                         packages.append(path)
 
                 # update createrepo
