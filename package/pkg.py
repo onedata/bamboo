@@ -88,6 +88,7 @@ DEB_PKG_LOCATION = {
 }
 
 REPO_TYPE = {
+    'trusty': 'deb',
     'wily': 'deb',
     'xenial': 'deb',
     'zesty': 'deb',
