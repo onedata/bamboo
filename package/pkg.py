@@ -312,8 +312,12 @@ def push(package_artifact):
                     print("Warning: No source directory in package or empty")
 
                 # update repo
-                execute(['aptly', 'publish', 'update', '-force-overwrite',
-                         distro, release])
+                if release:
+                    execute(['aptly', 'publish', 'update', '-force-overwrite',
+                            distro, release])
+                else:
+                    execute(['aptly', 'publish', 'update', '-force-overwrite',
+                            distro, distro])
             elif REPO_TYPE[distro] == 'rpm':
                 # copy packages
                 repo_dir = None
