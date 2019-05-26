@@ -13,16 +13,11 @@ import json
 import time
 from . import appmock, client, common, zone_worker, cluster_manager, \
     worker, provider_worker, cluster_worker, docker, dns, storages, panel, \
-    location_service_bootstrap
+    dockers_config
 
 
 def default(key):
-    return {'image': 'onedata/worker',
-            'ceph_image': 'onedata/ceph',
-            's3_image': 'onedata/s3proxy',
-            'swift_image': 'onedata/dockswift',
-            'nfs_image': 'erezhorev/dockerized_nfs_server',
-            'bin_am': '{0}/appmock'.format(os.getcwd()),
+    return {'bin_am': '{0}/appmock'.format(os.getcwd()),
             'bin_oz': '{0}/oz_worker'.format(os.getcwd()),
             'bin_op_worker': '{0}/op_worker'.format(os.getcwd()),
             'bin_cluster_worker': '{0}/cluster_worker'.format(os.getcwd()),
@@ -33,9 +28,15 @@ def default(key):
             'logdir': None}[key]
 
 
-def up(config_path, image=default('image'), ceph_image=default('ceph_image'),
-       s3_image=default('s3_image'), nfs_image=default('nfs_image'),
-       swift_image=default('swift_image'),
+def up(config_path,
+       image=dockers_config.default_image('worker'),
+       ceph_image=dockers_config.default_image('ceph'),
+       cephrados_image=dockers_config.default_image('cephrados'),
+       s3_image=dockers_config.default_image('s3'),
+       nfs_image=dockers_config.default_image('nfs'),
+       swift_image=dockers_config.default_image('swift'),
+       glusterfs_image=dockers_config.default_image('glusterfs'),
+       webdav_image=dockers_config.default_image('webdav'),
        bin_am=default('bin_am'), bin_oz=default('bin_oz'),
        bin_cluster_manager=default('bin_cluster_manager'),
        bin_op_worker=default('bin_op_worker'),
@@ -63,15 +64,13 @@ def up(config_path, image=default('image'), ceph_image=default('ceph_image'),
 
     # Start appmock instances
     if 'appmock_domains' in config:
-        am_output = appmock.up(image, bin_am, dns_server, uid, config_path, logdir)
+        am_output = appmock.up(image, bin_am, dns_server, uid, config_path,
+                               logdir)
         common.merge(output, am_output)
         # Make sure appmock domains are added to the dns server.
         # Setting first arg to 'auto' will force the restart and this is needed
         # so that dockers that start after can immediately see the domains.
         dns.maybe_restart_with_configuration('auto', uid, output)
-
-    ls_nodes = location_service_bootstrap.up_nodes(image, bin_oz, config, uid, logdir)
-    output['docker_ids'].extend(ls_nodes)
 
     # Start provider cluster instances
     setup_worker(zone_worker, bin_oz, 'zone_domains',
@@ -80,8 +79,9 @@ def up(config_path, image=default('image'), ceph_image=default('ceph_image'),
 
     # Start storages
     storages_dockers, storages_dockers_ids = \
-        storages.start_storages(config, config_path, ceph_image, s3_image,
-                                nfs_image, swift_image, image, uid)
+        storages.start_storages(config, config_path, ceph_image, cephrados_image, s3_image,
+                                nfs_image, swift_image, glusterfs_image, webdav_image, image,
+                                uid)
     output['storages'] = storages_dockers
 
     # Start onepanel instances
@@ -94,7 +94,7 @@ def up(config_path, image=default('image'), ceph_image=default('ceph_image'),
     luma_config = None
     if 'provider_domains' in config:
         luma_config = storages.start_luma(config, storages_dockers, image,
-                                          bin_luma,output, uid)
+                                          bin_luma, output, uid)
 
     # Start provider cluster instances
     setup_worker(provider_worker, bin_op_worker, 'provider_domains',
@@ -117,8 +117,8 @@ def up(config_path, image=default('image'), ceph_image=default('ceph_image'),
 
     # Setup global environment - providers, users, groups, spaces etc.
     if 'zone_domains' in config and \
-                    'provider_domains' in config and \
-                    'global_setup' in config:
+            'provider_domains' in config and \
+            'global_setup' in config:
         providers_map = {}
         for provider_name in config['provider_domains']:
             providers_map[provider_name] = {
@@ -155,7 +155,7 @@ echo $?'''
         command = command.format(json.dumps(env_configurator_input), True, True)
         env_configurator_dir = os.path.abspath(env_configurator_dir)
         docker_output = docker.run(
-            image='onedata/builder',
+            image=dockers_config.get_image('builder'),
             interactive=True,
             tty=True,
             rm=True,

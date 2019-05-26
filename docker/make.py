@@ -21,7 +21,7 @@ import os
 import platform
 import sys
 
-from environment import docker
+from environment import docker, dockers_config
 
 
 def default_keys_location():
@@ -39,8 +39,8 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     '-i', '--image',
     action='store',
-    default='onedata/builder',
-    help='docker image to use for building',
+    default=None,
+    help='override of docker image for building',
     dest='image')
 
 parser.add_argument(
@@ -56,6 +56,13 @@ parser.add_argument(
     default=True,
     help='disable mounting /var/cache/ccache and /var/cache/rebar3',
     dest='mount_cache')
+
+parser.add_argument(
+    '--cache-prefix',
+    action='store',
+    default="/var/cache",
+    help='Specify the cache prefix on host system (default: /var/cache)',
+    dest='cache_prefix')
 
 parser.add_argument(
     '-k', '--keys',
@@ -114,6 +121,7 @@ parser.add_argument(
     dest='cpuset_cpus')
 
 [args, pass_args] = parser.parse_known_args()
+dockers_config.ensure_image(args, 'image', 'builder')
 
 command = '''
 import os, shutil, subprocess, sys
@@ -174,10 +182,6 @@ command = command.format(
 # Mount docker socket so dockers can start dockers
 reflect = [(args.src, 'rw'), ('/var/run/docker.sock', 'rw')]
 reflect.extend(zip(args.reflect, ['rw'] * len(args.reflect)))
-if args.mount_cache:
-    reflect.extend([
-        ('/var/cache/ccache', 'rw'), ('/var/cache/rebar3', 'rw')
-    ])
 
 # Mount keys required for git and docker config that holds auth to
 # docker.onedata.org, so the docker can pull images from there.
@@ -186,6 +190,13 @@ if args.mount_cache:
 volumes = [
     (args.keys, '/tmp/keys', 'ro')
 ]
+
+if args.mount_cache:
+    volumes.extend([
+        ("%s/ccache"%(args.cache_prefix), '/var/cache/ccache', 'rw'),
+        ("%s/rebar3"%(args.cache_prefix), '/var/cache/rebar3', 'rw')
+    ])
+
 if os.path.isdir(expanduser('~/.docker')):
     volumes += [(expanduser('~/.docker'), '/tmp/docker_config', 'ro')]
 

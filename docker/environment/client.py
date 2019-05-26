@@ -9,7 +9,6 @@ to start.
 
 import copy
 import os
-
 from . import common, docker, dns, worker
 
 
@@ -61,12 +60,11 @@ def _node_up(image, bindir, config, config_path, dns_servers, logdir, storages_d
     # more than from release (ifs are in reverse order so it works when
     # there are multiple dirs).
     command = '''set -e
-[ -d {bindir}/release ] && cp {bindir}/release/oneclient /root/bin/oneclient
-[ -d {bindir}/relwithdebinfo ] && cp {bindir}/relwithdebinfo/oneclient /root/bin/oneclient
-[ -d {bindir}/debug ] && cp {bindir}/debug/oneclient /root/bin/oneclient
-chmod 777 /tmp
-mkdir /tmp/certs
-mkdir /tmp/keys
+[ -f {bindir}/release/oneclient ] && cp {bindir}/release/oneclient /root/bin/oneclient
+[ -f {bindir}/relwithdebinfo/oneclient ] && cp {bindir}/relwithdebinfo/oneclient /root/bin/oneclient
+[ -f {bindir}/debug/oneclient ] && cp {bindir}/debug/oneclient /root/bin/oneclient
+mkdir /tmp/keys /tmp/certs
+chmod -R 777 /tmp
 {mount_commands}
 bindfs --create-for-user={uid} --create-for-group={gid} /tmp /tmp
 '''
@@ -116,7 +114,6 @@ EOF
     command += '''bash'''
 
     volumes = [(bindir, bindir, 'ro')]
-    posix_storages = []
     if os_config['storages']:
         if isinstance(os_config['storages'][0], basestring):
             posix_storages = config['os_config']['storages']

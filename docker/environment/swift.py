@@ -8,6 +8,7 @@ Brings up a Swift storage with Keystone auth.
 
 import sys
 import time
+import subprocess
 
 from timeouts import *
 from . import common, docker
@@ -18,10 +19,14 @@ SWIFT_COMMAND = 'swift --auth-version 2 -A http://{0}:5000/v2.0 -K swift ' \
 
 def _get_swift_ready(ip):
     def _swift_ready(container):
-        output = docker.exec_(container, [
-            'bash', '-c', SWIFT_COMMAND.format(ip, 'list 2>&1')],
-                              output=True, stdout=sys.stderr)
-        return bool(output == '')
+        try:
+            output = docker.exec_(container, [
+                'bash', '-c', SWIFT_COMMAND.format(ip, 'list 2>&1')],
+                                  output=True, stdout=sys.stderr)
+        except subprocess.CalledProcessError:
+            return False
+        else:
+            return bool(output == '')
 
     return _swift_ready
 

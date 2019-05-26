@@ -8,12 +8,12 @@ This software is released under the MIT license cited in 'LICENSE.txt'
 Pushes .tar.gz package archives in onedata's bamboo artifact format:
 i. e.
 package/
-    fedora-23-x86_64
+    centos-7-x86_64
         SRPMS
             cluster-manager-1.0.0.1.ge1a52f4-1.fc23.src.rpm
         x86_64
             cluster-manager-1.0.0.1.ge1a52f4-1.fc23.x86_64.rpm
-    wily
+    xenial
         binary-amd64
             cluster-manager_1.0.0.1.ge1a52f4-1_amd64.deb
         source
@@ -22,7 +22,7 @@ package/
             cluster-manager_1.0.0.1.ge1a52f4-1_amd64.changes
             cluster-manager_1.0.0.1.ge1a52f4.orig.tar.gz
 
-Available distributions wily, xenial, fedora-21-x86_64, fedora-23-x86_64, centos-7-x86_64, sl6x-x86_64
+Available distributions xenial, bionic, centos-7-x86_64, fedora-29-x86_64
 """
 import argparse
 import json
@@ -63,25 +63,39 @@ Host packages
  '''
 
 APACHE_PREFIX = '/var/www/onedata'
+
+# Paths for legacy RPM repositories (prior to release 1802)
 YUM_REPO_LOCATION = {
     'fedora-21-x86_64': 'yum/fedora/21',
     'fedora-23-x86_64': 'yum/fedora/23',
     'centos-7-x86_64': 'yum/centos/7x',
     'sl6x-x86_64': 'yum/scientific/6x'
 }
+
+# Paths for Software Collection RPM repositories
+YUM_SCL_REPO_LOCATION = {
+    'fedora-29-x86_64': 'yum/{}/fedora/29',
+    'centos-7-x86_64': 'yum/{}/centos/7x'
+}
+
 DEB_PKG_LOCATION = {
     'trusty': 'apt/ubuntu/trusty/pool/main',
     'wily': 'apt/ubuntu/wily/pool/main',
-    'xenial': 'apt/ubuntu/xenial/pool/main'
+    'xenial': 'apt/ubuntu/xenial/pool/main',
+    'zesty': 'apt/ubuntu/zesty/pool/main',
+    'bionic': 'apt/ubuntu/bionic/pool/main',
+    'disco': 'apt/ubuntu/disco/pool/main'
 }
+
 REPO_TYPE = {
     'trusty': 'deb',
     'wily': 'deb',
     'xenial': 'deb',
-    'fedora-21-x86_64': 'rpm',
-    'fedora-23-x86_64': 'rpm',
-    'centos-7-x86_64': 'rpm',
-    'sl6x-x86_64': 'rpm'
+    'zesty': 'deb',
+    'bionic': 'deb',
+    'disco': 'deb',
+    'fedora-29-x86_64': 'rpm',
+    'centos-7-x86_64': 'rpm'
 }
 
 # create the top-level parser
@@ -106,6 +120,16 @@ parser.add_argument(
     action='store',
     help='Private key.',
     dest='identity')
+
+parser.add_argument(
+    '--release',
+    default=None,
+    action='store',
+    help="""Name of major Onedata release.
+            For RPM distributions this is equivalent to a Software Collection.
+            For DEB distributions this is a prefix in a repository.
+            Example: 1802""",
+    dest='release')
 
 # create the parser for the "config" command
 parser_config = subparsers.add_parser(
@@ -193,8 +217,35 @@ def deb_package_path(distro, type, package):
             os.path.join(distro, type))
 
 
+def deb_release_package_path(distro, release, type, package):
+    name = package.split('_')[0]
+
+    # Determine path name and the first letter to index in the
+    # apt repository based on the package name
+    first_letter = name[0]
+    if name.startswith('python-onedatafs'):
+        name = 'oneclient-base'
+        first_letter = name[0]
+    elif name.startswith('python3-onedatafs'):
+        name = 'oneclient-base'
+        first_letter = name[0]
+    elif name.startswith('python-'):
+        first_letter = name[len('python-')]
+    elif name.startswith('python3-'):
+        first_letter = name[len('python3-')]
+
+    return (os.path.join('apt/ubuntu/{release}/pool/main'.format(release=release),
+                         first_letter, name, package),
+            os.path.join(distro, type))
+
+
 def yum_package_path(distro, type, package):
     return (os.path.join(YUM_REPO_LOCATION[distro], type, package),
+            os.path.join(distro, type))
+
+
+def yum_release_package_path(distro, release, type, package):
+    return (os.path.join(YUM_SCL_REPO_LOCATION[distro].format(release,), type, package),
             os.path.join(distro, type))
 
 
@@ -220,29 +271,65 @@ def push(package_artifact):
         # for each distribution inside
         for distro in call(['ls', pkg_dir]).split():
             if REPO_TYPE[distro] == 'deb':
-                # push debs
+                release = args.release
+                # repository names for deb are in the form
+                # relase-distro, e.g. '1802-xenial'
+                if release:
+                    repo = '{}-{}'.format(release, distro)
+                else:
+                    repo = distro
+                # push debs if any were provided
                 binary_dir = os.path.join(pkg_dir, distro, 'binary-amd64')
-                for package in call(['ls', binary_dir]).split():
-                    path = deb_package_path(distro, 'binary-amd64', package)
-                    packages.append(path)
-                execute(['aptly', 'repo', 'add', '-force-replace', distro,
+                try:
+                    # Check if binary_dir exists in package
+                    execute(['ls', binary_dir])
+                    for package in call(['ls', binary_dir]).split():
+                        if release:
+                            path = deb_release_package_path(distro, release,
+                                                            'binary-amd64', package)
+                        else:
+                            path = deb_package_path(distro, 'binary-amd64', package)
+                        packages.append(path)
+                    execute(['aptly', 'repo', 'add', '-force-replace', repo,
                          binary_dir])
+                except CalledProcessError:
+                    print("Warning: No binary-amd64 directory in package or empty")
 
-                # push sources
+                # push sources if any were provided
                 source_dir = os.path.join(pkg_dir, distro, 'source')
-                for package in call(['ls', source_dir]).split():
-                    path = deb_package_path(distro, 'source', package)
-                    packages.append(path)
-                execute(['aptly', 'repo', 'add', '-force-replace', distro,
+                try:
+                    # Check if source_dir exists in package
+                    execute(['ls', source_dir])
+                    for package in call(['ls', source_dir]).split():
+                        if release:
+                            path = deb_release_package_path(distro, release,
+                                                            'source', package)
+                        else:
+                            path = deb_package_path(distro, 'source', package)
+                        packages.append(path)
+                    execute(['aptly', 'repo', 'add', '-force-replace', repo,
                          source_dir])
+                except CalledProcessError:
+                    print("Warning: No source directory in package or empty")
 
                 # update repo
-                execute(['aptly', 'publish', 'update', '-force-overwrite',
-                         distro, distro])
+                if release:
+                    execute(['aptly', 'publish', 'update', '-force-overwrite',
+                            distro, release])
+                else:
+                    execute(['aptly', 'publish', 'update', '-force-overwrite',
+                            distro, distro])
             elif REPO_TYPE[distro] == 'rpm':
                 # copy packages
-                repo_dir = os.path.join(APACHE_PREFIX,
-                                        YUM_REPO_LOCATION[distro])
+                repo_dir = None
+                scl = args.release
+                if scl:
+                    repo_dir = os.path.join(APACHE_PREFIX,
+                        YUM_SCL_REPO_LOCATION[distro].format(scl,))
+                else:
+                    repo_dir = os.path.join(APACHE_PREFIX,
+                        YUM_REPO_LOCATION[distro])
+
                 distro_contents = os.path.join(pkg_dir, distro)
 
                 print("Signing packages ...")
@@ -255,12 +342,15 @@ def push(package_artifact):
                 for type in ['x86_64', 'SRPMS']:
                     dir = os.path.join(distro_contents, type)
                     for package in call(['ls', dir]).split():
-                        path = yum_package_path(distro, type, package)
+                        if scl:
+                            path = yum_release_package_path(distro, scl, type, package)
+                        else:
+                            path = yum_package_path(distro, type, package)
                         packages.append(path)
 
                 # update createrepo
                 print("Updating repository ...")
-                call(['createrepo', repo_dir])
+                call(['createrepo', '--update', repo_dir])
 
         write_report(packages)
         return 0

@@ -14,7 +14,7 @@ from __future__ import print_function
 import argparse
 import json
 
-from environment import env
+from environment import env, dockers_config
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -23,23 +23,37 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     '-i', '--image',
     action='store',
-    default=env.default('image'),
-    help='the image to use for the components',
+    default=None,
+    help='override of docker image for onedata components',
     dest='image')
 
 parser.add_argument(
     '-ci', '--ceph-image',
     action='store',
-    default=env.default('ceph_image'),
-    help='the image to use for the ceph storages',
+    default=None,
+    help='override of docker image for ceph storages',
     dest='ceph_image')
 
 parser.add_argument(
     '-si', '--s3-image',
     action='store',
-    default=env.default('s3_image'),
-    help='the image to use for the s3 storages',
+    default=None,
+    help='override of docker image for s3 storages',
     dest='s3_image')
+
+parser.add_argument(
+    '-gi', '--glusterfs-image',
+    action='store',
+    default=None,
+    help='override of docker image for GlusterFS storages',
+    dest='glusterfs_image')
+
+parser.add_argument(
+    '-wi', '--webdav-image',
+    action='store',
+    default=None,
+    help='override of docker image for WebDAV storages',
+    dest='webdav_image')
 
 parser.add_argument(
     '-bw', '--bin-worker',
@@ -110,10 +124,16 @@ parser.add_argument(
     help='path to json configuration file')
 
 args = parser.parse_args()
+dockers_config.ensure_image(args, 'image', 'worker')
+dockers_config.ensure_image(args, 'ceph_image', 'ceph')
+dockers_config.ensure_image(args, 's3_image', 's3')
+dockers_config.ensure_image(args, 'glusterfs_image', 'glusterfs')
+dockers_config.ensure_image(args, 'webdav_image', 'webdav')
 
 output = env.up(args.config_path, image=args.image, ceph_image=args.ceph_image,
-                s3_image=args.s3_image, bin_am=args.bin_am,
-                bin_oz=args.bin_oz,
+                s3_image=args.s3_image, glusterfs_image=args.glusterfs_image,
+                webdav_image=args.webdav_image,
+                bin_am=args.bin_am, bin_oz=args.bin_oz,
                 bin_cluster_manager=args.bin_cluster_manager,
                 bin_op_worker=args.bin_op_worker,
                 bin_cluster_worker=args.bin_cluster_worker,
