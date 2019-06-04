@@ -40,8 +40,7 @@ cat > ${REPORT_FILENAME} <<EOF
 #
 # The pull-gui.sh script fetches a GUI package (static files) and places it in
 # deps directory (see pull-gui.sh -> TARGET_PATH). The package must be moved to
-# the release package during release generation (typically done in
-# rebar.config).
+# the target location during release generation (usually done in rebar.config).
 # The script attempts to download specified docker image from two repositories:
 # docker.onedata.org (primary) or dockerhub (fallback).
 # ------------------------------------------------------------------------------
