@@ -15,7 +15,7 @@
 # ./bamboos/scripts/gui/publish_gui_pkg_docker.sh --user bamboo --password <some_pass>
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-REPORT_FILENAME=gui-config.sh
+REPORT_FILENAME=gui-image.conf
 BUILD_REPORT_TXT_FILENAME=docker-build-report.txt
 PROJECT_NAME=$(basename "$PWD")
 
