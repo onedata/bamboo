@@ -27,23 +27,24 @@ rm -rf gui_static
 PKG_SHA_SUM=`shasum -a 256 gui_static.tar.gz | cut -f1 -d ' '`
 echo "Package SHA-256: ${PKG_SHA_SUM}"
 
-${SCRIPT_DIR}/../docker/docker_build.py --repository docker.onedata.org --tag "SHA256-${PKG_SHA_SUM}" --name ${PROEJCT_NAME} --publish --remove $@ .
+${SCRIPT_DIR}/../docker/docker_build.py --repository docker.onedata.org --tag "SHA256-${PKG_SHA_SUM}" --name ${PROJECT_NAME} --publish --remove $@ .
 
 GIT_COMMIT_TAG=$(cat $BUILD_REPORT_TXT_FILENAME | sed -n "s/^.*docker.onedata.org.*\(ID-.*\).*$/\1/p" | head -n 1)
 
 cat > ${REPORT_FILENAME} <<EOF
 #!/usr/bin/env bash
 
-#####################################################################
+# ------------------------------------------------------------------------------
 # This is a configuration file for the pull-gui.sh script, for more see:
 #   _build/default/lib/gui/pull-gui.sh
 #
 # The pull-gui.sh script fetches a GUI package (static files) and places it in
 # deps directory (see pull-gui.sh -> TARGET_PATH). The package must be moved to
-# the release package during release generation (typically done in rebar.config).
+# the release package during release generation (typically done in
+# rebar.config).
 # The script attempts to download specified docker image from two repositories:
 # docker.onedata.org (primary) or dockerhub (fallback).
-#####################################################################
+# ------------------------------------------------------------------------------
 
 # The name of the docker image containing the GUI package.
 IMAGE_NAME="${PROJECT_NAME}"
