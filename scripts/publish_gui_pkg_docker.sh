@@ -32,8 +32,6 @@ ${SCRIPT_DIR}/../docker/docker_build.py --repository docker.onedata.org --tag "S
 GIT_COMMIT_TAG=$(cat $BUILD_REPORT_TXT_FILENAME | sed -n "s/^.*docker.onedata.org.*\(ID-.*\).*$/\1/p" | head -n 1)
 
 cat > ${REPORT_FILENAME} <<EOF
-#!/usr/bin/env bash
-
 # ------------------------------------------------------------------------------
 # This is a configuration file for the pull-gui.sh script, for more see:
 #   _build/default/lib/gui/pull-gui.sh
