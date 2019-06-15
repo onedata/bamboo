@@ -306,6 +306,14 @@
                     }
                 }
             }
+        },
+        "providers": {
+            "p1": {
+                "creator": "user1"
+            },
+            "p2.oz": {
+                "creator": "user2"
+            }
         }
     },
     "appmock_domains": {

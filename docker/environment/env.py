@@ -92,14 +92,15 @@ def up(config_path,
 
     # Start python LUMA service
     luma_config = None
-    if 'provider_domains' in config:
+    # set up worker only if provider_domains exist AND are not an empty dict
+    if config.get('provider_domains'):
         luma_config = storages.start_luma(config, storages_dockers, image,
                                           bin_luma, output, uid)
 
-    # Start provider cluster instances
-    setup_worker(provider_worker, bin_op_worker, 'provider_domains',
-                 bin_cluster_manager, config, config_path, dns_server, image,
-                 logdir, output, uid, storages_dockers, luma_config)
+        # Start provider cluster instances
+        setup_worker(provider_worker, bin_op_worker, 'provider_domains',
+                     bin_cluster_manager, config, config_path, dns_server, image,
+                     logdir, output, uid, storages_dockers, luma_config)
 
     # Start stock cluster worker instances
     setup_worker(cluster_worker, bin_cluster_worker, 'cluster_domains',

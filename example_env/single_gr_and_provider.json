@@ -172,6 +172,11 @@
                     }
                 }
             }
+        },
+        "providers": {
+            "p1": {
+                "creator": "user1"
+            }
         }
     }
 }

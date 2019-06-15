@@ -29,6 +29,8 @@ class OZWorkerConfigurator:
         apps_sys_config = cfg['nodes']['node']['sys.config']
         sys_config = apps_sys_config[self.app_name()]
 
+        sys_config['disable_gui_package_verification'] = True
+
         if 'cluster_worker' not in apps_sys_config:
             apps_sys_config['cluster_worker'] = dict()
         apps_sys_config['cluster_worker']['external_ip'] = {'string': 'IP_PLACEHOLDER'}
