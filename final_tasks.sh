@@ -6,7 +6,7 @@ ONE_ENV_DEPLOYMENT_DIR="/home/bamboo/.one-env"
 DOCKER_CMD_TIMEOUT=10
 DELETE_HELM_RELEASE_TIMEOUT=60
 DELETE_K8S_NAMESPACE_TIMEOUT=60
-DELETE_PV_TIMEOUT=20
+DELETE_K8S_ELEM_TIMEOUT=20
 
 
 execute_with_timeout() {
@@ -38,12 +38,30 @@ do
 done
 
 # pv are not in any namespace so we have to delete them separately
-PVS=$(kubectl get pv)
+PVS=$(kubectl get pv --no-headers -o custom-columns=":metadata.name")
 for pv in ${PVS}
 do
-    execute_with_timeout ${DELETE_PV_TIMEOUT} kubectl delete pv ${pv}
+    execute_with_timeout ${DELETE_K8S_ELEM_TIMEOUT} kubectl delete pv ${pv}
 done
 
+# sometimes deleting helm release / k8s namespace leaves some deployments
+DEPLOYMENTS=$(kubectl get deployments --no-headers -o custom-columns=":metadata.name")
+for deployment in ${DEPLOYMENTS}
+do
+    execute_with_timeout ${DELETE_K8S_ELEM_TIMEOUT} kubectl delete deployment ${deployment}
+done
+
+PODS=$(kubectl get pods --no-headers -o custom-columns=":metadata.name")
+for pod in ${PODS}
+do
+    execute_with_timeout ${DELETE_K8S_ELEM_TIMEOUT} kubectl delete pod ${pod}
+done
+
+SERVICES=$(kubectl get services --no-headers -o custom-columns=":metadata.name" | grep -v kubernetes)
+for service in ${SERVICES}
+do
+    execute_with_timeout ${DELETE_K8S_ELEM_TIMEOUT} kubectl delete service ${service}
+done
 
 # clear docker
 CONTAINERS=$(docker ps -qa)
