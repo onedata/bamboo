@@ -13,7 +13,7 @@ main([Cookie, Node, Name, Hostname, Scheme, BucketName, AccessKey, SecretKey,
         <<"accessKey">> => list_to_binary(AccessKey),
         <<"secretKey">> => list_to_binary(SecretKey)
     },
-    Helper = safe_call(NodeAtom, helper, new_helper, [
+    {ok, Helper} = safe_call(NodeAtom, helper, new_helper, [
         <<"s3">>,
         #{
             <<"hostname">> => list_to_binary(Hostname),

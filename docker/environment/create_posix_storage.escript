@@ -11,7 +11,7 @@ main([Cookie, Node, Name, MountPoint, StoragePathType]) ->
         <<"uid">> => <<"0">>,
         <<"gid">> => <<"0">>
     },
-    Helper = safe_call(NodeAtom, helper, new_helper, [
+    {ok, Helper} = safe_call(NodeAtom, helper, new_helper, [
         <<"posix">>,
         #{<<"mountPoint">> => list_to_binary(MountPoint)},
         UserCtx,

@@ -13,7 +13,7 @@ main([Cookie, Node, Name, Volume, Hostname, Port, Transport, MountPoint, XlatorO
         <<"uid">> => <<"0">>,
         <<"gid">> => <<"0">>
     },
-    Helper = safe_call(NodeAtom, helper, new_helper, [
+    {ok, Helper} = safe_call(NodeAtom, helper, new_helper, [
         <<"glusterfs">>,
         #{
             <<"volume">> => list_to_binary(Volume),

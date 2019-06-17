@@ -14,7 +14,7 @@ main([Cookie, Node, Name, LatencyMin, LatencyMax, TimeoutProbability, Filter,
         <<"uid">> => <<"0">>,
         <<"gid">> => <<"0">>
     },
-    Helper = safe_call(NodeAtom, helper, new_helper, [
+    {ok, Helper} = safe_call(NodeAtom, helper, new_helper, [
         <<"nulldevice">>,
         #{
             <<"latencyMin">> => list_to_binary(LatencyMin),

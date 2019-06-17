@@ -15,7 +15,7 @@ main([Cookie, Node, Name, Endpoint, CredentialsType,
         <<"credentialsType">> => list_to_binary(CredentialsType),
         <<"credentials">> => list_to_binary(Credentials)
     },
-    Helper = safe_call(NodeAtom, helper, new_helper, [
+    {ok, Helper} = safe_call(NodeAtom, helper, new_helper, [
         <<"webdav">>,
         #{
             <<"endpoint">> => list_to_binary(Endpoint),

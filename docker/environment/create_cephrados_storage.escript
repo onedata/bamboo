@@ -13,7 +13,7 @@ main([Cookie, Node, Name, ClusterName, MonitorHostname, PoolName, Username,
         <<"username">> => list_to_binary(Username),
         <<"key">> => list_to_binary(Key)
     },
-    Helper = safe_call(NodeAtom, helper, new_helper, [
+    {ok, Helper} = safe_call(NodeAtom, helper, new_helper, [
         <<"cephrados">>,
         #{
             <<"monitorHostname">> => list_to_binary(MonitorHostname),

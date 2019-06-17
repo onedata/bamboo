@@ -13,7 +13,7 @@ main([Cookie, Node, Name, AuthUrl, ContainerName, TenantName, Username, Password
         <<"username">> => list_to_binary(Username),
         <<"password">> => list_to_binary(Password)
     },
-    Helper = safe_call(NodeAtom, helper, new_helper, [
+    {ok, Helper} = safe_call(NodeAtom, helper, new_helper, [
         <<"swift">>,
         #{
             <<"authUrl">> => list_to_binary(AuthUrl),
