@@ -7,7 +7,7 @@
 %%%-------------------------------------------------------------------
 %%% @doc
 %%% Dynamic configuration script for rebar.config. Replaces all
-%%% occurrences of "ssh://git@git.plgrid.pl:7999/vfs" with
+%%% occurrences of "ssh://git@git.onedata.org:7999/vfs" with
 %%% ONEDATA_GIT_URL value.
 %%% @end
 %%%-------------------------------------------------------------------
@@ -17,7 +17,7 @@ case os:getenv("ONEDATA_GIT_URL") of
     OnedataGitUrl ->
 
         Replace = fun(Entry) ->
-            re:replace(Entry, "ssh://git@git.plgrid.pl:7999/vfs",
+            re:replace(Entry, "ssh://git@git.onedata.org:7999/vfs",
                 OnedataGitUrl, [{return,list}])
         end,
 
