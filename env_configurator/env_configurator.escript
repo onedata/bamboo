@@ -155,11 +155,11 @@ main([InputJson, RegisterInOz, SetUpEntities]) ->
                 ProviderCfg = proplists:get_value(Provider, Providers, []),
                 {DefaultCreator, _} = hd(lists:sort(Users)),
                 Creator = proplists:get_value(<<"creator">>, ProviderCfg, DefaultCreator),
-                Root = call_node(OZNode, OZCookie, entity_logic, root_client, []),
+                Root = call_node(OZNode, OZCookie, aai, root_auth, []),
                 {ok, Macaroon} = call_node(OZNode, OZCookie, user_logic, create_provider_registration_token, [
                     Root, Creator
                 ]),
-                {ok, Token} = call_node(OZNode, OZCookie, onedata_macaroons, serialize, [
+                {ok, Token} = call_node(OZNode, OZCookie, macaroons, serialize, [
                     Macaroon
                 ]),
                 case list_to_atom(string:to_lower(RegisterInOz)) of
