@@ -11,13 +11,14 @@ main([Cookie, Node, Name, Endpoint, CredentialsType,
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
 
-    {ok, UserCtx} = safe_call(NodeAtom, helper, new_webdav_user_ctx, [
-        list_to_binary(CredentialsType),
-        list_to_binary(Credentials)
-    ]),
-    {ok, Helper} = safe_call(NodeAtom, helper, new_webdav_helper, [
-        list_to_binary(Endpoint),
+    UserCtx = #{
+        <<"credentialsType">> => list_to_binary(CredentialsType),
+        <<"credentials">> => list_to_binary(Credentials)
+    },
+    {ok, Helper} = safe_call(NodeAtom, helper, new_helper, [
+        <<"webdav">>,
         #{
+            <<"endpoint">> => list_to_binary(Endpoint),
             <<"verifyServerCertificate">> => list_to_binary(VerifyServerCertificate),
             <<"authorizationHeader">> => list_to_binary(AuthorizationHeader),
             <<"rangeWriteSupport">> => list_to_binary(RangeWriteSupport),

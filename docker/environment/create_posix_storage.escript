@@ -7,11 +7,15 @@ main([Cookie, Node, Name, MountPoint, StoragePathType]) ->
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
 
-    {ok, UserCtx} = safe_call(NodeAtom, helper, new_posix_user_ctx, [0, 0]),
-    {ok, Helper} = safe_call(NodeAtom, helper, new_posix_helper, [
-        list_to_binary(MountPoint),
-        #{},
+    UserCtx = #{
+        <<"uid">> => <<"0">>,
+        <<"gid">> => <<"0">>
+    },
+    {ok, Helper} = safe_call(NodeAtom, helper, new_helper, [
+        <<"posix">>,
+        #{<<"mountPoint">> => list_to_binary(MountPoint)},
         UserCtx,
+        false,
         list_to_binary(StoragePathType)
     ]),
 

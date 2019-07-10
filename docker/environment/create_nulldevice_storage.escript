@@ -10,8 +10,12 @@ main([Cookie, Node, Name, LatencyMin, LatencyMax, TimeoutProbability, Filter,
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
 
-    {ok, UserCtx} = safe_call(NodeAtom, helper, new_nulldevice_user_ctx, [0, 0]),
-    {ok, Helper} = safe_call(NodeAtom, helper, new_nulldevice_helper, [
+    UserCtx = #{
+        <<"uid">> => <<"0">>,
+        <<"gid">> => <<"0">>
+    },
+    {ok, Helper} = safe_call(NodeAtom, helper, new_helper, [
+        <<"nulldevice">>,
         #{
             <<"latencyMin">> => list_to_binary(LatencyMin),
             <<"latencyMax">> => list_to_binary(LatencyMax),
