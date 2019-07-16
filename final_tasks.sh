@@ -25,12 +25,14 @@ docker run -v ${ONEDATA_STORAGE_PATH}:${ONEDATA_STORAGE_PATH} \
 
 
 # clear k8s
+echo "Cleaning helm deployments"
 HELM_RELEASES=$(helm ls --all --short)
 for release in ${HELM_RELEASES}
 do
     execute_with_timeout ${DELETE_HELM_RELEASE_TIMEOUT} helm delete --purge ${release}
 done
 
+echo "Cleanining pods"
 NAMESPACES=$(kubectl get ns -o jsonpath="{.items[*].metadata.name}" | grep -v kube-system)
 for namespace in ${NAMESPACES};
 do
@@ -38,6 +40,7 @@ do
 done
 
 # pv are not in any namespace so we have to delete them separately
+echo "Cleaning kube persistant volumes"
 PVS=$(kubectl get pv --no-headers -o custom-columns=":metadata.name")
 for pv in ${PVS}
 do
@@ -63,7 +66,12 @@ do
     execute_with_timeout ${DELETE_K8S_ELEM_TIMEOUT} kubectl delete service ${service}
 done
 
+# Clean swift docker with special treatment as it hangs sometimes
+echo "Cleaning dockswift container"
+sudo /usr/local/sbin/clean-dockswift.sh
+
 # clear docker
+echo "Cleaning docker containers"
 CONTAINERS=$(docker ps -qa)
 CONTAINERS_TO_REMOVE=${CONTAINERS}
 
