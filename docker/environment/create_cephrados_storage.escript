@@ -4,7 +4,7 @@
 -export([main/1]).
 
 main([Cookie, Node, Name, ClusterName, MonitorHostname, PoolName, Username,
-    Key, Insecure, StoragePathType]) ->
+    Key, BlockSize, Insecure, StoragePathType]) ->
 
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
@@ -18,7 +18,8 @@ main([Cookie, Node, Name, ClusterName, MonitorHostname, PoolName, Username,
         #{
             <<"monitorHostname">> => list_to_binary(MonitorHostname),
             <<"clusterName">> => list_to_binary(ClusterName),
-            <<"poolName">> => list_to_binary(PoolName)
+            <<"poolName">> => list_to_binary(PoolName),
+            <<"blockSize">> => list_to_binary(BlockSize)
         },
         UserCtx,
         list_to_atom(Insecure),
