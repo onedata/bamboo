@@ -13,8 +13,8 @@ __license__ = "This software is released under the MIT license cited in " \
 import signal
 import sys
 import argparse
-from paramiko import SSHClient, AutoAddPolicy
-from scp import SCPClient
+from paramiko import SSHClient, AutoAddPolicy, SSHException
+from scp import SCPClient, SCPException
 from artifact_utils import (artifact_path, delete_file, partial_extension)
 
 
@@ -35,10 +35,11 @@ def upload_artifact_safe(ssh: SSHClient, artifact: str, plan: str,
     try:
         upload_artifact(ssh, artifact, partial_file_name)
         rename_uploaded_file(ssh, partial_file_name, file_name)
-    except:
+    except (SCPException, SSHException) as e:
         print("Uploading artifact of plan {0}, on branch {1} failed"
               .format(plan, branch))
         delete_file(ssh, partial_file_name)
+        raise e
 
 
 def upload_artifact(ssh: SSHClient, artifact: str, remote_path: str) -> None:
