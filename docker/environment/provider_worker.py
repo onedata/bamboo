@@ -68,23 +68,40 @@ class ProviderWorkerConfigurator:
             if isinstance(config['os_config']['storages'][0], basestring):
                 posix_storages = config['os_config']['storages']
             else:
-                posix_storages = [{
-                    'name': s['name'],
-                    'readonly': s.get('readonly', False)
-                } for s in config['os_config']['storages'] if
-                    s['type'] == 'posix']
+                posix_storages = []
+                for s in config['os_config']['storages']:
+                    if s['type'] == 'posix' and 'group' in s:
+                        posix_storages.append({
+                            'name': s['name'],
+                            'readonly': s.get('readonly', False),
+                            'group': s['group']
+                        })
+                    elif s['type'] == 'posix':
+                        posix_storages.append({
+                            'name': s['name'],
+                            'readonly': s.get('readonly', False)
+                        })
         else:
             posix_storages = []
 
         extra_volumes = []
+        grouped_storages = {}
+
         for s in posix_storages:
-            name = s['name']
-            readonly = s['readonly']
             if not storages_dockers:
                 storages_dockers = {'posix': {}}
+            name = s['name']
+            readonly = s['readonly']
             if name not in storages_dockers['posix'].keys():
-                v = common.volume_for_storage(name, readonly)
-                (host_path, docker_path, mode) = v
+                if 'group' in s and s['group'] in grouped_storages:
+                    (host_path, docker_path, mode) = (grouped_storages[s['group']], name, 'ro' if readonly else 'rw')
+                elif 'group' in s:
+                    (host_path, docker_path, mode) = common.volume_for_storage(name, readonly)
+                    grouped_storages[s['group']] = host_path
+                else:
+                    (host_path, docker_path, mode) = common.volume_for_storage(name, readonly)
+
+                v = (host_path, docker_path, mode)
                 storages_dockers['posix'][name] = {
                     "host_path": host_path,
                     "docker_path": docker_path,
@@ -93,7 +110,6 @@ class ProviderWorkerConfigurator:
             else:
                 d = storages_dockers['posix'][name]
                 v = (d['host_path'], d['docker_path'], d['mode'])
-
             extra_volumes.append(v)
 
         # Check if gui override is enabled in env and add required volumes
@@ -166,9 +182,10 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
             storage = {'type': 'posix', 'name': storage}
         if storage['type'] in ['posix', 'nfs']:
             st_path = storage['name']
+            print("STORAGE: ", storage)
             command = ['escript', script_paths['posix'], cookie,
                        first_node, storage['name'], st_path,
-                       'canonical']
+                       'canonical', str(storage.get('readonly', False))]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'ceph':
