@@ -23,8 +23,8 @@ To override an image using a config file, place a json file called
 The file should contain simple key-value pairs, with keys being types of
 dockers to use in bamboos scripts. Example 'dockers.config' content:
 {
-    "builder": "onedata/builder:v40",
-    "worker": "onedata/worker:v42"
+    "builder": "onedata/builder:1902-1",
+    "worker": "onedata/worker:1902-1"
 }
 
 Images can also be overriden using ENV variables
