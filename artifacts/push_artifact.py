@@ -16,7 +16,7 @@ import argparse
 from paramiko import SSHClient, AutoAddPolicy, SSHException
 from scp import SCPClient, SCPException
 from artifact_utils import (artifact_path, delete_file, partial_extension)
-
+import boto3
 
 def upload_artifact_safe(ssh: SSHClient, artifact: str, plan: str,
                          branch: str, hostname: str, port: int,
@@ -42,6 +42,18 @@ def upload_artifact_safe(ssh: SSHClient, artifact: str, plan: str,
         raise e
 
 
+def s3_upload_artifact_safe(s3, bucket: str, artifact: str, plan: str,
+                         branch: str) -> None:
+
+    file_name = artifact_path(plan, branch)
+    ext = partial_extension()
+    partial_file_name = file_name + ext
+    #print(file_name)
+    data = open(artifact, 'rb')
+    bucket = s3.Bucket(bucket)
+    bucket.put_object(Key=file_name, Body=data)
+
+
 def upload_artifact(ssh: SSHClient, artifact: str, remote_path: str) -> None:
     """
     Uploads given artifact to repo.
@@ -51,7 +63,6 @@ def upload_artifact(ssh: SSHClient, artifact: str, remote_path: str) -> None:
     """
     with SCPClient(ssh.get_transport()) as scp:
         scp.put(artifact, remote_path=remote_path)
-
 
 def rename_uploaded_file(ssh: SSHClient, src_file: str,
                          target_file: str) -> None:
@@ -94,18 +105,51 @@ def main():
         help='Name of current bamboo plan',
         required=True)
 
+    parser.add_argument(
+        '--s3-url',
+        help='The S3 endpoint URL',
+        default='https://storage.cloud.cyfronet.pl',
+        required=False)
+
+    parser.add_argument(
+        '--s3-bucket',
+        help='The S3 bucket name',
+        default='bamboo-artifacts-2',
+        required=False)
+
     args = parser.parse_args()
 
-    ssh = SSHClient()
-    ssh.set_missing_host_key_policy(AutoAddPolicy())
-    ssh.load_system_host_keys()
-    ssh.connect(args.hostname, port=args.port, username=args.username)
+    if args.hostname != 'S3':
+        ssh = SSHClient()
+        ssh.set_missing_host_key_policy(AutoAddPolicy())
+        ssh.load_system_host_keys()
+        ssh.connect(args.hostname, port=args.port, username=args.username)
+        upload_artifact_safe(ssh, args.artifact, args.plan, args.branch,
+                             args.hostname, args.port, args.username)
+        ssh.close()
+    else:
+        s3_session = boto3.session.Session()
 
-    upload_artifact_safe(ssh, args.artifact, args.plan, args.branch,
-                         args.hostname, args.port, args.username)
-
-    ssh.close()
-
+        #s3_client = s3_session.client(
+        s3_res = s3_session.resource(
+            service_name='s3',
+            endpoint_url=args.s3_url
+        )
+        #print(s3_client.list_buckets())
+        # for bucket in s3_res.buckets.all():
+        #     print(bucket.name)
+        # data = open('/run/boza', 'rb')
+        # bucket = s3_res.Bucket('bamboo-artifacts-2')
+        # bucket.put_object(Key='boza', Body=data)
+        # copy_source = {
+        #     'Bucket': 'bamboo-artifacts-2',
+        #     'Key': 'boza'
+        # }
+        #bucket.copy(copy_source, 'boza2')
+        #s3_res.Object('bamboo-artifacts-2', 'boza').delete()
+        s3_upload_artifact_safe(s3_res, args.s3_bucket, args.artifact, args.plan,
+                                args.branch)
+        
 
 if __name__ == '__main__':
     main()
