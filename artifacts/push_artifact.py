@@ -50,8 +50,8 @@ def s3_upload_artifact_safe(s3, bucket: str, artifact: str, plan: str,
     partial_file_name = file_name + ext
     #print(file_name)
     data = open(artifact, 'rb')
-    bucket = s3.Bucket(bucket)
-    bucket.put_object(Key=file_name, Body=data)
+    buck = s3.Bucket(bucket)
+    buck.put_object(Key=file_name, Body=data)
 
 
 def upload_artifact(ssh: SSHClient, artifact: str, remote_path: str) -> None:
@@ -135,18 +135,6 @@ def main():
             service_name='s3',
             endpoint_url=args.s3_url
         )
-        #print(s3_client.list_buckets())
-        # for bucket in s3_res.buckets.all():
-        #     print(bucket.name)
-        # data = open('/run/boza', 'rb')
-        # bucket = s3_res.Bucket('bamboo-artifacts-2')
-        # bucket.put_object(Key='boza', Body=data)
-        # copy_source = {
-        #     'Bucket': 'bamboo-artifacts-2',
-        #     'Key': 'boza'
-        # }
-        #bucket.copy(copy_source, 'boza2')
-        #s3_res.Object('bamboo-artifacts-2', 'boza').delete()
         s3_upload_artifact_safe(s3_res, args.s3_bucket, args.artifact, args.plan,
                                 args.branch)
         

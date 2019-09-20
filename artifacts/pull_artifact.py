@@ -14,6 +14,7 @@ from paramiko import SSHClient, AutoAddPolicy
 from scp import SCPClient
 import signal
 import sys
+import boto3
 from typing import Callable, Optional, Any, Tuple
 
 from artifact_utils import artifact_path, ARTIFACTS_EXT, DEVELOP_BRANCH
@@ -43,6 +44,30 @@ def download_specific_or_default(ssh: SSHClient, plan: str, branch: str,
                 "pulling artifact from branch {2}.".format(plan, branch,
                                                            default_branch))
 
+def s3_download_specific_or_default(s3, bucket: str, plan: str, branch: str,
+                                 hostname: str, port: int, username: str,
+                                 default_branch: str = DEVELOP_BRANCH) -> None:
+    """
+    Downloads build artifact for specific plan and branch from repo.
+    If artifact doesn't exist in repo, artifact from default (develop) branch
+    is downloaded.
+    :param s3: s3 resource
+    :param bucket: The artifacts bucket name
+    :param plan: name of current bamboo plan
+    :param branch: name of current git branch
+    :param hostname: hostname of artifacts repository
+    :param port: SSH port
+    :param username: username to authenticate as
+    :param default_branch: name of default git branch
+    """
+    s3_download_artifact_safe(
+        s3, bucket, plan, branch, hostname, port, username,
+        exc_handler=download_default_artifact,
+        exc_handler_args=(s3, bucket, plan, default_branch, hostname, port,
+                          username),
+        exc_log="Artifact of plan {0}, specific for branch {1} not found, "
+                "pulling artifact from branch {2}.".format(plan, branch,
+                                                           default_branch))
 
 def download_default_artifact(ssh: SSHClient, plan: str, branch: str,
                               hostname: str, port: int, username: str) -> None:
@@ -60,6 +85,22 @@ def download_default_artifact(ssh: SSHClient, plan: str, branch: str,
         exc_log="Pulling artifact of plan {}, from branch {} failed."
                 .format(plan, branch))
 
+def s3_download_default_artifact(s3, bucket: str, plan: str, branch: str,
+                              hostname: str, port: int, username: str) -> None:
+    """
+    Downloads build artifact for specific plan from default branch.
+    :param s3: s3 resource
+    :param bucket: The artifacts bucket name
+    :param plan: name of current bamboo plan
+    :param branch: name of git branch
+    :param hostname: hostname of artifacts repository
+    :param port: SSH port
+    :param username: username to authenticate as
+    """
+    s3_download_artifact_safe(
+        s3, bucket, plan, branch, hostname, port, username,
+        exc_log="Pulling artifact of plan {}, from branch {} failed."
+                .format(plan, branch))
 
 def download_artifact_safe(ssh: SSHClient, plan: str, branch: str,
                            hostname: str, port: int, username: str,
@@ -96,6 +137,42 @@ def download_artifact_safe(ssh: SSHClient, plan: str, branch: str,
         if exc_handler:
             exc_handler(*exc_handler_args)
 
+def s3_download_artifact_safe(s3, bucket: str, plan: str, branch: str,
+                           hostname: str, port: int, username: str,
+                           exc_handler: Optional[Callable[..., Any]] = None,
+                           exc_handler_args: Tuple[Any, ...] = (),
+                           exc_log: str = '') -> None:
+    """
+    Downloads artifact from repo. Locks file while it's being downloaded.
+    If exception is thrown during download, exc_log is printed and
+    exc_handler function is called.
+    :param s3: s3 resource
+    :param bucket: The artifacts bucket name
+    :param plan: name of current bamboo plan
+    :param branch: name of current git branch
+    :param hostname: hostname of artifacts repository
+    :param port: SSH port
+    :param username: username to authenticate as
+    :param exc_handler: function called when exception is thrown while
+    artifact is being downloaded
+    :param exc_handler_args: args for exc_handler
+    :param exc_log: log that is printed when exception is thrown while
+    artifact is being downloaded
+    """
+
+    def signal_handler(_signum, _frame):
+        # ssh.connect(hostname, port=port, username=username)
+        sys.exit(1)
+
+    signal.signal(signal.SIGINT, signal_handler)
+
+    try:
+        s3_download_artifact(s3, bucket, plan, branch)
+    except:
+        print(exc_log)
+        if exc_handler:
+            exc_handler(*exc_handler_args)
+
 
 def download_artifact(ssh: SSHClient, plan: str, branch: str) -> None:
     """
@@ -108,6 +185,16 @@ def download_artifact(ssh: SSHClient, plan: str, branch: str) -> None:
         scp.get(artifact_path(plan, branch),
                 local_path=plan.replace("-", '_') + ARTIFACTS_EXT)
 
+def s3_download_artifact(s3, bucket: str, plan: str, branch: str) -> None:
+    """
+    Downloads artifact from S3 repo.
+    :param s3: s3 resource
+    :param bucket: The artifacts bucket name
+    :param plan: name of current bamboo plan
+    :param branch: name of current git branch
+    """
+    buck = s3.Bucket(bucket)
+    buck.download_file(artifact_path(plan, branch), plan.replace("-", '_') + ARTIFACTS_EXT)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -140,17 +227,40 @@ def main():
         help='Name of current bamboo plan',
         required=True)
 
+    parser.add_argument(
+        '--s3-url',
+        help='The S3 endpoint URL',
+        default='https://storage.cloud.cyfronet.pl',
+        required=False)
+
+    parser.add_argument(
+        '--s3-bucket',
+        help='The S3 bucket name',
+        default='bamboo-artifacts-2',
+        required=False)
+
     args = parser.parse_args()
 
-    ssh = SSHClient()
-    ssh.set_missing_host_key_policy(AutoAddPolicy())
-    ssh.load_system_host_keys()
-    ssh.connect(args.hostname, port=args.port, username=args.username)
+    if args.hostname != 'S3':
+        ssh = SSHClient()
+        ssh.set_missing_host_key_policy(AutoAddPolicy())
+        ssh.load_system_host_keys()
+        ssh.connect(args.hostname, port=args.port, username=args.username)
 
-    download_specific_or_default(ssh, args.plan, args.branch, args.hostname,
+        download_specific_or_default(ssh, args.plan, args.branch, args.hostname,
                                  args.port, args.username)
 
-    ssh.close()
+        ssh.close()
+    else:
+        s3_session = boto3.session.Session()
+
+        s3_res = s3_session.resource(
+            service_name='s3',
+            endpoint_url=args.s3_url
+        )
+        s3_download_specific_or_default(s3_res, args.s3_bucket, args.plan, args.branch,
+                                        args.hostname, args.port, args.username)
+
 
 
 if __name__ == '__main__':
