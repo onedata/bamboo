@@ -44,9 +44,10 @@ def download_specific_or_default(ssh: SSHClient, plan: str, branch: str,
                 "pulling artifact from branch {2}.".format(plan, branch,
                                                            default_branch))
 
-def s3_download_specific_or_default(s3, bucket: str, plan: str, branch: str,
-                                 hostname: str, port: int, username: str,
-                                 default_branch: str = DEVELOP_BRANCH) -> None:
+    
+def s3_download_specific_or_default(s3: boto3.resources, bucket: str, plan: str, branch: str,
+                                    hostname: str, port: int, username: str,
+                                    default_branch: str = DEVELOP_BRANCH) -> None:
     """
     Downloads build artifact for specific plan and branch from repo.
     If artifact doesn't exist in repo, artifact from default (develop) branch
@@ -62,13 +63,14 @@ def s3_download_specific_or_default(s3, bucket: str, plan: str, branch: str,
     """
     s3_download_artifact_safe(
         s3, bucket, plan, branch, hostname, port, username,
-        exc_handler=download_default_artifact,
+        exc_handler=s3_download_default_artifact,
         exc_handler_args=(s3, bucket, plan, default_branch, hostname, port,
                           username),
         exc_log="Artifact of plan {0}, specific for branch {1} not found, "
                 "pulling artifact from branch {2}.".format(plan, branch,
                                                            default_branch))
 
+    
 def download_default_artifact(ssh: SSHClient, plan: str, branch: str,
                               hostname: str, port: int, username: str) -> None:
     """
@@ -85,8 +87,10 @@ def download_default_artifact(ssh: SSHClient, plan: str, branch: str,
         exc_log="Pulling artifact of plan {}, from branch {} failed."
                 .format(plan, branch))
 
-def s3_download_default_artifact(s3, bucket: str, plan: str, branch: str,
-                              hostname: str, port: int, username: str) -> None:
+    
+def s3_download_default_artifact(s3: boto3.resources, bucket: str,
+                                 plan: str, branch: str,
+                                 hostname: str, port: int, username: str) -> None:
     """
     Downloads build artifact for specific plan from default branch.
     :param s3: s3 resource
@@ -94,14 +98,15 @@ def s3_download_default_artifact(s3, bucket: str, plan: str, branch: str,
     :param plan: name of current bamboo plan
     :param branch: name of git branch
     :param hostname: hostname of artifacts repository
-    :param port: SSH port
-    :param username: username to authenticate as
+    :param port: SSH port - unused, left for compatibility
+    :param username: username to authenticate as - unused, left for compatibility
     """
     s3_download_artifact_safe(
         s3, bucket, plan, branch, hostname, port, username,
         exc_log="Pulling artifact of plan {}, from branch {} failed."
                 .format(plan, branch))
 
+    
 def download_artifact_safe(ssh: SSHClient, plan: str, branch: str,
                            hostname: str, port: int, username: str,
                            exc_handler: Optional[Callable[..., Any]] = None,
@@ -137,11 +142,13 @@ def download_artifact_safe(ssh: SSHClient, plan: str, branch: str,
         if exc_handler:
             exc_handler(*exc_handler_args)
 
-def s3_download_artifact_safe(s3, bucket: str, plan: str, branch: str,
-                           hostname: str, port: int, username: str,
-                           exc_handler: Optional[Callable[..., Any]] = None,
-                           exc_handler_args: Tuple[Any, ...] = (),
-                           exc_log: str = '') -> None:
+            
+def s3_download_artifact_safe(s3: boto3.resources, bucket: str,
+                              plan: str, branch: str,
+                              hostname: str, port: int, username: str,
+                              exc_handler: Optional[Callable[..., Any]] = None,
+                              exc_handler_args: Tuple[Any, ...] = (),
+                              exc_log: str = '') -> None:
     """
     Downloads artifact from repo. Locks file while it's being downloaded.
     If exception is thrown during download, exc_log is printed and
@@ -161,7 +168,6 @@ def s3_download_artifact_safe(s3, bucket: str, plan: str, branch: str,
     """
 
     def signal_handler(_signum, _frame):
-        # ssh.connect(hostname, port=port, username=username)
         sys.exit(1)
 
     signal.signal(signal.SIGINT, signal_handler)
@@ -185,7 +191,9 @@ def download_artifact(ssh: SSHClient, plan: str, branch: str) -> None:
         scp.get(artifact_path(plan, branch),
                 local_path=plan.replace("-", '_') + ARTIFACTS_EXT)
 
-def s3_download_artifact(s3, bucket: str, plan: str, branch: str) -> None:
+        
+def s3_download_artifact(s3: boto3.resources,
+                         bucket: str, plan: str, branch: str) -> None:
     """
     Downloads artifact from S3 repo.
     :param s3: s3 resource
@@ -196,6 +204,7 @@ def s3_download_artifact(s3, bucket: str, plan: str, branch: str) -> None:
     buck = s3.Bucket(bucket)
     buck.download_file(artifact_path(plan, branch), plan.replace("-", '_') + ARTIFACTS_EXT)
 
+    
 def main():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -230,14 +239,12 @@ def main():
     parser.add_argument(
         '--s3-url',
         help='The S3 endpoint URL',
-        default='https://storage.cloud.cyfronet.pl',
-        required=False)
+        default='https://storage.cloud.cyfronet.pl')
 
     parser.add_argument(
         '--s3-bucket',
         help='The S3 bucket name',
-        default='bamboo-artifacts-2',
-        required=False)
+        default='bamboo-artifacts-2')
 
     args = parser.parse_args()
 

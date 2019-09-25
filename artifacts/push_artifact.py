@@ -18,6 +18,7 @@ from scp import SCPClient, SCPException
 from artifact_utils import (artifact_path, delete_file, partial_extension)
 import boto3
 
+
 def upload_artifact_safe(ssh: SSHClient, artifact: str, plan: str,
                          branch: str, hostname: str, port: int,
                          username: str) -> None:
@@ -42,13 +43,12 @@ def upload_artifact_safe(ssh: SSHClient, artifact: str, plan: str,
         raise e
 
 
-def s3_upload_artifact_safe(s3, bucket: str, artifact: str, plan: str,
-                         branch: str) -> None:
+def s3_upload_artifact_safe(s3: boto3.resources, bucket: str, artifact: str, plan: str,
+                            branch: str) -> None:
 
     file_name = artifact_path(plan, branch)
     ext = partial_extension()
     partial_file_name = file_name + ext
-    #print(file_name)
     data = open(artifact, 'rb')
     buck = s3.Bucket(bucket)
     buck.put_object(Key=file_name, Body=data)
@@ -64,6 +64,7 @@ def upload_artifact(ssh: SSHClient, artifact: str, remote_path: str) -> None:
     with SCPClient(ssh.get_transport()) as scp:
         scp.put(artifact, remote_path=remote_path)
 
+        
 def rename_uploaded_file(ssh: SSHClient, src_file: str,
                          target_file: str) -> None:
     ssh.exec_command("mv {0} {1}".format(src_file, target_file))
@@ -108,14 +109,12 @@ def main():
     parser.add_argument(
         '--s3-url',
         help='The S3 endpoint URL',
-        default='https://storage.cloud.cyfronet.pl',
-        required=False)
+        default='https://storage.cloud.cyfronet.pl')
 
     parser.add_argument(
         '--s3-bucket',
         help='The S3 bucket name',
-        default='bamboo-artifacts-2',
-        required=False)
+        default='bamboo-artifacts-2')
 
     args = parser.parse_args()
 
@@ -130,7 +129,6 @@ def main():
     else:
         s3_session = boto3.session.Session()
 
-        #s3_client = s3_session.client(
         s3_res = s3_session.resource(
             service_name='s3',
             endpoint_url=args.s3_url

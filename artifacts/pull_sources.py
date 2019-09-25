@@ -53,14 +53,12 @@ def main():
     parser.add_argument(
         '--s3-url',
         help='The S3 endpoint URL',
-        default='https://storage.cloud.cyfronet.pl',
-        required=False)
+        default='https://storage.cloud.cyfronet.pl')
 
     parser.add_argument(
         '--s3-bucket',
         help='The S3 bucket name',
-        default='bamboo-artifacts-2',
-        required=False)
+        default='bamboo-artifacts-2')
 
     args = parser.parse_args()
 
@@ -108,18 +106,18 @@ def main():
                     print('Getting artifact for plan {}\'s from branch {}'
                           .format(plan, branch))
                     exc_log = 'Branch {} in plan {} not found.'.format(branch,
-                                                                   plan)
+                                                                       plan)
                     s3_download_artifact_safe(s3_res, args.s3_bucket, plan, branch, args.hostname,
-                                           args.port, args.username,
-                                           exc_handler=exit,
-                                           exc_handler_args=(1,),
-                                           exc_log=exc_log)
+                                              args.port, args.username,
+                                              exc_handler=exit,
+                                              exc_handler_args=(1,),
+                                              exc_log=exc_log)
                 else:
                     s3_download_specific_or_default(s3_res, args.s3_bucket, plan,
-                                                 os.getenv(BAMBOO_BRANCH_NAME),
-                                                 args.hostname, args.port,
-                                                 args.username,
-                                                 default_branch=default_branch)
+                                                    os.getenv(BAMBOO_BRANCH_NAME),
+                                                    args.hostname, args.port,
+                                                    args.username,
+                                                    default_branch=default_branch)
         
 
 if __name__ == '__main__':
