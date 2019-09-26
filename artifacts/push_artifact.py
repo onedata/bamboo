@@ -47,8 +47,6 @@ def s3_upload_artifact_safe(s3: boto3.resources, bucket: str, artifact: str, pla
                             branch: str) -> None:
 
     file_name = artifact_path(plan, branch)
-    ext = partial_extension()
-    partial_file_name = file_name + ext
     data = open(artifact, 'rb')
     buck = s3.Bucket(bucket)
     buck.put_object(Key=file_name, Body=data)
