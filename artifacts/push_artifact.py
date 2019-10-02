@@ -13,9 +13,10 @@ __license__ = "This software is released under the MIT license cited in " \
 import signal
 import sys
 import argparse
-from paramiko import SSHClient, AutoAddPolicy
-from scp import SCPClient
+from paramiko import SSHClient, AutoAddPolicy, SSHException
+from scp import SCPClient, SCPException
 from artifact_utils import (artifact_path, delete_file, partial_extension)
+import boto3
 
 
 def upload_artifact_safe(ssh: SSHClient, artifact: str, plan: str,
@@ -35,10 +36,20 @@ def upload_artifact_safe(ssh: SSHClient, artifact: str, plan: str,
     try:
         upload_artifact(ssh, artifact, partial_file_name)
         rename_uploaded_file(ssh, partial_file_name, file_name)
-    except:
+    except (SCPException, SSHException) as e:
         print("Uploading artifact of plan {0}, on branch {1} failed"
               .format(plan, branch))
         delete_file(ssh, partial_file_name)
+        raise e
+
+
+def s3_upload_artifact_safe(s3: boto3.resources, bucket: str, artifact: str, plan: str,
+                            branch: str) -> None:
+
+    file_name = artifact_path(plan, branch)
+    data = open(artifact, 'rb')
+    buck = s3.Bucket(bucket)
+    buck.put_object(Key=file_name, Body=data)
 
 
 def upload_artifact(ssh: SSHClient, artifact: str, remote_path: str) -> None:
@@ -51,7 +62,7 @@ def upload_artifact(ssh: SSHClient, artifact: str, remote_path: str) -> None:
     with SCPClient(ssh.get_transport()) as scp:
         scp.put(artifact, remote_path=remote_path)
 
-
+        
 def rename_uploaded_file(ssh: SSHClient, src_file: str,
                          target_file: str) -> None:
     ssh.exec_command("mv {0} {1}".format(src_file, target_file))
@@ -93,18 +104,36 @@ def main():
         help='Name of current bamboo plan',
         required=True)
 
+    parser.add_argument(
+        '--s3-url',
+        help='The S3 endpoint URL',
+        default='https://storage.cloud.cyfronet.pl')
+
+    parser.add_argument(
+        '--s3-bucket',
+        help='The S3 bucket name',
+        default='bamboo-artifacts-2')
+
     args = parser.parse_args()
 
-    ssh = SSHClient()
-    ssh.set_missing_host_key_policy(AutoAddPolicy())
-    ssh.load_system_host_keys()
-    ssh.connect(args.hostname, port=args.port, username=args.username)
+    if args.hostname != 'S3':
+        ssh = SSHClient()
+        ssh.set_missing_host_key_policy(AutoAddPolicy())
+        ssh.load_system_host_keys()
+        ssh.connect(args.hostname, port=args.port, username=args.username)
+        upload_artifact_safe(ssh, args.artifact, args.plan, args.branch,
+                             args.hostname, args.port, args.username)
+        ssh.close()
+    else:
+        s3_session = boto3.session.Session()
 
-    upload_artifact_safe(ssh, args.artifact, args.plan, args.branch,
-                         args.hostname, args.port, args.username)
-
-    ssh.close()
-
+        s3_res = s3_session.resource(
+            service_name='s3',
+            endpoint_url=args.s3_url
+        )
+        s3_upload_artifact_safe(s3_res, args.s3_bucket, args.artifact, args.plan,
+                                args.branch)
+        
 
 if __name__ == '__main__':
     main()
