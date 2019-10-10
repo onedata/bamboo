@@ -2,6 +2,7 @@
 
 ONEDATA_STORAGE_PATH="/tmp/onedata"
 ONE_ENV_DEPLOYMENT_DIR="/home/bamboo/.one-env"
+ONE_ENV_ARTIFACTS_DIR="${PWD}/one_env/artifacts_dir"
 
 DOCKER_CMD_TIMEOUT=10
 DELETE_HELM_RELEASE_TIMEOUT=60
@@ -16,12 +17,20 @@ execute_with_timeout() {
     timeout --kill-after ${TIMEOUT} ${TIMEOUT} bash -c "${CMD}"
 }
 
-
-# clear spaces data and one-env deployment dir
-echo "Clearing ${ONEDATA_STORAGE_PATH} and ${ONE_ENV_DEPLOYMENT_DIR}"
-docker run -v ${ONEDATA_STORAGE_PATH}:${ONEDATA_STORAGE_PATH} \
-           -v ${ONE_ENV_DEPLOYMENT_DIR}:${ONE_ENV_DEPLOYMENT_DIR} \
-           alpine sh -c "rm -rf ${ONEDATA_STORAGE_PATH}/* ${ONE_ENV_DEPLOYMENT_DIR}/*"
+# clear spaces data and one-env deployment and artifacts dir
+if [ -d ${ONE_ENV_ARTIFACTS_DIR} ] 
+then
+	echo "Clearing ${ONEDATA_STORAGE_PATH} and ${ONE_ENV_DEPLOYMENT_DIR} and ${ONE_ENV_ARTIFACTS_DIR}"
+	docker run -v ${ONEDATA_STORAGE_PATH}:${ONEDATA_STORAGE_PATH} \
+        	   -v ${ONE_ENV_DEPLOYMENT_DIR}:${ONE_ENV_DEPLOYMENT_DIR} \
+	  	       -v ${ONE_ENV_ARTIFACTS_DIR}:${ONE_ENV_ARTIFACTS_DIR} \
+          	   alpine sh -c "rm -rf ${ONEDATA_STORAGE_PATH}/* ${ONE_ENV_DEPLOYMENT_DIR}/* ${ONE_ENV_ARTIFACTS_DIR}/*"
+else
+    echo "Clearing ${ONEDATA_STORAGE_PATH} and ${ONE_ENV_DEPLOYMENT_DIR}"
+	docker run -v ${ONEDATA_STORAGE_PATH}:${ONEDATA_STORAGE_PATH} \
+               -v ${ONE_ENV_DEPLOYMENT_DIR}:${ONE_ENV_DEPLOYMENT_DIR} \
+               alpine sh -c "rm -rf ${ONEDATA_STORAGE_PATH}/* ${ONE_ENV_DEPLOYMENT_DIR}/*"
+fi
 
 
 # clear k8s
