@@ -155,16 +155,17 @@ main([InputJson, RegisterInOz, SetUpEntities]) ->
                 ProviderCfg = proplists:get_value(Provider, Providers, []),
                 {DefaultCreator, _} = hd(lists:sort(Users)),
                 Creator = proplists:get_value(<<"creator">>, ProviderCfg, DefaultCreator),
-                Root = call_node(OZNode, OZCookie, aai, root_auth, []),
-                {ok, Macaroon} = call_node(OZNode, OZCookie, user_logic, create_provider_registration_token, [
-                    Root, Creator
+
+                Auth = call_node(OZNode, OZCookie, aai, user_auth, [Creator]),
+                {ok, Token} = call_node(OZNode, OZCookie, user_logic, create_provider_registration_token, [
+                    Auth, Creator
                 ]),
-                {ok, Token} = call_node(OZNode, OZCookie, macaroons, serialize, [
-                    Macaroon
+                {ok, Serialized} = call_node(OZNode, OZCookie, tokens, serialize, [
+                    Token
                 ]),
                 case list_to_atom(string:to_lower(RegisterInOz)) of
                     true ->
-                        register_in_onezone(ProviderWorkers, Cookie, Provider, Token);
+                        register_in_onezone(ProviderWorkers, Cookie, Provider, Serialized);
                     _ -> ok
                 end,
                 create_space_storage_mapping(hd(ProviderWorkers), Cookie, Spaces, Provider)
