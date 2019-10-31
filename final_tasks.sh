@@ -2,11 +2,13 @@
 
 ONEDATA_STORAGE_PATH="/tmp/onedata"
 ONE_ENV_DEPLOYMENT_DIR="/home/bamboo/.one-env"
+ONE_ENV_ARTIFACTS_DIR="${PWD}/one_env/artifacts_dir"
 
 DOCKER_CMD_TIMEOUT=10
 DELETE_HELM_RELEASE_TIMEOUT=60
 DELETE_K8S_NAMESPACE_TIMEOUT=60
 DELETE_K8S_ELEM_TIMEOUT=20
+DELETE_LOOP_TIMEOUT=60
 
 
 execute_with_timeout() {
@@ -16,12 +18,20 @@ execute_with_timeout() {
     timeout --kill-after ${TIMEOUT} ${TIMEOUT} bash -c "${CMD}"
 }
 
-
-# clear spaces data and one-env deployment dir
-echo "Clearing ${ONEDATA_STORAGE_PATH} and ${ONE_ENV_DEPLOYMENT_DIR}"
-docker run -v ${ONEDATA_STORAGE_PATH}:${ONEDATA_STORAGE_PATH} \
-           -v ${ONE_ENV_DEPLOYMENT_DIR}:${ONE_ENV_DEPLOYMENT_DIR} \
-           alpine sh -c "rm -rf ${ONEDATA_STORAGE_PATH}/* ${ONE_ENV_DEPLOYMENT_DIR}/*"
+# clear spaces data and one-env deployment and artifacts dir
+if [ -d ${ONE_ENV_ARTIFACTS_DIR} ] 
+then
+	echo "Clearing ${ONEDATA_STORAGE_PATH} and ${ONE_ENV_DEPLOYMENT_DIR} and ${ONE_ENV_ARTIFACTS_DIR}"
+	docker run -v ${ONEDATA_STORAGE_PATH}:${ONEDATA_STORAGE_PATH} \
+        	   -v ${ONE_ENV_DEPLOYMENT_DIR}:${ONE_ENV_DEPLOYMENT_DIR} \
+	  	       -v ${ONE_ENV_ARTIFACTS_DIR}:${ONE_ENV_ARTIFACTS_DIR} \
+          	   alpine sh -c "rm -rf ${ONEDATA_STORAGE_PATH}/* ${ONE_ENV_DEPLOYMENT_DIR}/* ${ONE_ENV_ARTIFACTS_DIR}/*"
+else
+    echo "Clearing ${ONEDATA_STORAGE_PATH} and ${ONE_ENV_DEPLOYMENT_DIR}"
+	docker run -v ${ONEDATA_STORAGE_PATH}:${ONEDATA_STORAGE_PATH} \
+               -v ${ONE_ENV_DEPLOYMENT_DIR}:${ONE_ENV_DEPLOYMENT_DIR} \
+               alpine sh -c "rm -rf ${ONEDATA_STORAGE_PATH}/* ${ONE_ENV_DEPLOYMENT_DIR}/*"
+fi
 
 
 # clear k8s
@@ -107,5 +117,15 @@ for volume in ${STALLED_DOCKER_VOLUMES}
 do
     execute_with_timeout ${DOCKER_CMD_TIMEOUT} docker volume rm ${volume}
 done
+
+
+# Remove loopdevices created in Onepanel's Ceph tests
+echo "Removing stalled loopdevices"
+# Run in docker to obtain root privileges.
+# Use ubuntu 14.10 as newer versions don't have dmsetup.
+# For unknown reasons does not work with execute_with_timeout.
+timeout --kill-after ${DELETE_LOOP_TIMEOUT} ${DELETE_LOOP_TIMEOUT} \
+        docker run --rm --privileged ubuntu:14.10 sh -c \
+        'losetup -D; dmsetup ls | cut -f 1 | grep -F osd-- | xargs -tr -n 1 dmsetup remove;'
 
 echo "Done"
