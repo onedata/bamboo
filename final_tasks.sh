@@ -8,6 +8,7 @@ DOCKER_CMD_TIMEOUT=10
 DELETE_HELM_RELEASE_TIMEOUT=60
 DELETE_K8S_NAMESPACE_TIMEOUT=60
 DELETE_K8S_ELEM_TIMEOUT=20
+DELETE_LOOP_TIMEOUT=60
 
 
 execute_with_timeout() {
@@ -116,5 +117,15 @@ for volume in ${STALLED_DOCKER_VOLUMES}
 do
     execute_with_timeout ${DOCKER_CMD_TIMEOUT} docker volume rm ${volume}
 done
+
+
+# Remove loopdevices created in Onepanel's Ceph tests
+echo "Removing stalled loopdevices"
+# Run in docker to obtain root privileges.
+# Use ubuntu 14.10 as newer versions don't have dmsetup.
+# For unknown reasons does not work with execute_with_timeout.
+timeout --kill-after ${DELETE_LOOP_TIMEOUT} ${DELETE_LOOP_TIMEOUT} \
+        docker run --rm --privileged ubuntu:14.10 sh -c \
+        'losetup -D; dmsetup ls | cut -f 1 | grep -F osd-- | xargs -tr -n 1 dmsetup remove;'
 
 echo "Done"
