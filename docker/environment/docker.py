@@ -19,7 +19,7 @@ def run(image, docker_host=None, detach=False, dns_list=[], add_host={},
         rm=False, reflect=[], volumes=[], name=None, workdir=None, user=None,
         group=None, group_add=[], cpuset_cpus=None, privileged=False,
         publish=[], run_params=[], command=None, output=False, stdin=None,
-        stdout=None, stderr=None):
+        stdout=None, stderr=None, network=None):
     cmd = ['docker']
 
     cmd.append('run')
@@ -38,6 +38,9 @@ def run(image, docker_host=None, detach=False, dns_list=[], add_host={},
 
     if hostname:
         cmd.extend(['-h', hostname])
+
+    if network:
+        cmd.extend(['--network', network])
 
     if detach or sys.__stdin__.isatty():
         if interactive:
@@ -271,7 +274,7 @@ def create_volume(path, name, image, command):
                                    stderr=subprocess.STDOUT)
 
 
-def ps(all=False, quiet=False):
+def ps(all=False, quiet=False, filters=None):
     """
     List containers
     """
@@ -280,6 +283,10 @@ def ps(all=False, quiet=False):
         cmd.append("--all")
     if quiet:
         cmd.append("--quiet")
+    if filters:
+        for f in filters:
+            cmd.extend(['-f', '{}={}'.format(f[0], f[1])])
+
     return subprocess.check_output(cmd, universal_newlines=True).split()
 
 
