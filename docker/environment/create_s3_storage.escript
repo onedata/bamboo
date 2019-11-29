@@ -4,7 +4,7 @@
 -export([main/1]).
 
 main([Cookie, Node, Name, Hostname, Scheme, BucketName, AccessKey, SecretKey,
-    Insecure, StoragePathType]) ->
+    BlockSize, Insecure, StoragePathType]) ->
 
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
@@ -21,7 +21,8 @@ main([Cookie, Node, Name, Hostname, Scheme, BucketName, AccessKey, SecretKey,
             <<"scheme">> => case Scheme of
                 "https" -> <<"https">>;
                 _ -> <<"http">>
-            end
+            end,
+            <<"blockSize">> => list_to_binary(BlockSize)
         },
         UserCtx,
         list_to_atom(Insecure),
