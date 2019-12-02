@@ -19,10 +19,11 @@ main([Cookie, Node, Name, MountPoint, StoragePathType, ReadonlyStr]) ->
         list_to_binary(StoragePathType)
     ]),
 
-    StorageConfig = safe_call(NodeAtom, storage_config, new, [list_to_binary(Name), [Helper],
-        list_to_atom(string:lowercase(ReadonlyStr)), undefined]),
-    {ok, StorageId} = safe_call(NodeAtom, storage_config, save_doc, [StorageConfig]),
-    safe_call(NodeAtom, storage_config, on_storage_created, [StorageId]).
+    StorageId = safe_call(NodeAtom, datastore_utils, gen_key, []),
+
+    StorageConfig = safe_call(NodeAtom, storage_config, create, [StorageId, list_to_binary(Name), Helper,
+        list_to_atom(string:lowercase(ReadonlyStr)), undefined, false]),
+    safe_call(NodeAtom, storage, on_storage_created, [StorageId]).
 
 safe_call(Node, Module, Function, Args) ->
     case rpc:call(Node, Module, Function, Args) of

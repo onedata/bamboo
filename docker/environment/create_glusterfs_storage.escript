@@ -28,9 +28,9 @@ main([Cookie, Node, Name, Volume, Hostname, Port, Transport, MountPoint, XlatorO
         list_to_binary(StoragePathType)
     ]),
 
-    StorageConfig = safe_call(NodeAtom, storage_config, new, [list_to_binary(Name), [Helper]]),
-    {ok, StorageId} = safe_call(NodeAtom, storage_config, save_doc, [StorageConfig]),
-    safe_call(NodeAtom, storage_config, on_storage_created, [StorageId]).
+    StorageId = safe_call(NodeAtom, datastore_utils, gen_key, []),
+    StorageConfig = safe_call(NodeAtom, storage_config, create, [StorageId, list_to_binary(Name), Helper, false, undefined, false]),
+    safe_call(NodeAtom, storage, on_storage_created, [StorageId]).
 
 
 safe_call(Node, Module, Function, Args) ->
