@@ -19,9 +19,9 @@ main([Cookie, Node, Name, MountPoint, StoragePathType, ReadonlyStr]) ->
         list_to_binary(StoragePathType)
     ]),
 
-    StorageId = safe_call(NodeAtom, datastore_utils, gen_key, []),
-
-    StorageConfig = safe_call(NodeAtom, storage_config, create, [StorageId, list_to_binary(Name), Helper,
+    % use storage name as its id
+    StorageId = list_to_binary(Name),
+    StorageConfig = safe_call(NodeAtom, storage_config, create, [StorageId, Helper,
         list_to_atom(string:lowercase(ReadonlyStr)), undefined, false]),
     safe_call(NodeAtom, storage, on_storage_created, [StorageId]).
 
