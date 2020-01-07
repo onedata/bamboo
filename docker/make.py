@@ -32,6 +32,17 @@ def default_keys_location():
     return ssh_dir
 
 
+# Useful on macOS where the /var directory is a link to /private/var
+def autodetect_cache_dir():
+    var_dir = "/var"
+    try:
+        link = os.readlink(var_dir)
+        var_dir = os.path.join("/", link)
+    except OSError:
+        pass
+    return os.path.join(var_dir, "cache")
+
+
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     description='Run a command inside a dockerized development environment.')
@@ -60,7 +71,7 @@ parser.add_argument(
 parser.add_argument(
     '--cache-prefix',
     action='store',
-    default="/var/cache",
+    default=autodetect_cache_dir(),
     help='Specify the cache prefix on host system (default: /var/cache)',
     dest='cache_prefix')
 
