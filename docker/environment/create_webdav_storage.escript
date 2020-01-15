@@ -30,9 +30,10 @@ main([Cookie, Node, Name, Endpoint, CredentialsType,
         list_to_binary(StoragePathType)
     ]),
 
-    StorageConfig = safe_call(NodeAtom, storage_config, new, [list_to_binary(Name), [Helper]]),
-    {ok, StorageId} = safe_call(NodeAtom, storage_config, save_doc, [StorageConfig]),
-    safe_call(NodeAtom, storage_config, on_storage_created, [StorageId]).
+    % use storage name as its id
+    StorageId = list_to_binary(Name),
+    StorageConfig = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, false, undefined, false]),
+    safe_call(NodeAtom, storage, on_storage_created, [StorageId]).
 
 
 safe_call(Node, Module, Function, Args) ->
