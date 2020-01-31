@@ -13,6 +13,23 @@ import sys
 from six import string_types
 
 
+# Adds a bind-mount consistency option depending on the container's access_level.
+# This option applies to macOS only, otherwise is ignored by Docker. It relaxes
+# the consistency guarantees between the host and container:
+#   * cached - the host is authoritative, writes on host may not be immediately
+#              visible on the container. Improves performance of read-heavy
+#              workloads.
+#   * delegated - the container is authoritative, writes on the container may
+#                 not be immediately visible on the host, but they will be
+#                 flushed before the container exit. Improves performance of
+#                 write-heavy workloads.
+def with_consistency_opt(access_level):
+    if access_level == 'ro':
+        return 'ro,cached'
+    elif access_level == 'rw':
+        return 'rw,delegated'
+
+
 # noinspection PyDefaultArgument
 def run(image, docker_host=None, detach=False, dns_list=[], add_host={},
         envs={}, hostname=None, interactive=False, link={}, tty=False,
@@ -57,8 +74,10 @@ def run(image, docker_host=None, detach=False, dns_list=[], add_host={},
     if rm:
         cmd.append('--rm')
 
-    for path, read in reflect:
-        vol = '{0}:{0}:{1}'.format(os.path.abspath(path), read)
+    for path, access_level in reflect:
+        vol = '{0}:{0}:{1}'.format(
+            os.path.abspath(path), with_consistency_opt(access_level)
+        )
         cmd.extend(['-v', vol])
 
     # Volume can be in one of three forms
@@ -67,8 +86,10 @@ def run(image, docker_host=None, detach=False, dns_list=[], add_host={},
     # 3. {'volumes_from': 'volume name'}
     for entry in volumes:
         if isinstance(entry, tuple):
-            path, bind, readable = entry
-            vol = '{0}:{1}:{2}'.format(os.path.abspath(path), bind, readable)
+            path, bind, access_level = entry
+            vol = '{0}:{1}:{2}'.format(
+                os.path.abspath(path), bind, with_consistency_opt(access_level)
+            )
             cmd.extend(['-v', vol])
         elif isinstance(entry, dict):
             volume_name = entry['volumes_from']
@@ -309,10 +330,10 @@ def remove_volumes(volumes, timeout=None, stderr=None):
         cmd.append(volumes)
     else:
         cmd.extend(volumes)
-        
+
     if timeout is not None:
         cmd = add_timeout_cmd(cmd, timeout)
-        
+
     return subprocess.check_call(cmd, stderr=stderr)
 
 
