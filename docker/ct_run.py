@@ -25,6 +25,7 @@ import shutil
 import sys
 import time
 import glob
+import fnmatch
 import xml.etree.ElementTree as ElementTree
 
 sys.path.insert(0, 'bamboos/docker')
@@ -178,8 +179,13 @@ elif args.stress_no_clearing:
     ct_command.extend(['-env', 'stress_no_clearing', 'true'])
 elif args.cover:
     ct_command.extend(['-cover', 'cover_tmp.spec'])
-    env_descs = glob.glob(
-        os.path.join(script_dir, 'test_distributed', '*', 'env_desc.json'))
+
+    env_descs = []
+    tests_dir = os.path.join(script_dir, 'test_distributed')
+    for root, dirnames, filenames in os.walk(tests_dir):
+        for filename in fnmatch.filter(filenames, 'env_desc.json'):
+            env_descs.append(os.path.join(root, filename))
+
     for file in env_descs:
         shutil.copyfile(file, file + '.bak')
         with open(file, 'r') as jsonFile:
