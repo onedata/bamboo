@@ -6,41 +6,20 @@ This software is released under the MIT license cited in 'LICENSE.txt'
 Contains methods used to bring up storages.
 """
 import sys
+import os
 
 from . import common, s3, ceph, cephrados, nfs, glusterfs, webdav, amazon_iam, luma, swift
 
 
-def start_luma(config, storages_dockers, image, bin_luma, output, uid):
-    luma_mode = 'disabled'
-    for key in config['provider_domains']:
-        luma_mode = config['provider_domains'][key].get('luma_mode', 'disabled')
-        if luma_mode != 'disabled':
-            break
-    luma_config = None
-    if luma_mode != 'disabled':
-        luma_config = config.get('luma_setup', luma.get_default_config())
-
-        if storages_dockers['ceph']:
-            ceph_storage = storages_dockers['ceph'].values()[0]
-            generators_config = luma_config.get('generators_config', {})
-            ceph_config = generators_config.get('ceph', {})
-            ceph_config['username'] = ceph_storage.get('username', 'client.admin')
-            ceph_config['key'] = ceph_storage.get('key', ceph_storage['key'])
-            ceph_config['monitor_hostname'] = ceph_storage.get('monitor_hostname', \
-                ceph_storage['host_name'])
-            ceph_config['pool_name'] = ceph_storage.get('pool_name', 'onedata')
-            generators_config['ceph'] = ceph_config
-            luma_config['generators_config'] = generators_config
-
-        config['luma_setup'] = luma_config
-        luma_config = luma.up(image, bin_luma, config, uid)
-        output['docker_ids'].extend(luma_config['docker_ids'])
-        output['luma'] = {'host_name': luma_config['host_name']}
-    return luma_config
+def start_luma(config, config_path, image, uid):
+    db_path = config.get('db_path')
+    if db_path:
+        db_path = os.path.join(os.path.dirname(config_path), db_path)
+    return luma.up(image, db_path, uid)
 
 
 def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, nfs_image,
-                    swift_image, glusterfs_image, webdav_image, image, uid):
+                    swift_image, glusterfs_image, webdav_image, luma_image, image, uid):
     storages_dockers = {'ceph': {}, 'cephrados': {}, 's3': {}, 'nfs': {}, 'posix': {},
             'swift': {}, 'glusterfs': {}, 'webdav': {}}
     docker_ids = []
@@ -90,6 +69,21 @@ def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, n
                     _webdav_up(storage, storages_dockers, webdav_image,
                                   docker_ids, uid)
 
+                elif storage['type'] == 'posix' and storage['name'] not in \
+                        storages_dockers['posix']:
+                    storages_dockers['posix'].update({
+                        storage['name']: {
+                            "type": storage['type']
+                        }
+                    })
+
+                luma_config = storage.get("luma", None)
+                if luma_config:
+                    result = start_luma(luma_config, config_path, luma_image, "{0}.{1}".format(storage['name'].replace("/", "-"), uid))
+                    current = storages_dockers[storage['type']][storage['name']]
+                    current.update({"luma": result})
+                    docker_ids.append(result['docker_id'])
+
         if start_iam_mock:
             docker_ids.extend(_start_iam_mock(image, uid, storages_dockers))
 
@@ -121,7 +115,7 @@ def _ceph_up(storage, storages_dockers, ceph_image, docker_ids, uid):
     result = ceph.up(ceph_image, [pool], storage['name'], uid)
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
-    storages_dockers['ceph'][storage['name']] = result
+    storages_dockers['ceph'][storage['name']] = result.update("id", storage.get("id"))
 
 
 def _cephrados_up(storage, storages_dockers, cephrados_image, docker_ids, uid):
@@ -129,7 +123,7 @@ def _cephrados_up(storage, storages_dockers, cephrados_image, docker_ids, uid):
     result = cephrados.up(cephrados_image, [pool], storage['name'], uid)
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
-    storages_dockers['cephrados'][storage['name']] = result
+    storages_dockers['cephrados'][storage['name']] = result.update("id", storage.get("id"))
 
 
 def _s3_up(storage, storages_dockers, s3_image, docker_ids, uid):
@@ -143,7 +137,7 @@ def _s3_up(storage, storages_dockers, s3_image, docker_ids, uid):
         result['iam_request_scheme'] = storage[
             'iam_request_scheme']
 
-    storages_dockers['s3'][storage['name']] = result
+    storages_dockers['s3'][storage['name']] = result.update("id", storage.get("id"))
 
 
 def _swift_up(storage, storages_dockers, swift_image, docker_ids, uid):
@@ -152,7 +146,7 @@ def _swift_up(storage, storages_dockers, swift_image, docker_ids, uid):
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
 
-    storages_dockers['swift'][storage['name']] = result
+    storages_dockers['swift'][storage['name']] = result.update("id", storage.get("id"))
 
 
 def _nfs_up(storage, storages_dockers, nfs_image, docker_ids, uid, cfg):
@@ -165,7 +159,7 @@ def _nfs_up(storage, storages_dockers, nfs_image, docker_ids, uid, cfg):
     common.create_groups(container, cfg['groups'])
 
     del result['docker_ids']
-    storages_dockers['nfs'][storage['name']] = result
+    storages_dockers['nfs'][storage['name']] = result.update("id", storage.get("id"))
 
 
 def _glusterfs_up(storage, storages_dockers, glusterfs_image, docker_ids, uid):
@@ -173,10 +167,10 @@ def _glusterfs_up(storage, storages_dockers, glusterfs_image, docker_ids, uid):
                           uid, storage['transport'], storage['mountpoint'])
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
-    storages_dockers['glusterfs'][storage['name']] = result
+    storages_dockers['glusterfs'][storage['name']] = result.update("id", storage.get("id"))
 
 def _webdav_up(storage, storages_dockers, webdav_image, docker_ids, uid):
     result = webdav.up(webdav_image, storage['name'], uid)
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
-    storages_dockers['webdav'][storage['name']] = result
+    storages_dockers['webdav'][storage['name']] = result.update("id", storage.get("id"))

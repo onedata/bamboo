@@ -12,11 +12,10 @@ from . import common, docker, worker, gui
 
 
 def up(image, bindir, dns_server, uid, config_path, logdir=None,
-       storages_dockers=None, luma_config=None):
+       storages_dockers=None):
     return worker.up(image, bindir, dns_server, uid, config_path,
                      ProviderWorkerConfigurator(), logdir,
-                     storages_dockers=storages_dockers,
-                     luma_config=luma_config)
+                     storages_dockers=storages_dockers)
 
 
 class ProviderWorkerConfigurator:
@@ -44,8 +43,7 @@ class ProviderWorkerConfigurator:
 
     # Called AFTER the instance (cluster of workers) has been started
     def post_configure_instance(self, bindir, instance, config, container_ids,
-                                output, storages_dockers=None,
-                                luma_config=None):
+                                output, storages_dockers=None):
         this_config = config[self.domains_attribute()][instance]
         # Check if gui livereload is enabled in env and turn it on
         if 'gui_override' in this_config and isinstance(
@@ -88,28 +86,24 @@ class ProviderWorkerConfigurator:
         grouped_storages = {}
 
         for s in posix_storages:
-            if not storages_dockers:
-                storages_dockers = {'posix': {}}
             name = s['name']
             readonly = s['readonly']
-            if name not in storages_dockers['posix'].keys():
-                if 'group' in s and s['group'] in grouped_storages:
-                    (host_path, docker_path, mode) = (grouped_storages[s['group']], name, 'ro' if readonly else 'rw')
-                elif 'group' in s:
-                    (host_path, docker_path, mode) = common.volume_for_storage(name, readonly)
-                    grouped_storages[s['group']] = host_path
-                else:
-                    (host_path, docker_path, mode) = common.volume_for_storage(name, readonly)
-
-                v = (host_path, docker_path, mode)
-                storages_dockers['posix'][name] = {
-                    "host_path": host_path,
-                    "docker_path": docker_path,
-                    "mode": mode
-                }
+            if not storages_dockers:
+                storages_dockers = {'posix': {}}
+            if 'group' in s and s['group'] in grouped_storages:
+                (host_path, docker_path, mode) = (grouped_storages[s['group']], name, 'ro' if readonly else 'rw')
+            elif 'group' in s:
+                (host_path, docker_path, mode) = common.volume_for_storage(name, readonly)
+                grouped_storages[s['group']] = host_path
             else:
-                d = storages_dockers['posix'][name]
-                v = (d['host_path'], d['docker_path'], d['mode'])
+                (host_path, docker_path, mode) = common.volume_for_storage(name, readonly)
+
+            v = (host_path, docker_path, mode)
+            storages_dockers['posix'][name].update({
+                "host_path": host_path,
+                "docker_path": docker_path,
+                "mode": mode
+            })
             extra_volumes.append(v)
 
         # Check if gui override is enabled in env and add required volumes
@@ -146,13 +140,6 @@ class ProviderWorkerConfigurator:
 
 
 def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print(str(storages))
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print(str(op_config))
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print(str(storages_dockers))
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     # copy escript to docker host
     script_names = {'posix': 'create_posix_storage.escript',
                     's3': 'create_s3_storage.escript',
@@ -180,85 +167,92 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
     for storage in storages:
         if isinstance(storage, basestring):
             storage = {'type': 'posix', 'name': storage}
-        if storage['type'] in ['posix', 'nfs']:
+
+        # storage id is optional
+        st_type = storage['type']
+        st_name = storage['name']
+        # luma is optional
+        # even if it's None it must be passed to escript as string
+        luma_url = str(storages_dockers[st_type][st_name].get("luma", {}).get("url"))
+
+        if st_type in ['posix', 'nfs']:
             st_path = storage['name']
-            print("STORAGE: ", storage)
             command = ['escript', script_paths['posix'], cookie,
                        first_node, storage['name'], st_path,
-                       'canonical', str(storage.get('readonly', False))]
+                       'canonical', str(storage.get('readonly', False)), luma_url]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'ceph':
             config = storages_dockers['ceph'][storage['name']]
             pool = storage['pool'].split(':')[0]
             command = ['escript', script_paths['ceph'], cookie,
-                       first_node, storage['name'], 'ceph',
+                       first_node, st_name, 'ceph',
                        config['host_name'], pool, config['username'],
-                       config['key'], 'true', 'flat']
+                       config['key'], 'true', 'flat', luma_url]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'cephrados':
             config = storages_dockers['cephrados'][storage['name']]
             pool = storage['pool'].split(':')[0]
             command = ['escript', script_paths['cephrados'], cookie,
-                       first_node, storage['name'], 'ceph',
+                       first_node, st_name, 'ceph',
                        config['host_name'], pool, config['username'],
                        config['key'], storage.get('block_size', '10485760'),
-                       'true', storage.get('storage_path_type', 'flat')]
+                       'true', storage.get('storage_path_type', 'flat'), luma_url]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 's3':
             config = storages_dockers['s3'][storage['name']]
             command = ['escript', script_paths['s3'], cookie,
-                       first_node, storage['name'], config['host_name'],
+                       first_node, st_name, config['host_name'],
                        config.get('scheme', 'http'), storage['bucket'],
                        config['access_key'], config['secret_key'],
                        storage.get('block_size', '10485760'), 'true',
-                       storage.get('storage_path_type', 'flat')]
+                       storage.get('storage_path_type', 'flat'), luma_url]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'swift':
             config = storages_dockers['swift'][storage['name']]
             command = ['escript', script_paths['swift'], cookie,
-                       first_node, storage['name'],
+                       first_node, st_name,
                        'http://{0}:{1}/v2.0/tokens'.format(
                            config['host_name'], config['keystone_port']),
                        storage['container'], config['tenant_name'],
                        config['user_name'], config['password'],
                        storage.get('block_size', '10485760'), 'true',
-                       storage.get('storage_path_type', 'flat')]
+                       storage.get('storage_path_type', 'flat'), luma_url]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'glusterfs':
             config = storages_dockers['glusterfs'][storage['name']]
             command = ['escript', script_paths['glusterfs'], cookie,
-                       first_node, storage['name'], storage['volume'],
+                       first_node, st_name, storage['volume'],
                        config['host_name'], str(config['port']),
                        storage['transport'], storage['mountpoint'],
-                       'cluster.write-freq-threshold=100;', 'true', 'flat']
+                       'cluster.write-freq-threshold=100;', 'true', 'flat', luma_url]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'webdav':
             config = storages_dockers['webdav'][storage['name']]
             command = ['escript', script_paths['webdav'], cookie,
-                       first_node, storage['name'], config['endpoint'],
+                       first_node, st_name, config['endpoint'],
                        config.get('credentials_type', 'basic'),
                        config['credentials'], 'false',
                        storage.get('authorization_header', ''),
                        storage.get('range_write_support', 'sabredav'),
                        storage.get('connection_pool_size', '10'),
                        storage.get('maximum_upload_size', '0'), 'true',
-                       'canonical']
+                       'canonical', luma_url]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'nulldevice':
             command = ['escript', script_paths['nulldevice'], cookie,
-                       first_node, storage['name'], storage['latencyMin'],
+                       first_node, st_name, storage['latencyMin'],
                        storage['latencyMax'], storage['timeoutProbability'],
                        storage['filter'],
                        storage['simulatedFilesystemParameters'],
                        storage['simulatedFilesystemGrowSpeed'], 'true',
-                       'canonical']
+                       'canonical', luma_url]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         else:

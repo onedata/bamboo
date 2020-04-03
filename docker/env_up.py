@@ -56,6 +56,13 @@ parser.add_argument(
     dest='webdav_image')
 
 parser.add_argument(
+    '-li', '--luma-image',
+    action='store',
+    default=None,
+    help='override of docker image for LUMA server',
+    dest='luma_image')
+
+parser.add_argument(
     '-bw', '--bin-worker',
     action='store',
     default=env.default('bin_op_worker'),
@@ -105,13 +112,6 @@ parser.add_argument(
     dest='bin_oc')
 
 parser.add_argument(
-    '-bl', '--bin-luma',
-    action='store',
-    default=env.default('bin_luma'),
-    help='the path to luma repository',
-    dest='bin_luma')
-
-parser.add_argument(
     '-l', '--logdir',
     action='store',
     default=env.default('logdir'),
@@ -129,15 +129,17 @@ dockers_config.ensure_image(args, 'ceph_image', 'ceph')
 dockers_config.ensure_image(args, 's3_image', 's3')
 dockers_config.ensure_image(args, 'glusterfs_image', 'glusterfs')
 dockers_config.ensure_image(args, 'webdav_image', 'webdav')
+dockers_config.ensure_image(args, 'luma_image', 'luma')
 
 output = env.up(args.config_path, image=args.image, ceph_image=args.ceph_image,
                 s3_image=args.s3_image, glusterfs_image=args.glusterfs_image,
                 webdav_image=args.webdav_image,
+                luma_image=args.luma_image,
                 bin_am=args.bin_am, bin_oz=args.bin_oz,
                 bin_cluster_manager=args.bin_cluster_manager,
                 bin_op_worker=args.bin_op_worker,
                 bin_cluster_worker=args.bin_cluster_worker,
-                bin_luma=args.bin_luma, bin_onepanel=args.bin_onepanel,
+                bin_onepanel=args.bin_onepanel,
                 bin_oc=args.bin_oc, logdir=args.logdir)
 
 print(json.dumps(output))

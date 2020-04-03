@@ -4,7 +4,7 @@
 -export([main/1]).
 
 main([Cookie, Node, Name, ClusterName, MonitorHostname, PoolName, Username,
-    Key, BlockSize, Insecure, StoragePathType]) ->
+    Key, BlockSize, Insecure, StoragePathType, LumaUrl]) ->
 
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
@@ -28,7 +28,8 @@ main([Cookie, Node, Name, ClusterName, MonitorHostname, PoolName, Username,
 
     % use storage name as its id
     StorageId = list_to_binary(Name),
-    StorageConfig = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, false, undefined, false]),
+    LumaConfig = maybe_setup_luma(NodeAtom, LumaUrl),
+    {ok, StorageId} = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, false, LumaConfig, false]),
     safe_call(NodeAtom, storage, on_storage_created, [StorageId]).
 
 safe_call(Node, Module, Function, Args) ->
@@ -46,3 +47,7 @@ safe_call(Node, Module, Function, Args) ->
         X ->
             X
     end.
+
+maybe_setup_luma(_NodeAtom, "None") -> undefined;
+maybe_setup_luma(NodeAtom, LumaUrl) when is_list(LumaUrl) ->
+    safe_call(NodeAtom, luma_config, new, [list_to_binary(LumaUrl), undefined]).

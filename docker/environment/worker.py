@@ -9,8 +9,7 @@ Script is parametrised by worker type related configurator.
 import copy
 import json
 import os
-from . import common, docker, riak, couchbase, dns, cluster_manager, test_ca, \
-    dockers_config
+from . import common, docker, couchbase, dns, cluster_manager, test_ca
 from timeouts import *
 
 
@@ -149,26 +148,6 @@ ln -s {bindir} /root/build
     }
 
 
-def _riak_up(cluster_name, db_nodes, dns_servers, uid):
-    db_node_mappings = {}
-    for node in db_nodes:
-        db_node_mappings[node] = ''
-
-    i = 0
-    for node in iter(db_node_mappings.keys()):
-        db_node_mappings[node] = riak.config_entry(cluster_name, i, uid)
-        i += 1
-
-    if i == 0:
-        return db_node_mappings, {}
-
-    [dns] = dns_servers
-    riak_output = riak.up(dockers_config.get_image('riak'), dns, uid, None,
-                          cluster_name, len(db_node_mappings))
-
-    return db_node_mappings, riak_output
-
-
 def _couchbase_up(cluster_name, db_nodes, dns_servers, uid, configurator,
                   docker_host=None):
     db_node_mappings = {}
@@ -205,10 +184,8 @@ def _db_driver_module(db_driver):
 
 
 def up(image, bindir, dns_server, uid, config_path, configurator, logdir=None,
-       storages_dockers=None, luma_config=None):
+       storages_dockers=None):
     config = common.parse_json_config_file(config_path)
-    if luma_config:
-        _add_luma_config(config, luma_config)
 
     input_dir = config['dirs_config'][configurator.app_name()]['input_dir']
     dns_servers, output = dns.maybe_start(dns_server, uid)
@@ -254,10 +231,7 @@ def up(image, bindir, dns_server, uid, config_path, configurator, logdir=None,
         db_out = None
 
         # Start db nodes, obtain mappings
-        if db_driver == 'riak':
-            db_node_mappings, db_out = _riak_up(instance, all_db_nodes,
-                                                dns_servers, uid)
-        elif db_driver in ['couchbase', 'couchdb']:
+        if db_driver in ['couchbase', 'couchdb']:
             db_node_mappings, db_out = _couchbase_up(instance, all_db_nodes,
                                                      dns_servers, uid,
                                                      configurator,
@@ -312,21 +286,3 @@ def up(image, bindir, dns_server, uid, config_path, configurator, logdir=None,
     # Make sure domains are added to the dns server.
     dns.maybe_restart_with_configuration(dns_server, uid, output)
     return output
-
-
-def _add_luma_config(config, luma_config):
-    for key in config['provider_domains']:
-        luma_mode = config['provider_domains'][key].get('luma_mode')
-        if luma_mode:
-            op_workers = config['provider_domains'][key]['op_worker']
-
-            for wrk_key in op_workers:
-                if not op_workers[wrk_key]['sys.config']:
-                    op_workers[wrk_key]['sys.config'] = {}
-                if not op_workers[wrk_key]['sys.config']['op_worker']:
-                    op_workers[wrk_key]['sys.config']['op_worker'] = {}
-
-                op_workers[wrk_key]['sys.config']['op_worker'][
-                    'luma_mode'] = luma_mode
-                op_workers[wrk_key]['sys.config']['op_worker'][
-                    'luma_hostname'] = luma_config['host_name']

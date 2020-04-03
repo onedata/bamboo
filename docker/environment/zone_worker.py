@@ -9,7 +9,7 @@ import os
 from . import docker, common, worker, gui, panel
 
 def up(image, bindir, dns_server, uid, config_path, logdir=None,
-       dnsconfig_path=None, storages_dockers=None, luma_config=None):
+       dnsconfig_path=None, storages_dockers=None):
     if dnsconfig_path is None:
         config = common.parse_json_config_file(config_path)
         input_dir = config['dirs_config']['oz_worker']['input_dir']
@@ -59,8 +59,7 @@ class OZWorkerConfigurator:
 
     # Called AFTER the instance (cluster of workers) has been started
     def post_configure_instance(self, bindir, instance, config, container_ids,
-                                output, storages_dockers=None,
-                                luma_config=None):
+                                output, storages_dockers=None):
         this_config = config[self.domains_attribute()][instance]
         # Check if gui livereload is enabled in env and turn it on
         if 'gui_override' in this_config and isinstance(

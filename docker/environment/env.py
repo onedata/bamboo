@@ -23,7 +23,6 @@ def default(key):
             'bin_cluster_worker': '{0}/cluster_worker'.format(os.getcwd()),
             'bin_cluster_manager': '{0}/cluster_manager'.format(os.getcwd()),
             'bin_oc': '{0}/oneclient'.format(os.getcwd()),
-            'bin_luma': '{0}/luma'.format(os.getcwd()),
             'bin_onepanel': '{0}/onepanel'.format(os.getcwd()),
             'logdir': None}[key]
 
@@ -37,12 +36,15 @@ def up(config_path,
        swift_image=dockers_config.default_image('swift'),
        glusterfs_image=dockers_config.default_image('glusterfs'),
        webdav_image=dockers_config.default_image('webdav'),
-       bin_am=default('bin_am'), bin_oz=default('bin_oz'),
+       luma_image=dockers_config.default_image('luma'),
+       bin_am=default('bin_am'),
+       bin_oz=default('bin_oz'),
        bin_cluster_manager=default('bin_cluster_manager'),
        bin_op_worker=default('bin_op_worker'),
        bin_cluster_worker=default('bin_cluster_worker'),
-       bin_oc=default('bin_oc'), bin_luma=default('bin_luma'),
-       bin_onepanel=default('bin_onepanel'), logdir=default('logdir')):
+       bin_oc=default('bin_oc'),
+       bin_onepanel=default('bin_onepanel'),
+       logdir=default('logdir')):
     config = common.parse_json_config_file(config_path)
     uid = common.generate_uid()
 
@@ -80,8 +82,8 @@ def up(config_path,
     # Start storages
     storages_dockers, storages_dockers_ids = \
         storages.start_storages(config, config_path, ceph_image, cephrados_image, s3_image,
-                                nfs_image, swift_image, glusterfs_image, webdav_image, image,
-                                uid)
+                                nfs_image, swift_image, glusterfs_image, webdav_image, luma_image,
+                                image, uid)
     output['storages'] = storages_dockers
 
     # Start onepanel instances
@@ -90,17 +92,10 @@ def up(config_path,
                              storages_dockers, logdir)
         common.merge(output, op_output)
 
-    # Start python LUMA service
-    luma_config = None
-    # set up worker only if provider_domains exist AND are not an empty dict
-    if config.get('provider_domains'):
-        luma_config = storages.start_luma(config, storages_dockers, image,
-                                          bin_luma, output, uid)
-
-        # Start provider cluster instances
-        setup_worker(provider_worker, bin_op_worker, 'provider_domains',
-                     bin_cluster_manager, config, config_path, dns_server, image,
-                     logdir, output, uid, storages_dockers, luma_config)
+    # Start provider cluster instances
+    setup_worker(provider_worker, bin_op_worker, 'provider_domains',
+                 bin_cluster_manager, config, config_path, dns_server, image,
+                 logdir, output, uid, storages_dockers)
 
     # Start stock cluster worker instances
     setup_worker(cluster_worker, bin_cluster_worker, 'cluster_domains',
@@ -184,8 +179,7 @@ echo $?'''
 
 
 def setup_worker(worker, bin_worker, domains_name, bin_cm, config, config_path,
-                 dns_server, image, logdir, output, uid, storages_dockers=None,
-                 luma_config=None):
+                 dns_server, image, logdir, output, uid, storages_dockers=None):
     if domains_name in config:
         # Start cluster_manager instances
         cluster_manager_output = cluster_manager.up(image, bin_cm, dns_server,
@@ -196,8 +190,7 @@ def setup_worker(worker, bin_worker, domains_name, bin_cm, config, config_path,
         # Start op_worker instances
         cluster_worker_output = worker.up(image, bin_worker, dns_server, uid,
                                           config_path, logdir,
-                                          storages_dockers=storages_dockers,
-                                          luma_config=luma_config)
+                                          storages_dockers=storages_dockers)
         common.merge(output, cluster_worker_output)
         # Make sure OP domains are added to the dns server.
         # Setting first arg to 'auto' will force the restart and this is needed
