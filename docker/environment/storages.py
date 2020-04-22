@@ -115,7 +115,7 @@ def _ceph_up(storage, storages_dockers, ceph_image, docker_ids, uid):
     result = ceph.up(ceph_image, [pool], storage['name'], uid)
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
-    storages_dockers['ceph'][storage['name']] = result.update("id", storage.get("id"))
+    storages_dockers['ceph'][storage['name']] = result
 
 
 def _cephrados_up(storage, storages_dockers, cephrados_image, docker_ids, uid):
@@ -123,7 +123,7 @@ def _cephrados_up(storage, storages_dockers, cephrados_image, docker_ids, uid):
     result = cephrados.up(cephrados_image, [pool], storage['name'], uid)
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
-    storages_dockers['cephrados'][storage['name']] = result.update("id", storage.get("id"))
+    storages_dockers['cephrados'][storage['name']] = result
 
 
 def _s3_up(storage, storages_dockers, s3_image, docker_ids, uid):
@@ -137,7 +137,7 @@ def _s3_up(storage, storages_dockers, s3_image, docker_ids, uid):
         result['iam_request_scheme'] = storage[
             'iam_request_scheme']
 
-    storages_dockers['s3'][storage['name']] = result.update("id", storage.get("id"))
+    storages_dockers['s3'][storage['name']] = result
 
 
 def _swift_up(storage, storages_dockers, swift_image, docker_ids, uid):
@@ -146,7 +146,7 @@ def _swift_up(storage, storages_dockers, swift_image, docker_ids, uid):
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
 
-    storages_dockers['swift'][storage['name']] = result.update("id", storage.get("id"))
+    storages_dockers['swift'][storage['name']] = result
 
 
 def _nfs_up(storage, storages_dockers, nfs_image, docker_ids, uid, cfg):
@@ -159,7 +159,7 @@ def _nfs_up(storage, storages_dockers, nfs_image, docker_ids, uid, cfg):
     common.create_groups(container, cfg['groups'])
 
     del result['docker_ids']
-    storages_dockers['nfs'][storage['name']] = result.update("id", storage.get("id"))
+    storages_dockers['nfs'][storage['name']] = result
 
 
 def _glusterfs_up(storage, storages_dockers, glusterfs_image, docker_ids, uid):
@@ -167,10 +167,10 @@ def _glusterfs_up(storage, storages_dockers, glusterfs_image, docker_ids, uid):
                           uid, storage['transport'], storage['mountpoint'])
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
-    storages_dockers['glusterfs'][storage['name']] = result.update("id", storage.get("id"))
+    storages_dockers['glusterfs'][storage['name']] = result
 
 def _webdav_up(storage, storages_dockers, webdav_image, docker_ids, uid):
     result = webdav.up(webdav_image, storage['name'], uid)
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
-    storages_dockers['webdav'][storage['name']] = result.update("id", storage.get("id"))
+    storages_dockers['webdav'][storage['name']] = result

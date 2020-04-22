@@ -256,7 +256,7 @@ def storage_host_path():
     if not os.path.exists(HOST_STORAGE_PATH):
         os.makedirs(HOST_STORAGE_PATH)
     tmpdir = tempfile.mkdtemp(dir=HOST_STORAGE_PATH)
-    os.chmod(tmpdir,  stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+    os.chmod(tmpdir,  stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH | stat.S_IXOTH)
     return tmpdir
 
 
