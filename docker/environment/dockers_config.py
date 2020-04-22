@@ -58,7 +58,7 @@ def default_image(type):
         'dns': 'onedata/dns',
         'ceph': 'onedata/ceph',
         'cephrados': 'onedata/ceph',
-        's3': 'onedata/s3proxy',
+        's3': 'onedata/minio:v1',
         'swift': 'onedata/dockswift',
         'nfs': 'erezhorev/dockerized_nfs_server',
         'glusterfs': 'gluster/gluster-centos:gluster3u7_centos7',
