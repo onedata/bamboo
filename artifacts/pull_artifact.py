@@ -137,10 +137,13 @@ def download_artifact_safe(ssh: SSHClient, plan: str, branch: str,
 
     try:
         download_artifact(ssh, plan, branch)
-    except:
+    except Exception as ex:
         print(exc_log)
         if exc_handler:
-            exc_handler(*exc_handler_args)
+            return exc_handler(*exc_handler_args)
+        else: 
+            print('Unexpected error: {}'.format(ex))
+            sys.exit(1)
 
             
 def s3_download_artifact_safe(s3: boto3.resources, bucket: str,
@@ -174,10 +177,13 @@ def s3_download_artifact_safe(s3: boto3.resources, bucket: str,
 
     try:
         s3_download_artifact(s3, bucket, plan, branch)
-    except:
+    except Exception as ex:
         print(exc_log)
         if exc_handler:
-            exc_handler(*exc_handler_args)
+            return exc_handler(*exc_handler_args)
+        else: 
+            print('Unexpected error: {}'.format(ex))
+            sys.exit(1)
 
 
 def download_artifact(ssh: SSHClient, plan: str, branch: str) -> None:
