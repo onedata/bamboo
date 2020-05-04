@@ -171,15 +171,12 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
         # storage id is optional
         st_type = storage['type']
         st_name = storage['name']
-        # luma is optional
-        # even if it's None it must be passed to escript as string
-        luma_url = str(storages_dockers[st_type][st_name].get("luma", {}).get("url"))
 
         if st_type in ['posix', 'nfs']:
             st_path = storage['name']
             command = ['escript', script_paths['posix'], cookie,
                        first_node, storage['name'], st_path,
-                       'canonical', str(storage.get('readonly', False)), luma_url]
+                       'canonical', str(storage.get('readonly', False))]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'ceph':
@@ -188,7 +185,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
             command = ['escript', script_paths['ceph'], cookie,
                        first_node, st_name, 'ceph',
                        config['host_name'], pool, config['username'],
-                       config['key'], 'true', 'flat', luma_url]
+                       config['key'], 'true', 'flat']
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'cephrados':
@@ -198,7 +195,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        first_node, st_name, 'ceph',
                        config['host_name'], pool, config['username'],
                        config['key'], storage.get('block_size', '10485760'),
-                       'true', storage.get('storage_path_type', 'flat'), luma_url]
+                       'true', storage.get('storage_path_type', 'flat')]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 's3':
@@ -208,7 +205,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        config.get('scheme', 'http'), storage['bucket'],
                        config['access_key'], config['secret_key'],
                        storage.get('block_size', '10485760'), 'true',
-                       storage.get('storage_path_type', 'flat'), luma_url]
+                       storage.get('storage_path_type', 'flat')]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'swift':
@@ -220,7 +217,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        storage['container'], config['tenant_name'],
                        config['user_name'], config['password'],
                        storage.get('block_size', '10485760'), 'true',
-                       storage.get('storage_path_type', 'flat'), luma_url]
+                       storage.get('storage_path_type', 'flat')]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'glusterfs':
@@ -229,7 +226,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        first_node, st_name, storage['volume'],
                        config['host_name'], str(config['port']),
                        storage['transport'], storage['mountpoint'],
-                       'cluster.write-freq-threshold=100;', 'true', 'flat', luma_url]
+                       'cluster.write-freq-threshold=100;', 'true', 'flat']
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'webdav':
@@ -242,7 +239,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        storage.get('range_write_support', 'sabredav'),
                        storage.get('connection_pool_size', '10'),
                        storage.get('maximum_upload_size', '0'), 'true',
-                       'canonical', luma_url]
+                       'canonical']
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'nulldevice':
@@ -252,7 +249,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        storage['filter'],
                        storage['simulatedFilesystemParameters'],
                        storage['simulatedFilesystemGrowSpeed'], 'true',
-                       'canonical', luma_url]
+                       'canonical']
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         else:

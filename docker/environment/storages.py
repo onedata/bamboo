@@ -6,20 +6,12 @@ This software is released under the MIT license cited in 'LICENSE.txt'
 Contains methods used to bring up storages.
 """
 import sys
-import os
 
-from . import common, s3, ceph, cephrados, nfs, glusterfs, webdav, amazon_iam, luma, swift
-
-
-def start_luma(config, config_path, image, uid):
-    db_path = config.get('db_path')
-    if db_path:
-        db_path = os.path.join(os.path.dirname(config_path), db_path)
-    return luma.up(image, db_path, uid)
+from . import common, s3, ceph, cephrados, nfs, glusterfs, webdav, amazon_iam, swift
 
 
 def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, nfs_image,
-                    swift_image, glusterfs_image, webdav_image, luma_image, image, uid):
+                    swift_image, glusterfs_image, webdav_image, image, uid):
     storages_dockers = {'ceph': {}, 'cephrados': {}, 's3': {}, 'nfs': {}, 'posix': {},
             'swift': {}, 'glusterfs': {}, 'webdav': {}}
     docker_ids = []
@@ -76,13 +68,6 @@ def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, n
                             "type": storage['type']
                         }
                     })
-
-                luma_config = storage.get("luma", None)
-                if luma_config:
-                    result = start_luma(luma_config, config_path, luma_image, "{0}.{1}".format(storage['name'].replace("/", "-"), uid))
-                    current = storages_dockers[storage['type']][storage['name']]
-                    current.update({"luma": result})
-                    docker_ids.append(result['docker_id'])
 
         if start_iam_mock:
             docker_ids.extend(_start_iam_mock(image, uid, storages_dockers))

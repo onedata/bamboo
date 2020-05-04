@@ -59,8 +59,7 @@ def default_image(type):
         'swift': 'onedata/dockswift',
         'nfs': 'erezhorev/dockerized_nfs_server',
         'glusterfs': 'gluster/gluster-centos:gluster3u7_centos7',
-        'webdav': 'onedata/sabredav:v1',
-        'luma': 'onedata/luma:19.02.1'
+        'webdav': 'onedata/sabredav:v1'
     }[type]
 
 
@@ -75,8 +74,7 @@ def image_override_env(type):
         'swift': 'SWIFT_IMAGE',
         'nfs': 'NFS_IMAGE',
         'glusterfs': 'GLUSTERFS_IMAGE',
-        'webdav': 'WEBDAV_IMAGE',
-        'luma': 'LUMA_IMAGE'
+        'webdav': 'WEBDAV_IMAGE'
     }[type]
 
 
