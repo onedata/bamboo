@@ -59,15 +59,7 @@ def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, n
                 elif storage['type'] == 'webdav' and storage['name'] not in \
                         storages_dockers['webdav']:
                     _webdav_up(storage, storages_dockers, webdav_image,
-                                  docker_ids, uid)
-
-                elif storage['type'] == 'posix' and storage['name'] not in \
-                        storages_dockers['posix']:
-                    storages_dockers['posix'].update({
-                        storage['name']: {
-                            "type": storage['type']
-                        }
-                    })
+                               docker_ids, uid)
 
         if start_iam_mock:
             docker_ids.extend(_start_iam_mock(image, uid, storages_dockers))

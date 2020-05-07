@@ -86,24 +86,28 @@ class ProviderWorkerConfigurator:
         grouped_storages = {}
 
         for s in posix_storages:
-            name = s['name']
-            readonly = s['readonly']
             if not storages_dockers:
                 storages_dockers = {'posix': {}}
-            if 'group' in s and s['group'] in grouped_storages:
-                (host_path, docker_path, mode) = (grouped_storages[s['group']], name, 'ro' if readonly else 'rw')
-            elif 'group' in s:
-                (host_path, docker_path, mode) = common.volume_for_storage(name, readonly)
-                grouped_storages[s['group']] = host_path
-            else:
-                (host_path, docker_path, mode) = common.volume_for_storage(name, readonly)
+            name = s['name']
+            readonly = s['readonly']
+            if name not in storages_dockers['posix'].keys():
+                if 'group' in s and s['group'] in grouped_storages:
+                    (host_path, docker_path, mode) = (grouped_storages[s['group']], name, 'ro' if readonly else 'rw')
+                elif 'group' in s:
+                    (host_path, docker_path, mode) = common.volume_for_storage(name, readonly)
+                    grouped_storages[s['group']] = host_path
+                else:
+                    (host_path, docker_path, mode) = common.volume_for_storage(name, readonly)
 
-            v = (host_path, docker_path, mode)
-            storages_dockers['posix'][name].update({
-                "host_path": host_path,
-                "docker_path": docker_path,
-                "mode": mode
-            })
+                v = (host_path, docker_path, mode)
+                storages_dockers['posix'][name] = {
+                    "host_path": host_path,
+                    "docker_path": docker_path,
+                    "mode": mode
+                }
+            else:
+                d = storages_dockers['posix'][name]
+                v = (d['host_path'], d['docker_path'], d['mode'])
             extra_volumes.append(v)
 
         # Check if gui override is enabled in env and add required volumes
@@ -167,12 +171,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
     for storage in storages:
         if isinstance(storage, basestring):
             storage = {'type': 'posix', 'name': storage}
-
-        # storage id is optional
-        st_type = storage['type']
-        st_name = storage['name']
-
-        if st_type in ['posix', 'nfs']:
+        if storage['type'] in ['posix', 'nfs']:
             st_path = storage['name']
             command = ['escript', script_paths['posix'], cookie,
                        first_node, storage['name'], st_path,
@@ -183,7 +182,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
             config = storages_dockers['ceph'][storage['name']]
             pool = storage['pool'].split(':')[0]
             command = ['escript', script_paths['ceph'], cookie,
-                       first_node, st_name, 'ceph',
+                       first_node, storage['name'], 'ceph',
                        config['host_name'], pool, config['username'],
                        config['key'], 'true', 'flat']
             assert 0 is docker.exec_(container, command, tty=True,
@@ -192,7 +191,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
             config = storages_dockers['cephrados'][storage['name']]
             pool = storage['pool'].split(':')[0]
             command = ['escript', script_paths['cephrados'], cookie,
-                       first_node, st_name, 'ceph',
+                       first_node, storage['name'], 'ceph',
                        config['host_name'], pool, config['username'],
                        config['key'], storage.get('block_size', '10485760'),
                        'true', storage.get('storage_path_type', 'flat')]
@@ -201,7 +200,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
         elif storage['type'] == 's3':
             config = storages_dockers['s3'][storage['name']]
             command = ['escript', script_paths['s3'], cookie,
-                       first_node, st_name, config['host_name'],
+                       first_node, storage['name'], config['host_name'],
                        config.get('scheme', 'http'), storage['bucket'],
                        config['access_key'], config['secret_key'],
                        storage.get('block_size', '10485760'), 'true',
@@ -211,7 +210,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
         elif storage['type'] == 'swift':
             config = storages_dockers['swift'][storage['name']]
             command = ['escript', script_paths['swift'], cookie,
-                       first_node, st_name,
+                       first_node, storage['name'],
                        'http://{0}:{1}/v2.0/tokens'.format(
                            config['host_name'], config['keystone_port']),
                        storage['container'], config['tenant_name'],
@@ -223,7 +222,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
         elif storage['type'] == 'glusterfs':
             config = storages_dockers['glusterfs'][storage['name']]
             command = ['escript', script_paths['glusterfs'], cookie,
-                       first_node, st_name, storage['volume'],
+                       first_node, storage['name'], storage['volume'],
                        config['host_name'], str(config['port']),
                        storage['transport'], storage['mountpoint'],
                        'cluster.write-freq-threshold=100;', 'true', 'flat']
@@ -232,7 +231,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
         elif storage['type'] == 'webdav':
             config = storages_dockers['webdav'][storage['name']]
             command = ['escript', script_paths['webdav'], cookie,
-                       first_node, st_name, config['endpoint'],
+                       first_node, storage['name'], config['endpoint'],
                        config.get('credentials_type', 'basic'),
                        config['credentials'], 'false',
                        storage.get('authorization_header', ''),
@@ -244,7 +243,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'nulldevice':
             command = ['escript', script_paths['nulldevice'], cookie,
-                       first_node, st_name, storage['latencyMin'],
+                       first_node, storage['name'], storage['latencyMin'],
                        storage['latencyMax'], storage['timeoutProbability'],
                        storage['filter'],
                        storage['simulatedFilesystemParameters'],
