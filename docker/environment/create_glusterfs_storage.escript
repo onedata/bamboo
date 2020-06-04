@@ -30,7 +30,7 @@ main([Cookie, Node, Name, Volume, Hostname, Port, Transport, MountPoint, XlatorO
 
     % use storage name as its id
     StorageId = list_to_binary(Name),
-    StorageConfig = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, false, undefined, false]),
+    StorageConfig = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, false, undefined]),
     safe_call(NodeAtom, storage, on_storage_created, [StorageId]).
 
 
