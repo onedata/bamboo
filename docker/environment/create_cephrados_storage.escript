@@ -28,7 +28,7 @@ main([Cookie, Node, Name, ClusterName, MonitorHostname, PoolName, Username,
 
     % use storage name as its id
     StorageId = list_to_binary(Name),
-    StorageConfig = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, false, undefined, false]),
+    StorageConfig = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, false, undefined]),
     safe_call(NodeAtom, storage, on_storage_created, [StorageId]).
 
 safe_call(Node, Module, Function, Args) ->
