@@ -28,7 +28,7 @@ main([Cookie, Node, Name, AuthUrl, ContainerName, TenantName, Username, Password
 
     % use storage name as its id
     StorageId = list_to_binary(Name),
-    {ok, StorageId} = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, false, undefined, false]),
+    {ok, StorageId} = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, false, undefined]),
     safe_call(NodeAtom, storage, on_storage_created, [StorageId]).
 
 

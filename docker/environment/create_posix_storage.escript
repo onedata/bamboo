@@ -22,7 +22,7 @@ main([Cookie, Node, Name, MountPoint, StoragePathType, ReadonlyStr]) ->
     % use storage name as its id
     StorageId = list_to_binary(Name),
     {ok, StorageId} = safe_call(NodeAtom, storage_config, create, [StorageId, Helper,
-        list_to_atom(string:lowercase(ReadonlyStr)), undefined, false]),
+        list_to_atom(string:lowercase(ReadonlyStr)), undefined]),
     safe_call(NodeAtom, storage, on_storage_created, [StorageId]).
 
 safe_call(Node, Module, Function, Args) ->
