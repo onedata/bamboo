@@ -184,7 +184,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
             command = ['escript', script_paths['ceph'], cookie,
                        first_node, storage['name'], 'ceph',
                        config['host_name'], pool, config['username'],
-                       config['key'], 'true', 'flat']
+                       config['key'], 'flat']
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'cephrados':
@@ -194,7 +194,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        first_node, storage['name'], 'ceph',
                        config['host_name'], pool, config['username'],
                        config['key'], storage.get('block_size', '10485760'),
-                       'true', storage.get('storage_path_type', 'flat')]
+                       storage.get('storage_path_type', 'flat')]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 's3':
@@ -203,7 +203,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        first_node, storage['name'], config['host_name'],
                        config.get('scheme', 'http'), storage['bucket'],
                        config['access_key'], config['secret_key'],
-                       storage.get('block_size', '10485760'), 'true',
+                       storage.get('block_size', '10485760'),
                        storage.get('storage_path_type', 'flat')]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
@@ -215,7 +215,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                            config['host_name'], config['keystone_port']),
                        storage['container'], config['tenant_name'],
                        config['user_name'], config['password'],
-                       storage.get('block_size', '10485760'), 'true',
+                       storage.get('block_size', '10485760'),
                        storage.get('storage_path_type', 'flat')]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
@@ -225,7 +225,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        first_node, storage['name'], storage['volume'],
                        config['host_name'], str(config['port']),
                        storage['transport'], storage['mountpoint'],
-                       'cluster.write-freq-threshold=100;', 'true', 'flat']
+                       'cluster.write-freq-threshold=100;', 'flat']
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'webdav':
@@ -237,7 +237,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        storage.get('authorization_header', ''),
                        storage.get('range_write_support', 'sabredav'),
                        storage.get('connection_pool_size', '10'),
-                       storage.get('maximum_upload_size', '0'), 'true',
+                       storage.get('maximum_upload_size', '0'),
                        'canonical']
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
@@ -247,7 +247,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        storage['latencyMax'], storage['timeoutProbability'],
                        storage['filter'],
                        storage['simulatedFilesystemParameters'],
-                       storage['simulatedFilesystemGrowSpeed'], 'true',
+                       storage['simulatedFilesystemGrowSpeed'],
                        'canonical']
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
