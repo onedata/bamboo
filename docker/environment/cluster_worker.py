@@ -8,11 +8,10 @@ Brings up a set of cluster-worker nodes. They can create separate clusters.
 from . import worker, docker, common
 
 def up(image, bindir, dns_server, uid, config_path, logdir=None,
-       storages_dockers=None, luma_config=None):
+       storages_dockers=None):
     return worker.up(image, bindir, dns_server, uid, config_path,
                      ClusterWorkerConfigurator(), logdir,
-                     storages_dockers=storages_dockers,
-                     luma_config=luma_config)
+                     storages_dockers=storages_dockers)
 
 
 class ClusterWorkerConfigurator:
@@ -29,8 +28,7 @@ class ClusterWorkerConfigurator:
 
     # Called AFTER the instance (cluster of workers) has been started
     def post_configure_instance(self, bindir, instance, config, container_ids,
-                                output, storages_dockers=None,
-                                luma_config=None):
+                                output, storages_dockers=None):
         pass
 
     def extra_volumes(self, config, bindir, instance_domain, storages_dockers):

@@ -3,7 +3,7 @@
 
 -export([main/1]).
 
-main([Cookie, Node, Name, MountPoint, StoragePathType, ReadonlyStr]) ->
+main([Cookie, Node, Name, MountPoint, StoragePathType, SkipStorageDetection]) ->
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
 
@@ -13,16 +13,17 @@ main([Cookie, Node, Name, MountPoint, StoragePathType, ReadonlyStr]) ->
     },
     {ok, Helper} = safe_call(NodeAtom, helper, new_helper, [
         <<"posix">>,
-        #{<<"mountPoint">> => list_to_binary(MountPoint)},
-        UserCtx,
-        false,
-        list_to_binary(StoragePathType)
+        #{
+            <<"mountPoint">> => list_to_binary(MountPoint),
+            <<"skipStorageDetection">> => list_to_binary(string:lowercase(SkipStorageDetection)),
+            <<"storagePathType">> => list_to_binary(StoragePathType)
+        },
+        UserCtx
     ]),
 
     % use storage name as its id
     StorageId = list_to_binary(Name),
-    StorageConfig = safe_call(NodeAtom, storage_config, create, [StorageId, Helper,
-        list_to_atom(string:lowercase(ReadonlyStr)), undefined]),
+    {ok, StorageId} = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, undefined]),
     safe_call(NodeAtom, storage, on_storage_created, [StorageId]).
 
 safe_call(Node, Module, Function, Args) ->

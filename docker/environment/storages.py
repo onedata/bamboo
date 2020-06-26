@@ -7,36 +7,7 @@ Contains methods used to bring up storages.
 """
 import sys
 
-from . import common, s3, ceph, cephrados, nfs, glusterfs, webdav, amazon_iam, luma, swift
-
-
-def start_luma(config, storages_dockers, image, bin_luma, output, uid):
-    luma_mode = 'disabled'
-    for key in config['provider_domains']:
-        luma_mode = config['provider_domains'][key].get('luma_mode', 'disabled')
-        if luma_mode != 'disabled':
-            break
-    luma_config = None
-    if luma_mode != 'disabled':
-        luma_config = config.get('luma_setup', luma.get_default_config())
-
-        if storages_dockers['ceph']:
-            ceph_storage = storages_dockers['ceph'].values()[0]
-            generators_config = luma_config.get('generators_config', {})
-            ceph_config = generators_config.get('ceph', {})
-            ceph_config['username'] = ceph_storage.get('username', 'client.admin')
-            ceph_config['key'] = ceph_storage.get('key', ceph_storage['key'])
-            ceph_config['monitor_hostname'] = ceph_storage.get('monitor_hostname', \
-                ceph_storage['host_name'])
-            ceph_config['pool_name'] = ceph_storage.get('pool_name', 'onedata')
-            generators_config['ceph'] = ceph_config
-            luma_config['generators_config'] = generators_config
-
-        config['luma_setup'] = luma_config
-        luma_config = luma.up(image, bin_luma, config, uid)
-        output['docker_ids'].extend(luma_config['docker_ids'])
-        output['luma'] = {'host_name': luma_config['host_name']}
-    return luma_config
+from . import common, s3, ceph, cephrados, nfs, glusterfs, webdav, amazon_iam, swift
 
 
 def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, nfs_image,
@@ -88,7 +59,7 @@ def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, n
                 elif storage['type'] == 'webdav' and storage['name'] not in \
                         storages_dockers['webdav']:
                     _webdav_up(storage, storages_dockers, webdav_image,
-                                  docker_ids, uid)
+                               docker_ids, uid)
 
         if start_iam_mock:
             docker_ids.extend(_start_iam_mock(image, uid, storages_dockers))

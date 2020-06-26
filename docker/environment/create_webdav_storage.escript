@@ -5,8 +5,7 @@
 
 main([Cookie, Node, Name, Endpoint, CredentialsType,
       Credentials, VerifyServerCertificate, AuthorizationHeader,
-      RangeWriteSupport, ConnectionPoolSize, MaximumUploadSize,
-      Insecure, StoragePathType]) ->
+      RangeWriteSupport, ConnectionPoolSize, MaximumUploadSize, StoragePathType]) ->
 
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
@@ -23,16 +22,16 @@ main([Cookie, Node, Name, Endpoint, CredentialsType,
             <<"authorizationHeader">> => list_to_binary(AuthorizationHeader),
             <<"rangeWriteSupport">> => list_to_binary(RangeWriteSupport),
             <<"connectionPoolSize">> => list_to_binary(ConnectionPoolSize),
-            <<"maximumUploadSize">> => list_to_binary(MaximumUploadSize)
+            <<"maximumUploadSize">> => list_to_binary(MaximumUploadSize),
+            <<"skipStorageDetection">> => <<"false">>,
+            <<"storagePathType">> => list_to_binary(StoragePathType)
         },
-        UserCtx,
-        list_to_atom(Insecure),
-        list_to_binary(StoragePathType)
+        UserCtx
     ]),
 
     % use storage name as its id
     StorageId = list_to_binary(Name),
-    StorageConfig = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, false, undefined]),
+    {ok, StorageId} = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, undefined]),
     safe_call(NodeAtom, storage, on_storage_created, [StorageId]).
 
 

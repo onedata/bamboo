@@ -4,7 +4,7 @@
 -export([main/1]).
 
 main([Cookie, Node, Name, ClusterName, MonitorHostname, PoolName, Username,
-    Key, BlockSize, Insecure, StoragePathType]) ->
+    Key, BlockSize, StoragePathType]) ->
 
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
@@ -19,16 +19,16 @@ main([Cookie, Node, Name, ClusterName, MonitorHostname, PoolName, Username,
             <<"monitorHostname">> => list_to_binary(MonitorHostname),
             <<"clusterName">> => list_to_binary(ClusterName),
             <<"poolName">> => list_to_binary(PoolName),
-            <<"blockSize">> => list_to_binary(BlockSize)
+            <<"blockSize">> => list_to_binary(BlockSize),
+            <<"skipStorageDetection">> => <<"false">>,
+            <<"storagePathType">> => list_to_binary(StoragePathType)
         },
-        UserCtx,
-        list_to_atom(Insecure),
-        list_to_binary(StoragePathType)
+        UserCtx
     ]),
 
     % use storage name as its id
     StorageId = list_to_binary(Name),
-    StorageConfig = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, false, undefined]),
+    {ok, StorageId} = safe_call(NodeAtom, storage_config, create, [StorageId, Helper, undefined]),
     safe_call(NodeAtom, storage, on_storage_created, [StorageId]).
 
 safe_call(Node, Module, Function, Args) ->
