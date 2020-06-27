@@ -92,9 +92,12 @@ def up(config_path,
         common.merge(output, op_output)
 
     # Start provider cluster instances
-    setup_worker(provider_worker, bin_op_worker, 'provider_domains',
-                 bin_cluster_manager, config, config_path, dns_server, image,
-                 logdir, output, uid, storages_dockers)
+
+    # set up worker only if provider_domains exist AND are not an empty dict
+    if config.get('provider_domains'):
+        setup_worker(provider_worker, bin_op_worker, 'provider_domains',
+                     bin_cluster_manager, config, config_path, dns_server, image,
+                     logdir, output, uid, storages_dockers)
 
     # Start stock cluster worker instances
     setup_worker(cluster_worker, bin_cluster_worker, 'cluster_domains',
