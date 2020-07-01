@@ -3,7 +3,7 @@
 
 -export([main/1]).
 
-main([Cookie, Node, Name, Url, CredentialsType, Credentials,StoragePathType]) ->
+main([Cookie, Node, Name, Url, CredentialsType, Credentials, StoragePathType]) ->
 
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
