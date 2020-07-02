@@ -152,6 +152,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                     'swift': 'create_swift_storage.escript',
                     'glusterfs': 'create_glusterfs_storage.escript',
                     'webdav': 'create_webdav_storage.escript',
+                    'xrootd': 'create_xrootd_storage.escript',
                     'nulldevice': 'create_nulldevice_storage.escript'}
     pwd = common.get_script_dir()
     for script_name in script_names.values():
@@ -239,6 +240,15 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        storage.get('connection_pool_size', '10'),
                        storage.get('maximum_upload_size', '0'),
                        'canonical']
+            assert 0 is docker.exec_(container, command, tty=True,
+                                     stdout=sys.stdout, stderr=sys.stderr)
+        elif storage['type'] == 'xrootd':
+            config = storages_dockers['xrootd'][storage['name']]
+            command = ['escript', script_paths['xrootd'], cookie,
+                       first_node, storage['name'], config['host'],
+                       config.get('path', '/'),
+                       config.get('credentials_type', 'none'),
+                       config.get('credentials', ''), 'canonical']
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'nulldevice':
