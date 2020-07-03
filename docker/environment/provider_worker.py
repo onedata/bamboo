@@ -245,8 +245,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
         elif storage['type'] == 'xrootd':
             config = storages_dockers['xrootd'][storage['name']]
             command = ['escript', script_paths['xrootd'], cookie,
-                       first_node, storage['name'], config['host'],
-                       config.get('path', '/'),
+                       first_node, storage['name'], config['url'],
                        config.get('credentials_type', 'none'),
                        config.get('credentials', ''), 'canonical']
             assert 0 is docker.exec_(container, command, tty=True,
