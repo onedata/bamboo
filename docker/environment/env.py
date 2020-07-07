@@ -36,6 +36,7 @@ def up(config_path,
        swift_image=dockers_config.default_image('swift'),
        glusterfs_image=dockers_config.default_image('glusterfs'),
        webdav_image=dockers_config.default_image('webdav'),
+       xrootd_image=dockers_config.default_image('xrootd'),
        bin_am=default('bin_am'),
        bin_oz=default('bin_oz'),
        bin_cluster_manager=default('bin_cluster_manager'),
@@ -80,9 +81,9 @@ def up(config_path,
 
     # Start storages
     storages_dockers, storages_dockers_ids = \
-        storages.start_storages(config, config_path, ceph_image, cephrados_image, s3_image,
-                                nfs_image, swift_image, glusterfs_image, webdav_image, image,
-                                uid)
+        storages.start_storages(config, config_path, ceph_image, cephrados_image,
+                                s3_image, nfs_image, swift_image, glusterfs_image,
+                                webdav_image, xrootd_image, image, uid)
     output['storages'] = storages_dockers
 
     # Start onepanel instances
