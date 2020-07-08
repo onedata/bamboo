@@ -17,6 +17,7 @@ scripts. Supported image types (passed as string):
     * glusterfs
     * webdav
     * xrootd
+    * http
 
 To override an image using a config file, place a json file called
 'dockers.config' anywhere on the path from CWD to the executed bamboos script.
@@ -41,6 +42,7 @@ Images can also be overriden using ENV variables
     * GLUSTERFS_IMAGE
     * WEBDAV_IMAGE
     * XROOTD_IMAGE
+    * HTTP_IMAGE
 """
 
 import sys
@@ -62,7 +64,8 @@ def default_image(type):
         'nfs': 'erezhorev/dockerized_nfs_server',
         'glusterfs': 'gluster/gluster-centos:gluster3u7_centos7',
         'webdav': 'onedata/sabredav:v1',
-        'xrootd': 'onedata/xrootd:v1'
+        'xrootd': 'onedata/xrootd:v1',
+        'http': 'onedata/lighttpd:v1'
     }[type]
 
 
@@ -78,7 +81,8 @@ def image_override_env(type):
         'nfs': 'NFS_IMAGE',
         'glusterfs': 'GLUSTERFS_IMAGE',
         'webdav': 'WEBDAV_IMAGE',
-        'xrootd': 'XROOTD_IMAGE'
+        'xrootd': 'XROOTD_IMAGE',
+        'http': 'HTTP_IMAGE'
     }[type]
 
 

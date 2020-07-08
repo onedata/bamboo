@@ -65,6 +65,12 @@ def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, n
                         storages_dockers['xrootd']:
                     _xrootd_up(storage, storages_dockers, xrootd_image,
                                docker_ids, uid)
+
+                elif storage['type'] == 'http' and storage['name'] not in \
+                        storages_dockers['http']:
+                    _http_up(storage, storages_dockers, http_image,
+                               docker_ids, uid)
+
         if start_iam_mock:
             docker_ids.extend(_start_iam_mock(image, uid, storages_dockers))
 
