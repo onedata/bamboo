@@ -46,7 +46,7 @@ def _node_up(image, name, uid):
 
     return {
         'docker_ids': [container],
-        'endpoint': "https://{}/test_data".format(ip),
+        'endpoint': "https://{}".format(ip),
         'credentials': 'user:password',
         'credentials_type': 'basic',
         'authorization_header': '',
