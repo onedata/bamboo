@@ -153,6 +153,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                     'glusterfs': 'create_glusterfs_storage.escript',
                     'webdav': 'create_webdav_storage.escript',
                     'xrootd': 'create_xrootd_storage.escript',
+                    'http': 'create_http_storage.escript',
                     'nulldevice': 'create_nulldevice_storage.escript'}
     pwd = common.get_script_dir()
     for script_name in script_names.values():
@@ -248,6 +249,17 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        first_node, storage['name'], config['url'],
                        config.get('credentials_type', 'none'),
                        config.get('credentials', ''), 'canonical']
+            assert 0 is docker.exec_(container, command, tty=True,
+                                     stdout=sys.stdout, stderr=sys.stderr)
+        elif storage['type'] == 'http':
+            config = storages_dockers['http'][storage['name']]
+            command = ['escript', script_paths['http'], cookie,
+                       first_node, storage['name'], config['endpoint'],
+                       config.get('credentials_type', 'basic'),
+                       config['credentials'], 'false',
+                       storage.get('authorization_header', ''),
+                       storage.get('connection_pool_size', '10'),
+                       'canonical']
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'nulldevice':

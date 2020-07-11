@@ -7,13 +7,13 @@ Contains methods used to bring up storages.
 """
 import sys
 
-from . import common, s3, ceph, cephrados, nfs, glusterfs, webdav, xrootd, amazon_iam, swift
+from . import common, s3, ceph, cephrados, nfs, glusterfs, webdav, xrootd, http, amazon_iam, swift
 
 
 def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, nfs_image,
-                    swift_image, glusterfs_image, webdav_image, xrootd_image, image, uid):
+                    swift_image, glusterfs_image, webdav_image, xrootd_image, http_image, image, uid):
     storages_dockers = {'ceph': {}, 'cephrados': {}, 's3': {}, 'nfs': {}, 'posix': {},
-            'swift': {}, 'glusterfs': {}, 'webdav': {}, 'xrootd': {}}
+            'swift': {}, 'glusterfs': {}, 'webdav': {}, 'xrootd': {}, 'http': {}}
     docker_ids = []
     if 'os_configs' in config:
         start_iam_mock = False
@@ -65,6 +65,12 @@ def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, n
                         storages_dockers['xrootd']:
                     _xrootd_up(storage, storages_dockers, xrootd_image,
                                docker_ids, uid)
+
+                elif storage['type'] == 'http' and storage['name'] not in \
+                        storages_dockers['http']:
+                    _http_up(storage, storages_dockers, http_image,
+                               docker_ids, uid)
+
         if start_iam_mock:
             docker_ids.extend(_start_iam_mock(image, uid, storages_dockers))
 
@@ -161,3 +167,11 @@ def _xrootd_up(storage, storages_dockers, xrootd_image, docker_ids, uid):
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
     storages_dockers['xrootd'][storage['name']] = result
+
+def _http_up(storage, storages_dockers, http_image, docker_ids, uid):
+    result = http.up(http_image, storage['name'], uid)
+    docker_ids.extend(result['docker_ids'])
+    del result['docker_ids']
+    storages_dockers['http'][storage['name']] = result
+
+
