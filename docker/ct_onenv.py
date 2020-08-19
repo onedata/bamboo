@@ -4,7 +4,7 @@
 Copyright (C) 2020 ACK CYFRONET AGH
 This software is released under the MIT license cited in 'LICENSE.txt'
 
-Runs oneprovider integration tests, providing Erlang's ct_run with every
+Runs integration tests, providing Erlang's ct_run with every
 environmental argument it needs for successful run. The output is put into
 'test_distributed/logs'. The (init|end)_per_suite "testcases" are removed from
 the surefire.xml output.
@@ -66,6 +66,12 @@ def main():
         help='path ot sources to be mounted in onenv container. Use when sources are outside HOME directory',
         dest='path_to_sources')
 
+    parser.add_argument(
+        '--no-clean',
+        action='store_true',
+        help='if set environment will not be cleaned up after tests',
+        dest='no_clean')
+
     args = parser.parse_args()
     dockers_config.ensure_image(args, 'image', 'worker')
 
@@ -107,6 +113,9 @@ def prepare_ct_command(args):
     ct_command.extend(code_paths)
 
     ct_command.extend(['-env', 'path_to_sources', os.path.normpath(os.path.join(os.getcwd(), args.path_to_sources))])
+
+    ct_command.extend(['-env', 'clean_env', "false" if args.no_clean else "true"])
+
 
     if args.suites:
         ct_command.append('-suite')
