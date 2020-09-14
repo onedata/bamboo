@@ -11,7 +11,8 @@
 # * `preview` - start a server on http://localhost:8088 that will render ReDoc
 #   documentation based on `swagger.json` file placed in working dir.
 
-# Currently used version of Redoc standalone is: 2.0.0-rc.23
+# Currently used version of Redoc standalone is: 2.0.0-rc.40
+# with experimental description override patch: https://github.com/kliput/ReDoc/commit/62687d25e7a3980f23a98fd416eb866f6a7af1cc
 
 REDOC_IMG='onedata/redoc-cli:v3'
 
