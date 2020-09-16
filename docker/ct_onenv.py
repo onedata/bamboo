@@ -32,6 +32,8 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(script_dir, 'bamboos/docker'))
 
 CONFIG_DIRS = ['.docker', '.kube', '.minikube', '.one-env']
+COVER_SPEC = 'cover.spec'
+COVER_TMP_SPEC = 'cover_tmp.spec'
 
 
 def main():
@@ -131,7 +133,7 @@ def prepare_ct_command(args):
         ct_command.extend(args.cases)
 
     if args.cover:
-        ct_command.extend(['-cover', 'cover_tmp.spec'])
+        ct_command.extend(['-cover', COVER_TMP_SPEC])
 
     return ct_command
 
@@ -237,8 +239,8 @@ def prepare_cover():
     excl_mods = glob.glob(
         os.path.join(script_dir, 'test_distributed', '*.erl'))
     excl_mods = [os.path.basename(item)[:-4] for item in excl_mods]
-    cover_template = os.path.join(script_dir, 'test_distributed', 'cover.spec')
-    new_cover = os.path.join(script_dir, 'test_distributed', 'cover_tmp.spec')
+    cover_template = os.path.join(script_dir, 'test_distributed', COVER_SPEC)
+    new_cover = os.path.join(script_dir, 'test_distributed', COVER_TMP_SPEC)
 
     incl_dirs = []
     with open(cover_template, 'r') as template, open(new_cover, 'w') as cover:
