@@ -18,23 +18,23 @@ from __future__ import print_function
 
 from os.path import expanduser
 import argparse
-import json
 import os
 import platform
 import re
-import shutil
 import sys
-import time
 import glob
-import fnmatch
 import xml.etree.ElementTree as ElementTree
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(script_dir, 'bamboos/docker'))
 from environment import docker, dockers_config
 from environment.common import HOST_STORAGE_PATH, remove_dockers_and_volumes
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(script_dir, 'bamboos/docker'))
+
 CONFIG_DIRS = ['.docker', '.kube', '.minikube', '.one-env']
+COVER_SPEC = 'cover.spec'
+COVER_TMP_SPEC = 'cover_tmp.spec'
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -63,7 +63,8 @@ def main():
     parser.add_argument(
         '--path-to-sources',
         default=os.path.normpath(os.path.join(os.getcwd(), '..')),
-        help='path ot sources to be mounted in onenv container. Use when sources are outside HOME directory',
+        help='path ot sources to be mounted in onenv container. '
+             'Use when sources are outside HOME directory',
         dest='path_to_sources')
 
     parser.add_argument(
@@ -72,33 +73,38 @@ def main():
         help='if set environment will not be cleaned up after tests',
         dest='no_clean')
 
+    parser.add_argument(
+        '--cover',
+        action='store_true',
+        default=False,
+        help='run cover analysis',
+        dest='cover')
+
     args = parser.parse_args()
     dockers_config.ensure_image(args, 'image', 'worker')
 
-    excl_mods = glob.glob(
-        os.path.join(script_dir, 'test_distributed', '*.erl'))
-    excl_mods = [os.path.basename(item)[:-4] for item in excl_mods]
-
-
+    if args.cover:
+        prepare_cover()
     command = prepare_docker_command(args)
     remove_dockers_and_volumes()
     ret = start_test_docker(command, args)
     remove_onenv_container()
 
-    if ret != 0 and not skipped_test_exists(os.path.join(script_dir, "test_distributed/logs/*/surefire.xml")):
+    if ret != 0 and not skipped_test_exists(
+            os.path.join(script_dir, "test_distributed/logs/*/surefire.xml")):
         ret = 0
 
     sys.exit(ret)
-    
-    
+
+
 def prepare_ct_command(args):
     ct_command = ['ct_run',
                   '-abort_if_missing_suites',
                   '-dir', '.',
                   '-logdir', './logs/',
                   '-ct_hooks', 'cth_surefire', '[{path, "surefire.xml"}]',
-                  'and', 'cth_logger', 
-                  'and', 'cth_onenv_up', 
+                  'and', 'cth_logger',
+                  'and', 'cth_onenv_up',
                   'and', 'cth_mock',
                   'and', 'cth_posthook',
                   '-noshell',
@@ -107,15 +113,16 @@ def prepare_ct_command(args):
                   '-include', '../include', '../_build/default/lib']
 
     code_paths = ['-pa']
-    
+
     code_paths.extend(
         glob.glob(os.path.join(script_dir, '_build/default/lib', '*', 'ebin')))
     ct_command.extend(code_paths)
 
-    ct_command.extend(['-env', 'path_to_sources', os.path.normpath(os.path.join(os.getcwd(), args.path_to_sources))])
+    ct_command.extend(['-env', 'path_to_sources',
+                       os.path.normpath(os.path.join(os.getcwd(), args.path_to_sources))])
 
     ct_command.extend(['-env', 'clean_env', "false" if args.no_clean else "true"])
-
+    ct_command.extend(['-env', 'cover', "true" if args.cover else "false"])
 
     if args.suites:
         ct_command.append('-suite')
@@ -124,13 +131,16 @@ def prepare_ct_command(args):
     if args.cases:
         ct_command.append('-case')
         ct_command.extend(args.cases)
-        
+
+    if args.cover:
+        ct_command.extend(['-cover', COVER_TMP_SPEC])
+
     return ct_command
-    
-    
+
+
 def prepare_docker_command(args):
     ct_command = prepare_ct_command(args)
-    
+
     command = '''
 import os, shutil, subprocess, sys, stat
 
@@ -181,14 +191,14 @@ sys.exit(ret)
         config_dirs=CONFIG_DIRS,
         shed_privileges=(platform.system() == 'Linux'))
 
-    
+
 def start_test_docker(command, args):
     volumes = []
     for dirname in CONFIG_DIRS:
         path = expanduser(os.path.join('~', dirname))
         if os.path.isdir(path):
             volumes += [(path, os.path.join('/tmp', dirname), 'ro')]
-            
+
     return docker.run(tty=True,
                       rm=True,
                       interactive=True,
@@ -204,7 +214,7 @@ def start_test_docker(command, args):
                       name='testmaster',
                       hostname='testmaster.test',
                       image=args.image,
-                      command=['python', '-c', command]) 
+                      command=['python', '-c', command])
 
 
 def skipped_test_exists(junit_report_path):
@@ -217,13 +227,37 @@ def skipped_test_exists(junit_report_path):
         if testsuite.attrib['skipped'] != '0':
             return True
     return False
-    
-    
+
+
 def remove_onenv_container():
     container = docker.ps(all=True, quiet=True, filters=[('name', 'one-env')])
     if container:
         docker.remove(container, force=True)
-    
-    
-if __name__ == '__main__': 
+
+
+def prepare_cover():
+    excl_mods = glob.glob(
+        os.path.join(script_dir, 'test_distributed', '*.erl'))
+    excl_mods = [os.path.basename(item)[:-4] for item in excl_mods]
+    cover_template = os.path.join(script_dir, 'test_distributed', COVER_SPEC)
+    new_cover = os.path.join(script_dir, 'test_distributed', COVER_TMP_SPEC)
+
+    incl_dirs = []
+    with open(cover_template, 'r') as template, open(new_cover, 'w') as cover:
+        for line in template:
+            if 'incl_dirs_r' in line:
+                dirs_string = re.search(r'\[(.*?)\]', line).group(1)
+                incl_dirs = [os.path.join(script_dir, d[1:]) for d in
+                             dirs_string.split(', ')]
+            elif 'excl_mods' in line:
+                modules_string = re.search(r'\[(.*?)\]', line).group(1)
+                excl_mods.extend([d.strip('"') for d in modules_string.split(', ')])
+            else:
+                print(line, file=cover)
+
+        print('{{incl_dirs_r, ["{0}]}}.'.format(', "'.join(incl_dirs)), file=cover)
+        print('{{excl_mods, [{0}]}}.'.format(', '.join(excl_mods)), file=cover)
+
+
+if __name__ == '__main__':
     main()
