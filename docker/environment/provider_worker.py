@@ -24,8 +24,10 @@ class ProviderWorkerConfigurator:
         if 'oz_domain' in sys_config:
             oz_hostname = worker.cluster_domain(sys_config['oz_domain'], uid)
             sys_config['oz_domain'] = oz_hostname
-        sys_config[
-            'interprovider_connections_security'] = 'only_verify_peercert'
+        sys_config['interprovider_connections_security'] = 'only_verify_peercert'
+        # required for op-worker to init connection to Onezone as onepanel 
+        # that normally synchronizes clocks is not started in env_up
+        sys_config['graph_sync_require_clock_sync_for_connection'] = False
         return cfg
 
     def pre_start_commands(self, domain):
