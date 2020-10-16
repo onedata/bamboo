@@ -21,7 +21,7 @@ case "${1}" in
     preview)
         [ ! -f `pwd`/swagger.json ] && echo "No swagger.json file found in working directory" && exit 1
         echo "Open http://localhost:8088 (or http://\${DOCKER_MACHINE_IP}:8088)"
-	      docker run -v `pwd`/swagger.json:/var/www/html/swagger.json:ro -p 8088:80 ${REDOC_IMG}
+	      docker run --rm -v `pwd`/swagger.json:/var/www/html/swagger.json:ro -p 8088:80 ${REDOC_IMG}
         ;;
 
     *)
