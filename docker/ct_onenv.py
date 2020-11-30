@@ -110,7 +110,7 @@ def prepare_ct_command(args):
                   '-noshell',
                   '-name', 'testmaster@testmaster',
                   '-hidden',
-                  '-include', '../include', '../_build/default/lib']
+                  '-include', './include', '../include', '../_build/default/lib']
 
     code_paths = ['-pa']
 

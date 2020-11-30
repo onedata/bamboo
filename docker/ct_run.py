@@ -150,7 +150,7 @@ ct_command = ['ct_run',
               'and', 'cth_posthook',
               '-noshell',
               '-name', 'testmaster@testmaster.{0}.test'.format(uid),
-              '-include', '../include', '../_build/default/lib']
+              '-include', './include', '../include', '../_build/default/lib']
 
 code_paths = ['-pa']
 if incl_dirs:
