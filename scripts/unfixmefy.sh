@@ -92,13 +92,18 @@ if [ -z "${BRANCH_NAME}" ]; then
     BRANCH_NAME=`git rev-parse --abbrev-ref HEAD`
 fi
 VFS_TAG=`echo "${BRANCH_NAME}" | egrep -o 'VFS-[[:digit:]]+' | head -n1`
-if [ -z "${VFS_TAG}" ]; then
+if [ $BRANCH_NAME == "develop" ]; then
+    echo "Current branch is develop, the script will not look"
+    echo "for forgotten todos marked with a specific VFS tag."
+elif [ -z "${VFS_TAG}" ]; then
     echo "WARNING: Cannot resolve the VFS tag (e.g. VFS-1234). You should run this"
     echo "script in a git repo with a branch checked out that has such tag in its name."
     echo "You may also provide the branch name or the VFS tag in the first argument."
     echo "The script will NOT look for forgotten todos marked with a specific VFS tag."
     echo "---------------------------------------------------------------------"
     echo " "
+else
+    echo "Current branch tag: ${VFS_TAG}"
 fi
 
 
