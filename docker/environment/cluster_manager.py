@@ -92,7 +92,7 @@ sleep 5'''  # Add sleep so logs can be chowned
 
 
 def _ready(container):
-    return True  # todo implement
+    return True
 
 
 def up(image, bindir, dns_server, uid, config_path, logdir=None, domains_name='provider_domains'):
