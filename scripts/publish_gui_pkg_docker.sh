@@ -16,7 +16,6 @@
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 REPORT_FILENAME=gui-image.conf
-BUILD_REPORT_TXT_FILENAME=docker-build-report.txt
 PROJECT_NAME=$(basename "$PWD")
 
 rm -rf gui_static gui_static.tar.gz
@@ -24,12 +23,22 @@ cp -r rel gui_static || exit $?
 tar -zcf gui_static.tar.gz gui_static || exit $?
 rm -rf gui_static
 
+COMMIT=`git rev-parse HEAD | cut -c1-10`
 PKG_SHA_SUM=`shasum -a 256 gui_static.tar.gz | cut -f1 -d ' '`
+PKG_SHA_SUM_PREFIX=`echo ${PKG_SHA_SUM} | cut -c1-10`
 echo "Package SHA-256: ${PKG_SHA_SUM}"
 
-${SCRIPT_DIR}/../docker/docker_build.py --repository docker.onedata.org --tag "SHA256-${PKG_SHA_SUM}" --name ${PROJECT_NAME} --publish --remove $@ .
+SHA256_TAG="SHA256-${PKG_SHA_SUM}"
+ID_SHA256P_TAG="ID_SHA256P-${COMMIT}-${PKG_SHA_SUM_PREFIX}"
 
-GIT_COMMIT_TAG=$(cat $BUILD_REPORT_TXT_FILENAME | sed -n "s/^.*docker.onedata.org.*\(ID-.*\).*$/\1/p" | head -n 1)
+${SCRIPT_DIR}/../docker/docker_build.py \
+  --name ${PROJECT_NAME} \
+  --repository docker.onedata.org \
+  --tag ${SHA256_TAG} \
+  --tag ${ID_SHA256P_TAG} \
+  --publish \
+  --remove \
+  $@ .
 
 cat > ${REPORT_FILENAME} <<EOF
 # ------------------------------------------------------------------------------
@@ -46,7 +55,7 @@ cat > ${REPORT_FILENAME} <<EOF
 # The name of the docker image containing the GUI package.
 IMAGE_NAME="${PROJECT_NAME}"
 # Tag (version) of the above image.
-IMAGE_TAG="${GIT_COMMIT_TAG}"
+IMAGE_TAG="${ID_SHA256P_TAG}"
 # SHA-256 checksum of the GUI package (tar.gz archive) embedded in the docker.
 # Used for additional integrity check and to keep track of verified GUI packages.
 PACKAGE_CHECKSUM="${PKG_SHA_SUM}"
