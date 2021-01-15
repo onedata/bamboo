@@ -35,6 +35,7 @@ EXCLUDED_THIRD_PARTY_DEPS=(
     base64url
     cowboy
     cowlib
+    cberl
     edown
     esaml
     erldns
