@@ -33,8 +33,10 @@ EXCLUDED_FILES=(
 # list of third party deps that we do not want to scan as we cannot fix the fixmes there
 EXCLUDED_THIRD_PARTY_DEPS=(
     base64url
+    bp_tree
     cowboy
     cowlib
+    cberl
     edown
     esaml
     erldns
