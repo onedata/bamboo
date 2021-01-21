@@ -25,6 +25,7 @@ EXCLUDED_DIRS=(
     node_package
     node_modules
     logs
+    gitbook_cache
     .git
     .idea
 )
