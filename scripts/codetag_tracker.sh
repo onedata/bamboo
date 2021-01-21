@@ -23,6 +23,7 @@ EXCLUDED_DIRS=(
     _build  # do not recurse into the _build directory as it is traversed selectively
     _book
     node_package
+    node_modules
     logs
     .git
     .idea
