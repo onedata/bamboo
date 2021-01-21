@@ -21,6 +21,7 @@ OUTPUT_FILE="$(mktemp)"
 
 EXCLUDED_DIRS=(
     _build  # do not recurse into the _build directory as it is traversed selectively
+    _book
     node_package
     logs
     .git
