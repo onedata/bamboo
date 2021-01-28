@@ -89,19 +89,19 @@ print_failure_summary() {
 
 
 OPTIONS=`getopt -o b::e:: --long branch::,excluded-dirs:: -- "$@"`
-eval set -- "$OPTIONS"
+eval set -- "${OPTIONS}"
 
 while true ; do
-    case "$1" in
+    case "${1}" in
         -b|--branch)
-            case "$2" in
+            case "${2}" in
                 "") BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD) ; shift 2 ;;
-                 *) BRANCH_NAME=$2 ; shift 2 ;;
+                 *) BRANCH_NAME=${2} ; shift 2 ;;
             esac ;;
         -e|--excluded-dirs)
-            case "$2" in
+            case "${2}" in
                 "") shift 2 ;;
-                 *) IFS=',' read -ra EXTRA_DIRS_TO_EXCLUDE <<< "$2";
+                 *) IFS=',' read -ra EXTRA_DIRS_TO_EXCLUDE <<< "${2}";
                     EXCLUDED_DIRS+=("${EXTRA_DIRS_TO_EXCLUDE[@]}");
                     shift 2 ;;
             esac ;;
@@ -164,15 +164,15 @@ done
 
 # scan non-excluded deps in the lib directory (internally skips EXCLUDED_FILES and EXCLUDED_DIRS)
 if [ -d "./_build/default/lib" ]; then
-  find ./_build/default/lib -maxdepth 1 -mindepth 1 | while read FILEPATH
-  do
-    FILENAME=`basename ${FILEPATH}`
-    if [[ ! " ${EXCLUDED_THIRD_PARTY_DEPS[@]} " =~ " ${FILENAME} " ]]; then
-        check_path ${FILEPATH};
-    fi
-  done
+    find ./_build/default/lib -maxdepth 1 -mindepth 1 | while read FILEPATH
+    do
+        FILENAME=`basename ${FILEPATH}`
+        if [[ ! " ${EXCLUDED_THIRD_PARTY_DEPS[@]} " =~ " ${FILENAME} " ]]; then
+            check_path ${FILEPATH};
+        fi
+    done
 else
-  echo "Warning: could not find the '_build/default/lib' directory, skipping scan of dependencies"
+    echo "Warning: could not find the '_build/default/lib' directory, skipping scan of dependencies"
 fi
 
 if [ -s ${OUTPUT_FILE} ]; then
