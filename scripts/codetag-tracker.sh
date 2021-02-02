@@ -87,32 +87,30 @@ print_failure_summary() {
     echo "Please fix these occurrences and run the script again."
 }
 
+BRANCH_NAME="$(git rev-parse --abbrev-ref HEAD)"
 
-OPTIONS=`getopt -o b::e:: --long branch::,excluded-dirs:: -- "$@"`
-eval set -- "${OPTIONS}"
-
-while true ; do
-    case "${1}" in
-        -b|--branch)
-            case "${2}" in
-                "") BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD) ; shift 2 ;;
-                 *) BRANCH_NAME=${2} ; shift 2 ;;
-            esac ;;
-        -e|--excluded-dirs)
-            case "${2}" in
-                "") shift 2 ;;
-                 *) IFS=',' read -ra EXTRA_DIRS_TO_EXCLUDE <<< "${2}";
-                    EXCLUDED_DIRS+=("${EXTRA_DIRS_TO_EXCLUDE[@]}");
-                    shift 2 ;;
-            esac ;;
-        --) shift ; break ;;
-        *) echo "Internal error!" ; exit 1 ;;
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --branch=*)
+            if [ ! -z "${1#*=}" ]; then
+                BRANCH_NAME="${1#*=}"
+            fi
+            ;;
+        --excluded-dirs=*)
+            IFS=',' read -ra EXTRA_DIRS_TO_EXCLUDE <<< "${1#*=}";
+            EXCLUDED_DIRS+=("${EXTRA_DIRS_TO_EXCLUDE[@]}");
+            ;;
+        *)
+            printf "***************************\n"
+            printf "* Error: Invalid argument.*\n"
+            printf "***************************\n"
+            exit 1
     esac
+    shift
 done
 
-
 VFS_TAG=`echo "${BRANCH_NAME}" | egrep -o 'VFS-[[:digit:]]+' | head -n1`
-if [ $BRANCH_NAME == "develop" ]; then
+if [ "$BRANCH_NAME" == "develop" ]; then
     echo "Current branch is develop, the script will not look"
     echo "for forgotten todos marked with a specific VFS tag."
 elif [ -z "${VFS_TAG}" ]; then
