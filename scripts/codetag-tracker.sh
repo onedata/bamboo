@@ -28,6 +28,7 @@ EXCLUDED_DIRS=(
 EXCLUDED_FILES=(
     ${SCRIPT_NAME}
     add-error.sh
+    CHANGELOG.md
 )
 # list of third party deps that we do not want to scan as we cannot fix the fixmes there
 EXCLUDED_THIRD_PARTY_DEPS=(
@@ -147,7 +148,8 @@ run_grep() {
 check_path() {
     FILEPATH=${1}
     run_grep fixme ${FILEPATH} >> ${OUTPUT_FILE}
-    run_grep writeme ${FILEPATH} >> ${OUTPUT_FILE}
+    run_grep 'writeme\s'  ${FILEPATH} >> ${OUTPUT_FILE}
+    run_grep 'writeme:'  ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep todo ${FILEPATH} | sed -E '/VFS-[0-9]+/d' >> ${OUTPUT_FILE}
     if [ -n "${VFS_TAG}" ]; then
         run_grep ${VFS_TAG} ${FILEPATH} >> ${OUTPUT_FILE}
