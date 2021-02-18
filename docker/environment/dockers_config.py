@@ -105,35 +105,39 @@ def get_image(type):
         print('Using overriden image for {}: {}'.format(type, image))
         return image
 
-    if os.path.isabs(sys.argv[0]):
-        current_path = sys.argv[0]
-        end_path = filesystem_root()
-    else:
-        current_path = os.path.join(os.getcwd(), sys.argv[0])
-        end_path = os.getcwd()
+    # look for DOCKERS_CONFIG_FILE starting from the place where the script is
+    # called (potentially the repo that includes bamboos as submodule)
+    start_path = os.getcwd()
+    end_path = filesystem_root()
+    image = search_for_config_with_entry(start_path, end_path, type)
+    if image:
+        return image
 
-    config_path = search_for_config(current_path, end_path)
-    if config_path:
-        config = json.load(open(config_path))
-        if type in config:
-            image = config[type]
-            print('Found dockers config in {}'.format(os.path.normpath(config_path)))
-            print('Using preconfigured image for {}: {}'.format(type, image))
-            return image
+    # otherwise look for entry in default DOCKERS_CONFIG_FILE in bamboos repo
+    start_path = os.path.realpath(__file__)
+    image = search_for_config_with_entry(start_path, end_path, type)
+    if image:
+        return image
 
+    # if all methods fail, return the default image defined statically
     image = default_image(type)
     print('Using default image for {}: {}'.format(type, image))
     return image
 
 
-def search_for_config(current_path, end_path):
+def search_for_config_with_entry(current_path, end_path, type):
     cfg_path = os.path.join(current_path, DOCKERS_CONFIG_FILE)
     if os.path.isfile(cfg_path):
-        return cfg_path
+        config = json.load(open(cfg_path))
+        if type in config:
+            image = config[type]
+            print('Found dockers config in {}'.format(os.path.normpath(cfg_path)))
+            print('Using preconfigured image for {}: {}'.format(type, image))
+            return image
 
     if current_path == end_path:
         return None
 
     # Step one dir upwards
     current_path = os.path.dirname(current_path)
-    return search_for_config(current_path, end_path)
+    return search_for_config_with_entry(current_path, end_path, type)
