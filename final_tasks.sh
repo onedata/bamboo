@@ -88,6 +88,7 @@ CONTAINERS_TO_REMOVE=${CONTAINERS}
 for container in ${CONTAINERS}
 do
     NAMESPACE=$(execute_with_timeout ${DOCKER_CMD_TIMEOUT} docker inspect --format '"{{ index .Config.Labels \"io.kubernetes.pod.namespace\"}}"' ${container})
+    NAME=$(execute_with_timeout ${DOCKER_CMD_TIMEOUT} docker inspect --format '"{{ index .Name}}"' ${container})
     if [[ ${NAMESPACE} ]]
     then
         if [[ "${NAMESPACE}" ==  "kube-system" ]]
@@ -95,6 +96,11 @@ do
             CONTAINERS_TO_REMOVE=( "${CONTAINERS_TO_REMOVE[@]/$container}" )
         fi
     fi
+    if [[ "${NAME}" == "/docuum" ]]
+    then
+        CONTAINERS_TO_REMOVE=( "${CONTAINERS_TO_REMOVE[@]/$container}" )
+    fi
+
 done
 
 echo "Stalled docker containers to remove: "
