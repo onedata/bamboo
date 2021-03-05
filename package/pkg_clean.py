@@ -171,7 +171,7 @@ Example use:
     LOG.info("Package cleanup called for {}:{}:{}:{}".format(repo,
         str(packages), version, str(days)))
 
-    if(('xenial' in repo) or ('bionic' in repo)):
+    if(('xenial' in repo) or ('bionic' in repo) or ('focal' in repo)):
         apt_clean_packages(release, repo, packages, version, days)
         apt_db_update(release, repo)
     elif 'centos' in repo:
@@ -179,7 +179,7 @@ Example use:
         yum_db_update(release, repo)
     else:
         print("Invalid repo " + repo +
-              ". Supported repositories are: xenial, bionic, centos/7x")
+              ". Supported repositories are: xenial, bionic, focal, centos/7x")
         LOG.error("Invalid repo " + repo +
-                  ". Supported repositories are: xenial, bionic, centos/7x")
+                  ". Supported repositories are: xenial, bionic, focal, centos/7x")
         sys.exit(1)
