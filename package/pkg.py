@@ -22,7 +22,7 @@ package/
             cluster-manager_1.0.0.1.ge1a52f4-1_amd64.changes
             cluster-manager_1.0.0.1.ge1a52f4.orig.tar.gz
 
-Available distributions xenial, bionic, centos-7-x86_64, fedora-29-x86_64
+Available distributions xenial, bionic, focal, centos-7-x86_64
 """
 import argparse
 import json
@@ -84,7 +84,8 @@ DEB_PKG_LOCATION = {
     'xenial': 'apt/ubuntu/xenial/pool/main',
     'zesty': 'apt/ubuntu/zesty/pool/main',
     'bionic': 'apt/ubuntu/bionic/pool/main',
-    'disco': 'apt/ubuntu/disco/pool/main'
+    'disco': 'apt/ubuntu/disco/pool/main',
+    'focal': 'apt/ubuntu/focal/pool/main'
 }
 
 REPO_TYPE = {
@@ -94,6 +95,7 @@ REPO_TYPE = {
     'zesty': 'deb',
     'bionic': 'deb',
     'disco': 'deb',
+    'focal': 'deb',
     'fedora-29-x86_64': 'rpm',
     'centos-7-x86_64': 'rpm'
 }
