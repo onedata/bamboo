@@ -149,6 +149,7 @@ check_path() {
     FILEPATH=${1}
     run_grep fixme ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep 'writeme\s'  ${FILEPATH} >> ${OUTPUT_FILE}
+    run_grep 'writeme$'  ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep 'writeme:'  ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep todo ${FILEPATH} | sed -E '/VFS-[0-9]+/d' >> ${OUTPUT_FILE}
     if [ -n "${VFS_TAG}" ]; then
