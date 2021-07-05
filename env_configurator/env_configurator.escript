@@ -186,8 +186,8 @@ main([InputJson, RegisterInOz, SetUpEntities]) ->
         end,
         halt(0)
     catch
-        T:M ->
-            io:format("Error in ~s - ~p:~p~n~p~n", [escript:script_name(), T, M, erlang:get_stacktrace()]),
+        T:M:Stk ->
+            io:format("Error in ~s - ~p:~p~n~p~n", [escript:script_name(), T, M, Stk]),
             halt(1)
     end;
 

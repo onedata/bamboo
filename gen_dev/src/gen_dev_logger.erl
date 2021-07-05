@@ -9,7 +9,7 @@
 %%% Functions that log messages provided by gen_dev script
 %%% @end
 %%%-------------------------------------------------------------------
--module(logger).
+-module(gen_dev_logger).
 -author("Tomasz Lichon").
 
 % logging

@@ -40,16 +40,15 @@ main([ArgsFile]) ->
         ParsedJson = args_parser:parse_config_file(ArgsFile),
         ok = configure_apps(ParsedJson)
     catch
-        _Type:Error ->
-            Stacktrace = erlang:get_stacktrace(),
-            try logger:print("Error: ~ts", [Error])
-            catch _:_ -> logger:print("Error: ~p", [Error])
+        _Type:Error:Stacktrace ->
+            try gen_dev_logger:print("Error: ~ts", [Error])
+            catch _:_ -> gen_dev_logger:print("Error: ~p", [Error])
             end,
-            logger:print("Stacktrace: ~p~n", [Stacktrace]),
+            gen_dev_logger:print("Stacktrace: ~p~n", [Stacktrace]),
             halt(?EXIT_FAILURE_CODE)
     end;
 main(_) ->
-    logger:print_usage(),
+    gen_dev_logger:print_usage(),
     halt(?EXIT_FAILURE_CODE).
 
 %%%===================================================================
@@ -113,23 +112,23 @@ prepare_neccessary_paths(Config) ->
 -spec prepare_and_print_configuration(AppName :: atom(), InputDir :: string(),
     ReleaseDir :: string(), NodeConfig :: list()) -> {SysConfig :: list(), VmArgs :: list()}.
 prepare_and_print_configuration(AppName, InputDir, ReleaseDir, NodeConfig) ->
-    logger:print("================ Configuring release ===================="),
-    logger:pretty_print_entry({application, AppName}),
-    logger:pretty_print_entry({input_dir, InputDir}),
-    logger:pretty_print_entry({release_dir, ReleaseDir}),
+    gen_dev_logger:print("================ Configuring release ===================="),
+    gen_dev_logger:pretty_print_entry({application, AppName}),
+    gen_dev_logger:pretty_print_entry({input_dir, InputDir}),
+    gen_dev_logger:pretty_print_entry({release_dir, ReleaseDir}),
 
-    logger:print("====================== vm.args =========================="),
+    gen_dev_logger:print("====================== vm.args =========================="),
     VmArgs = proplists:get_value('vm.args', NodeConfig),
-    lists:foreach(fun(X) -> logger:pretty_print_entry(X) end, VmArgs),
+    lists:foreach(fun(X) -> gen_dev_logger:pretty_print_entry(X) end, VmArgs),
 
-    logger:print("===================== sys.config ========================"),
+    gen_dev_logger:print("===================== sys.config ========================"),
     SysConfig = proplists:get_value('sys.config', NodeConfig),
     lists:foreach(fun({ConfiguredApp, AppConfig}) ->
-        logger:pretty_print_entry({environment, ConfiguredApp}),
-        lists:foreach(fun(X) -> logger:pretty_print_entry(X, 1) end, AppConfig),
-        logger:print("")
+        gen_dev_logger:pretty_print_entry({environment, ConfiguredApp}),
+        lists:foreach(fun(X) -> gen_dev_logger:pretty_print_entry(X, 1) end, AppConfig),
+        gen_dev_logger:print("")
     end, SysConfig),
-    logger:print(""),
+    gen_dev_logger:print(""),
     {SysConfig, VmArgs}.
 
 %%--------------------------------------------------------------------
