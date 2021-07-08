@@ -26,6 +26,7 @@ USER_EMAIL=${USER_EMAIL:-"bamboo@bamboo.onedata.org"}
 
 ALL_REPOS=(
     appmock
+    clproto
     cluster-manager
     cluster-worker
     ctool
