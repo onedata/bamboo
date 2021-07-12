@@ -252,6 +252,13 @@ def main():
         help='The S3 bucket name',
         default='bamboo-artifacts-2')
 
+    parser.add_argument(
+        '--default-branch',
+        help='Name of git branch to which script will fallback if artifact for desired ' +
+             'branch is not found',
+        default=DEVELOP_BRANCH
+    )
+
     args = parser.parse_args()
 
     if args.hostname != 'S3':
@@ -261,7 +268,7 @@ def main():
         ssh.connect(args.hostname, port=args.port, username=args.username)
 
         download_specific_or_default(ssh, args.plan, args.branch, args.hostname,
-                                 args.port, args.username)
+                                 args.port, args.username, args.default_branch)
 
         ssh.close()
     else:
@@ -272,7 +279,8 @@ def main():
             endpoint_url=args.s3_url
         )
         s3_download_specific_or_default(s3_res, args.s3_bucket, args.plan, args.branch,
-                                        args.hostname, args.port, args.username)
+                                        args.hostname, args.port, args.username,
+                                        args.default_branch)
 
 
 
