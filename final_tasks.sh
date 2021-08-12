@@ -39,7 +39,7 @@ echo "Cleaning helm deployments"
 HELM_RELEASES=$(helm ls --all --short)
 for release in ${HELM_RELEASES}
 do
-    execute_with_timeout ${DELETE_HELM_RELEASE_TIMEOUT} helm delete --purge ${release}
+    execute_with_timeout ${DELETE_HELM_RELEASE_TIMEOUT} helm unistall ${release}
 done
 
 echo "Cleanining pods"
