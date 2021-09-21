@@ -21,7 +21,7 @@ def _dns_ready(dns):
     # its own ip when asked about its hostname
     try:
         result = subprocess.check_output(
-            ['dig', '+short', '@{0}'.format(ip), hostname],
+            ['timeout', '10', 'dig', '+short', '@{0}'.format(ip), hostname],
             stdin=None, stderr=None)
         return result.strip('\n') == ip
     except:
