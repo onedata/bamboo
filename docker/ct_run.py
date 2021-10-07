@@ -115,6 +115,36 @@ dockers_config.ensure_image(args, 'image', 'worker')
 script_dir = os.path.dirname(os.path.abspath(__file__))
 uid = str(int(time.time()))
 
+if 'bamboo_coverOptionOverride' in os.environ:
+    print("----------------------------------------------------")
+    if os.environ['bamboo_coverOptionOverride'] == "true":
+        print("NOTE: overriding cover option to 'true' according to ${bamboo_coverOptionOverride} ENV variable")
+        args.cover = True
+    elif os.environ['bamboo_coverOptionOverride'] == "false":
+        print("NOTE: overriding cover option to 'false' according to ${bamboo_coverOptionOverride} ENV variable")
+        args.cover = False
+    elif os.environ['bamboo_coverOptionOverride'] == "develop_only":
+        if 'bamboo_planRepository_branchName' in os.environ and \
+            os.environ['bamboo_planRepository_branchName'] == "develop":
+
+            print(
+                "NOTE: overriding cover option to 'true' for branch 'develop' "
+                "according to ${bamboo_coverOptionOverride} ENV variable"
+            )
+            args.cover = True
+        else:
+            print(
+                "NOTE: overriding cover option to 'false' for branch other than 'develop' "
+                "according to ${bamboo_coverOptionOverride} ENV variable"
+            )
+            args.cover = False
+    else:
+        print("WARNING: ignoring bad value for ${{bamboo_coverOptionOverride}} ENV variable - '{}'".format(
+            os.environ['bamboo_coverOptionOverride']
+        ))
+    print("----------------------------------------------------")
+    sys.stdout.flush()
+
 excl_mods = glob.glob(
     os.path.join(script_dir, 'test_distributed', '*.erl'))
 excl_mods = [os.path.basename(item)[:-4] for item in excl_mods]
@@ -178,6 +208,10 @@ elif args.stress:
 elif args.stress_no_clearing:
     ct_command.extend(['-env', 'stress_no_clearing', 'true'])
 elif args.cover:
+    print("----------------------------------------------------")
+    print("Cover is enabled, the tests will take longer to run due to setup and later analysis.")
+    print("----------------------------------------------------")
+    sys.stdout.flush()
     ct_command.extend(['-cover', 'cover_tmp.spec'])
 
     env_descs = []

@@ -83,8 +83,43 @@ def main():
     args = parser.parse_args()
     dockers_config.ensure_image(args, 'image', 'worker')
 
+    if 'bamboo_coverOptionOverride' in os.environ:
+        print("----------------------------------------------------")
+        if os.environ['bamboo_coverOptionOverride'] == "true":
+            print("NOTE: overriding cover option to 'true' according to ${bamboo_coverOptionOverride} ENV variable")
+            args.cover = True
+        elif os.environ['bamboo_coverOptionOverride'] == "false":
+            print("NOTE: overriding cover option to 'false' according to ${bamboo_coverOptionOverride} ENV variable")
+            args.cover = False
+        elif os.environ['bamboo_coverOptionOverride'] == "develop_only":
+            if 'bamboo_planRepository_branchName' in os.environ and \
+                os.environ['bamboo_planRepository_branchName'] == "develop":
+
+                print(
+                    "NOTE: overriding cover option to 'true' for branch 'develop' "
+                    "according to ${bamboo_coverOptionOverride} ENV variable"
+                )
+                args.cover = True
+            else:
+                print(
+                    "NOTE: overriding cover option to 'false' for branch other than 'develop' "
+                    "according to ${bamboo_coverOptionOverride} ENV variable"
+                )
+                args.cover = False
+        else:
+            print("WARNING: ignoring bad value for ${{bamboo_coverOptionOverride}} ENV variable - '{}'".format(
+                os.environ['bamboo_coverOptionOverride']
+            ))
+        print("----------------------------------------------------")
+        sys.stdout.flush()
+
     if args.cover:
+        print("----------------------------------------------------")
+        print("Cover is enabled, the tests will take longer to run due to setup and later analysis.")
+        print("----------------------------------------------------")
+        sys.stdout.flush()
         prepare_cover()
+
     command = prepare_docker_command(args)
     remove_dockers_and_volumes()
     ret = start_test_docker(command, args)
