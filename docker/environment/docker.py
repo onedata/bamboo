@@ -111,7 +111,10 @@ def run(image, docker_host=None, detach=False, dns_list=[], add_host={},
         cmd.append('--privileged')
 
     for port in publish:
-        cmd.extend(['-p', '{0}:{0}'.format(port)])
+        if isinstance(port, tuple):
+            cmd.extend(['-p', '{0}:{1}'.format(port[0], port[1])])
+        else:
+            cmd.extend(['-p', '{0}:{0}'.format(port)])
 
     if cpuset_cpus:
         cmd.extend(['--cpuset-cpus', cpuset_cpus])

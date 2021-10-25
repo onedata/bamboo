@@ -28,7 +28,7 @@ parser.add_argument(
     dest='image')
 
 args = parser.parse_args()
-dockers_config.ensure_image(args, 'image', 'worker')
+dockers_config.ensure_image(args, 'image', 'nfs')
 
 config = nfs.up(args.image, common.generate_uid(), 'storage')
 
