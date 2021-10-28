@@ -74,6 +74,13 @@ def main():
         dest='no_clean')
 
     parser.add_argument(
+        '--performance', '-p',
+        action='store_true',
+        default=False,
+        help='run performance tests',
+        dest='performance')
+
+    parser.add_argument(
         '--cover',
         action='store_true',
         default=False,
@@ -169,6 +176,9 @@ def prepare_ct_command(args):
 
     if args.cover:
         ct_command.extend(['-cover', COVER_TMP_SPEC])
+
+    if args.performance:
+        ct_command.extend(['-env', 'performance', 'true'])
 
     return ct_command
 
