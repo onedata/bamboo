@@ -27,9 +27,16 @@ parser.add_argument(
     help='override of docker image for the container',
     dest='image')
 
+parser.add_argument(
+    '-p', '--path',
+    action='store',
+    default=None,
+    help='path on the host to be mounted as nfs share',
+    dest='path')
+
 args = parser.parse_args()
 dockers_config.ensure_image(args, 'image', 'nfs')
 
-config = nfs.up(args.image, common.generate_uid(), 'storage')
+config = nfs.up(args.image, common.generate_uid(), 'storage', args.path)
 
 print(json.dumps(config))

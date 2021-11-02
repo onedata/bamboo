@@ -5,15 +5,18 @@ This software is released under the MIT license cited in 'LICENSE.txt'
 
 Contains methods used to bring up storages.
 """
+import os
 import sys
+import tempfile
 
-from . import common, s3, ceph, cephrados, nfs, glusterfs, webdav, xrootd, http, amazon_iam, swift
+from . import common, s3, ceph, cephrados, glusterfs, webdav, xrootd, nfs, http, amazon_iam, swift
 
 
-def start_storages(config, config_path, ceph_image, cephrados_image, s3_image, nfs_image,
-                    swift_image, glusterfs_image, webdav_image, xrootd_image, http_image, image, uid):
-    storages_dockers = {'ceph': {}, 'cephrados': {}, 's3': {}, 'nfs': {}, 'posix': {},
-            'swift': {}, 'glusterfs': {}, 'webdav': {}, 'xrootd': {}, 'http': {}}
+def start_storages(config, config_path, ceph_image, cephrados_image, s3_image,
+                    swift_image, glusterfs_image, webdav_image, xrootd_image,
+                    nfs_image, http_image,image, uid):
+    storages_dockers = {'ceph': {}, 'cephrados': {}, 's3': {}, 'posix': {},
+            'swift': {}, 'glusterfs': {}, 'webdav': {}, 'xrootd': {}, 'nfs': {}, 'http': {}}
     docker_ids = []
     if 'os_configs' in config:
         start_iam_mock = False
@@ -137,15 +140,16 @@ def _swift_up(storage, storages_dockers, swift_image, docker_ids, uid):
 
 
 def _nfs_up(storage, storages_dockers, nfs_image, docker_ids, uid, cfg):
-    result = nfs.up(nfs_image, uid, storage['name'])
+
+    tmp_dir = tempfile.mkdtemp(dir=common.HOST_STORAGE_PATH,
+            prefix="nfs_helper_test_")
+    os.chmod(tmp_dir, 0o777)
+
+    result = nfs.up(nfs_image, uid, storage['name'], tmp_dir)
     docker_ids.extend(result['docker_ids'])
 
-    # create system users and groups on nfs docker
-    container = result['docker_ids'][0]
-    common.create_users(container, cfg['users'])
-    common.create_groups(container, cfg['groups'])
-
     del result['docker_ids']
+    result['path'] = tmp_dir
     storages_dockers['nfs'][storage['name']] = result
 
 
@@ -156,17 +160,20 @@ def _glusterfs_up(storage, storages_dockers, glusterfs_image, docker_ids, uid):
     del result['docker_ids']
     storages_dockers['glusterfs'][storage['name']] = result
 
+
 def _webdav_up(storage, storages_dockers, webdav_image, docker_ids, uid):
     result = webdav.up(webdav_image, storage['name'], uid)
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
     storages_dockers['webdav'][storage['name']] = result
 
+
 def _xrootd_up(storage, storages_dockers, xrootd_image, docker_ids, uid):
     result = xrootd.up(xrootd_image, storage['name'], uid)
     docker_ids.extend(result['docker_ids'])
     del result['docker_ids']
     storages_dockers['xrootd'][storage['name']] = result
+
 
 def _http_up(storage, storages_dockers, http_image, docker_ids, uid):
     result = http.up(http_image, storage['name'], uid)

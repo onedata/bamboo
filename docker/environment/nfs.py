@@ -28,14 +28,15 @@ def _node_up(image, uid, name, path):
         hostname=hostname,
         volumes=(path, "/nfsshare", "rw"),
         privileged=True)
-    settings = docker.inspect(container)
-    ip = settings['NetworkSettings']['IPAddress']
 
     common.wait_until(_nfs_ready, [container], NFS_READY_WAIT_SECONDS)
 
+    settings = docker.inspect(container)
+    ip = settings['NetworkSettings']['IPAddress']
+
     return {
         'docker_ids': [container],
-        'ip': ip,
+        'host': ip,
     }
 
 

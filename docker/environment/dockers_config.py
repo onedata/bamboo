@@ -13,10 +13,10 @@ scripts. Supported image types (passed as string):
     * cephrados
     * s3
     * swift
-    * nfs
     * glusterfs
     * webdav
     * xrootd
+    * nfs
     * http
 
 To override an image using a config file, place a json file called
@@ -38,10 +38,10 @@ Images can also be overriden using ENV variables
     * CEPHRADOS_IMAGE
     * S3_IMAGE
     * SWIFT_IMAGE
-    * NFS_IMAGE
     * GLUSTERFS_IMAGE
     * WEBDAV_IMAGE
     * XROOTD_IMAGE
+    * NFS_IMAGE
     * HTTP_IMAGE
 """
 
@@ -61,10 +61,10 @@ def default_image(type):
         'cephrados': 'onedata/ceph',
         's3': 'onedata/minio:v1',
         'swift': 'onedata/dockswift',
-        'nfs': 'onedata/nfs:v1',
         'glusterfs': 'gluster/gluster-centos:gluster3u7_centos7',
         'webdav': 'onedata/sabredav:v1',
         'xrootd': 'onedata/xrootd:v1',
+        'nfs': 'onedata/nfs:v1',
         'http': 'onedata/lighttpd:v1'
     }[type]
 
@@ -78,10 +78,10 @@ def image_override_env(type):
         'cephrados': 'CEPHRADOS_IMAGE',
         's3': 'S3_IMAGE',
         'swift': 'SWIFT_IMAGE',
-        'nfs': 'NFS_IMAGE',
         'glusterfs': 'GLUSTERFS_IMAGE',
         'webdav': 'WEBDAV_IMAGE',
         'xrootd': 'XROOTD_IMAGE',
+        'nfs': 'NFS_IMAGE',
         'http': 'HTTP_IMAGE'
     }[type]
 

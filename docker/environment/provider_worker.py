@@ -155,6 +155,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                     'glusterfs': 'create_glusterfs_storage.escript',
                     'webdav': 'create_webdav_storage.escript',
                     'xrootd': 'create_xrootd_storage.escript',
+                    'nfs': 'create_nfs_storage.escript',
                     'http': 'create_http_storage.escript',
                     'nulldevice': 'create_nulldevice_storage.escript'}
     pwd = common.get_script_dir()
@@ -175,7 +176,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
     for storage in storages:
         if isinstance(storage, basestring):
             storage = {'type': 'posix', 'name': storage}
-        if storage['type'] in ['posix', 'nfs']:
+        if storage['type'] in ['posix']:
             st_path = storage['name']
             command = ['escript', script_paths['posix'], cookie,
                        first_node, storage['name'], st_path,
@@ -229,7 +230,14 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                        first_node, storage['name'], storage['volume'],
                        config['host_name'], str(config['port']),
                        storage['transport'], storage['mountpoint'],
-                       'cluster.write-freq-threshold=100;', 'flat']
+                       'cluster.write-freq-threshold=100;', 'canonical']
+            assert 0 is docker.exec_(container, command, tty=True,
+                                     stdout=sys.stdout, stderr=sys.stderr)
+        elif storage['type'] == 'nfs':
+            config = storages_dockers['nfs'][storage['name']]
+            command = ['escript', script_paths['nfs'], cookie,
+                       first_node, storage['name'], storage['version'],
+                       storage['volume'], config['host'], 'canonical']
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'webdav':
