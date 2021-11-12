@@ -226,7 +226,7 @@ elif args.cover:
             data = json.load(jsonFile)
 
             configs_to_change = []
-            repo_name = os.popen("basename `git rev-parse --show-toplevel`").read().strip()
+            repo_name = os.popen("basename -s .git `git config --get remote.origin.url`").read().strip()
 
             if repo_name == "onepanel" and 'onepanel_domains' in data:
                 for onepanel in data['onepanel_domains']:
