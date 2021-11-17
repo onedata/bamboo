@@ -226,7 +226,15 @@ elif args.cover:
             data = json.load(jsonFile)
 
             configs_to_change = []
-            if 'provider_domains' in data:
+            repo_name = os.popen("basename -s .git `git config --get remote.origin.url`").read().strip()
+
+            if repo_name == "onepanel" and 'onepanel_domains' in data:
+                for onepanel in data['onepanel_domains']:
+                    configs_to_change.append(
+                        ('onepanel', data['onepanel_domains'][onepanel][
+                            'onepanel'].values())
+                    )
+            elif repo_name == "op-worker" and 'provider_domains' in data:
                 for provider in data['provider_domains']:
                     if 'op_worker' in data['provider_domains'][provider]:
                         configs_to_change.append(
@@ -239,8 +247,17 @@ elif args.cover:
                              data['provider_domains'][provider][
                                  'cluster_manager'].values())
                         )
-
-            if 'cluster_domains' in data:
+            elif repo_name == "oz-worker" and 'zone_domains' in data:
+                for zone in data['zone_domains']:
+                    configs_to_change.append(
+                        ('oz_worker',
+                         data['zone_domains'][zone]['oz_worker'].values())
+                    )
+                    configs_to_change.append(
+                        ('oz_worker',
+                         data['zone_domains'][zone]['cluster_manager'].values())
+                    )
+            elif repo_name == "cluster-manager" and 'cluster_domains' in data:
                 for cluster in data['cluster_domains']:
                     if 'cluster_worker' in data['cluster_domains'][cluster]:
                         configs_to_change.append(
@@ -253,24 +270,6 @@ elif args.cover:
                              data['cluster_domains'][cluster][
                                  'cluster_manager'].values())
                         )
-
-            if 'zone_domains' in data:
-                for zone in data['zone_domains']:
-                    configs_to_change.append(
-                        ('oz_worker',
-                         data['zone_domains'][zone]['oz_worker'].values())
-                    )
-                    configs_to_change.append(
-                        ('oz_worker',
-                         data['zone_domains'][zone]['cluster_manager'].values())
-                    )
-
-            if 'onepanel_domains' in data:
-                for onepanel in data['onepanel_domains']:
-                    configs_to_change.append(
-                        ('onepanel', data['onepanel_domains'][onepanel][
-                            'onepanel'].values())
-                    )
 
             for (app_name, configs) in configs_to_change:
                 for config in configs:
