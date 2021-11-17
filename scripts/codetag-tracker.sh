@@ -19,6 +19,9 @@ SCRIPT_NAME=`basename "$0"`
 OUTPUT_FILE="$(mktemp)"
 
 
+IGNORE_LINE_TAG='@codetag-tracker-ignore'
+
+
 EXCLUDED_DIRS=(
     _build  # do not recurse into the _build directory as it is traversed selectively
     logs
@@ -105,10 +108,6 @@ while [ $# -gt 0 ]; do
             IFS=',' read -ra EXTRA_DIRS_TO_EXCLUDE <<< "${1#*=}";
             EXCLUDED_DIRS+=("${EXTRA_DIRS_TO_EXCLUDE[@]}");
             ;;
-        --excluded-files=*)
-            IFS=',' read -ra EXTRA_FILES_TO_EXCLUDE <<< "${1#*=}";
-            EXCLUDED_FILES+=("${EXTRA_FILES_TO_EXCLUDE[@]}");
-            ;;
         *)
             printf "***************************\n"
             printf "* Error: Invalid argument.*\n"
@@ -150,7 +149,7 @@ run_grep() {
         # add the file name as prefix to each line of the output for the same format as grep -r gives
         POST_PROCESS=( sed -e "s|^|${FILEPATH}:|" )
     fi
-    grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} ${PATTERN} ${FILEPATH} | "${POST_PROCESS[@]}"
+    grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}" | "${POST_PROCESS[@]}"
 }
 
 check_path() {
@@ -160,7 +159,7 @@ check_path() {
     run_grep 'writeme$'  ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep 'writeme:'  ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep todo ${FILEPATH} | sed -E '/VFS-[0-9]+/d' >> ${OUTPUT_FILE}
-    run_grep 'rpc:multicall'  ${FILEPATH} >> ${OUTPUT_FILE}
+    run_grep 'rpc:multicall' ${FILEPATH} >> ${OUTPUT_FILE}
     if [ -n "${VFS_TAG}" ]; then
         run_grep ${VFS_TAG} ${FILEPATH} >> ${OUTPUT_FILE}
     fi
