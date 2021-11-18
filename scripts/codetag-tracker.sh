@@ -19,6 +19,9 @@ SCRIPT_NAME=`basename "$0"`
 OUTPUT_FILE="$(mktemp)"
 
 
+IGNORE_LINE_TAG='@codetag-tracker-ignore'
+
+
 EXCLUDED_DIRS=(
     _build  # do not recurse into the _build directory as it is traversed selectively
     logs
@@ -62,23 +65,27 @@ EXCLUDED_THIRD_PARTY_DEPS=(
 
 
 print_failure_summary() {
-    echo "Oh no! Found some forgotten fixmes or todos!"
+    echo "Oh no! Found some forgotten fixmes, todos or forbidden functions!"
     echo "---------------------------------------------------------------------"
     echo "Please keep in mind the following guidelines:"
-    echo " * fixme   - not tolerated at all, use it to mark places in your code"
-    echo "             that must be fixed before it can make it to production"
-    echo "             (this script will subtly keep an eye on you)"
+    echo " * fixme         - not tolerated at all, use it to mark places in your code"
+    echo "                   that must be fixed before it can make it to production"
+    echo "                   (this script will subtly keep an eye on you)"
     echo " "
-    echo " * writeme - same as fixme"
+    echo " * writeme       - same as fixme"
     echo " "
-    echo " * todo    - tolerated only if a string matching 'VFS-\\d+' is found in"
-    echo "             the same line, but NOT tolerated if the todo concerns the"
-    echo "             current git branch (well, this is exactly the right moment"
-    echo "             to resolve such todos)."
+    echo " * todo          - tolerated only if a string matching 'VFS-\\d+' is found in"
+    echo "                   the same line, but NOT tolerated if the todo concerns the"
+    echo "                   current git branch (well, this is exactly the right moment"
+    echo "                   to resolve such todos)."
     echo " "
-    echo " * note    - tolerated, can be used to leave a note for the future,"
-    echo "             when a todo with a concrete VFS tag is not viable. "
-    echo "             Do not overuse!"
+    echo " * note           - tolerated, can be used to leave a note for the future,"
+    echo "                   when a todo with a concrete VFS tag is not viable. "
+    echo "                   Do not overuse!"
+    echo " "
+    echo " * rpc:multicall - not tolerated due to a bug in Erlang OTP that may cause"
+    echo "                   a complete VM crash, use utils:rpc_multicall/4,5 from"
+    echo "                   ctool instead."
     echo "---------------------------------------------------------------------"
     echo "Below is the dump of all offending lines:"
     echo " "
@@ -142,7 +149,7 @@ run_grep() {
         # add the file name as prefix to each line of the output for the same format as grep -r gives
         POST_PROCESS=( sed -e "s|^|${FILEPATH}:|" )
     fi
-    grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} ${PATTERN} ${FILEPATH} | "${POST_PROCESS[@]}"
+    grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}" | "${POST_PROCESS[@]}"
 }
 
 check_path() {
@@ -152,6 +159,7 @@ check_path() {
     run_grep 'writeme$'  ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep 'writeme:'  ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep todo ${FILEPATH} | sed -E '/VFS-[0-9]+/d' >> ${OUTPUT_FILE}
+    run_grep 'rpc:multicall' ${FILEPATH} >> ${OUTPUT_FILE}
     if [ -n "${VFS_TAG}" ]; then
         run_grep ${VFS_TAG} ${FILEPATH} >> ${OUTPUT_FILE}
     fi
