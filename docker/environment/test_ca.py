@@ -80,12 +80,18 @@ def create_key(path):
     cmd(['openssl', 'genrsa', '-out', path, '2048'])
 
 
-def create_csr(key_path, output_path, common_name):
-    cmd(['openssl', 'req', '-new', '-key', key_path, '-out', output_path,
-         '-subj', '/C=PL/L=OneDataTest/O=OneDataTest/CN=' + common_name])
+def create_csr(key_path, output_path, common_name, hostname):
+    cmd([
+        'openssl', 'req', '-new', '-key', key_path, '-out', output_path,
+        '-subj', '/C=PL/L=OneDataTest/O=OneDataTest/CN={}'.format(common_name),
+        '-addext', 'subjectAltName = DNS:{}'.format(hostname)
+    ])
 
 
 def generate_webcert(hostname):
+    # common name may be no longer than 64 characters
+    common_name = hostname[:64]
+
     temp_dir, config_file = create_temp_ca_dir(hostname)
     key_path = os.path.join(temp_dir, 'key.pem')
     csr_path = os.path.join(temp_dir, 'csr.pem')
@@ -93,7 +99,7 @@ def generate_webcert(hostname):
     ca_cert_path = os.path.join(temp_dir, 'ca.pem')
     write_ca_cert(ca_cert_path)
     create_key(key_path)
-    create_csr(key_path, csr_path, hostname)
+    create_csr(key_path, csr_path, common_name, hostname)
 
     cmd([
         'openssl', 'ca', '-batch',
