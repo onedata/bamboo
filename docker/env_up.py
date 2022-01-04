@@ -63,6 +63,13 @@ parser.add_argument(
     dest='xrootd_image')
 
 parser.add_argument(
+    '-ni', '--nfs-image',
+    action='store',
+    default=None,
+    help='override of docker image for NFS storages',
+    dest='nfs_image')
+
+parser.add_argument(
     '-hi', '--http-image',
     action='store',
     default=None,
@@ -137,12 +144,14 @@ dockers_config.ensure_image(args, 's3_image', 's3')
 dockers_config.ensure_image(args, 'glusterfs_image', 'glusterfs')
 dockers_config.ensure_image(args, 'webdav_image', 'webdav')
 dockers_config.ensure_image(args, 'xrootd_image', 'xrootd')
+dockers_config.ensure_image(args, 'nfs_image', 'nfs')
 dockers_config.ensure_image(args, 'http_image', 'http')
 
 output = env.up(args.config_path, image=args.image, ceph_image=args.ceph_image,
                 s3_image=args.s3_image, glusterfs_image=args.glusterfs_image,
                 webdav_image=args.webdav_image,
                 xrootd_image=args.xrootd_image,
+                nfs_image=args.nfs_image,
                 http_image=args.http_image,
                 bin_am=args.bin_am, bin_oz=args.bin_oz,
                 bin_cluster_manager=args.bin_cluster_manager,

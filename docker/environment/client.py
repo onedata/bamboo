@@ -51,7 +51,6 @@ def _node_up(image, bindir, config, config_path, dns_servers, logdir, storages_d
     hostname = node['name']
     shortname = hostname.split(".")[0]
     os_config = config['os_config']
-    mount_commands = common.mount_nfs_command(config, storages_dockers)
 
     client_data = {}
 

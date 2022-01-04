@@ -95,12 +95,10 @@ EOF
 cat <<"EOF" > /root/bin/node/etc/cacerts/OneDataTestWebServerCa.pem
 {cacert}
 EOF
-{mount_commands}
 {pre_start_commands}
 ln -s {bindir} /root/build
 /root/bin/node/bin/{executable} console'''
 
-    mount_commands = common.mount_nfs_command(config, storages_dockers)
     pre_start_commands = configurator.pre_start_commands(domain)
     command = command.format(
         bindir=bindir,
@@ -108,7 +106,6 @@ ln -s {bindir} /root/build
         key=key,
         cert=cert,
         cacert=cacert,
-        mount_commands=mount_commands,
         pre_start_commands=pre_start_commands,
         uid=os.geteuid(),
         gid=os.getegid(),
