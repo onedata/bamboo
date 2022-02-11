@@ -130,7 +130,6 @@ def main():
     command = prepare_docker_command(args)
     remove_dockers_and_volumes()
     ret = start_test_docker(command, args)
-    remove_onenv_container()
 
     if ret != 0 and not skipped_test_exists(
             os.path.join(script_dir, "test_distributed/logs/*/surefire.xml")):
@@ -272,12 +271,6 @@ def skipped_test_exists(junit_report_path):
         if testsuite.attrib['skipped'] != '0':
             return True
     return False
-
-
-def remove_onenv_container():
-    container = docker.ps(all=True, quiet=True, filters=[('name', 'one-env')])
-    if container:
-        docker.remove(container, force=True)
 
 
 def prepare_cover():
