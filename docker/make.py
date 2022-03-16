@@ -177,7 +177,12 @@ try:
 except:
     pass
 
-sh_command = 'eval $(ssh-agent) > /dev/null; ssh-add 2>&1; {command} {params}'
+sh_command = (
+    'git config --global url.https://github.com/.insteadOf git://github.com/; ' 
+    'eval $(ssh-agent) > /dev/null; '
+    'ssh-add 2>&1; '
+    '{command} {params}'
+)
 ret = subprocess.call(['sh', '-c', sh_command])
 sys.exit(ret)
 '''
