@@ -35,7 +35,7 @@ ALL_REPOS=(
     homepage
     ioreplay
     macaroons
-    onedata
+    oneclient-pkg
     onedata-acceptance
     onedatafs-jupyter
     onenv-ct
@@ -43,10 +43,11 @@ ALL_REPOS=(
     onepanel-gui
     onepanel-swagger
     oneprovider-gui
+    oneprovider-pkg
     oneprovider-swagger
-    onezone
     onezone-gui
     onezone-gui-plugin-ecrin
+    onezone-pkg
     onezone-swagger
     op-worker
     oz-worker
