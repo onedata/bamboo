@@ -27,9 +27,9 @@
 
 set -e
 
-USER_NAME=${3:-$(git config user.name)}
+USER_NAME=${2:-$(git config user.name)}
 USER_NAME=${USER_NAME:-"Bamboo Agent"}
-USER_EMAIL=${4:-$(git config user.email)}
+USER_EMAIL=${3:-$(git config user.email)}
 USER_EMAIL=${USER_EMAIL:-"bamboo@bamboo.onedata.org"}
 
 ALL_REPOS=(
