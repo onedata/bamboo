@@ -85,7 +85,9 @@ DEB_PKG_LOCATION = {
     'zesty': 'apt/ubuntu/zesty/pool/main',
     'bionic': 'apt/ubuntu/bionic/pool/main',
     'disco': 'apt/ubuntu/disco/pool/main',
-    'focal': 'apt/ubuntu/focal/pool/main'
+    'focal': 'apt/ubuntu/focal/pool/main',
+    'impish': 'apt/ubuntu/impish/pool/main',
+    'jammy': 'apt/ubuntu/jammy/pool/main'
 }
 
 REPO_TYPE = {
@@ -96,6 +98,8 @@ REPO_TYPE = {
     'bionic': 'deb',
     'disco': 'deb',
     'focal': 'deb',
+    'impish': 'deb',
+    'jammy': 'deb',
     'fedora-29-x86_64': 'rpm',
     'centos-7-x86_64': 'rpm'
 }
