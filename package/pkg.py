@@ -87,7 +87,7 @@ DEB_PKG_LOCATION = {
     'disco': 'apt/ubuntu/disco/pool/main',
     'focal': 'apt/ubuntu/focal/pool/main',
     'impish': 'apt/ubuntu/impish/pool/main',
-    'jammy': 'apt/ubuntu/jelly/pool/main'
+    'jammy': 'apt/ubuntu/jammy/pool/main'
 }
 
 REPO_TYPE = {
