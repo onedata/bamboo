@@ -177,8 +177,14 @@ try:
 except:
     pass
 
+# call git config modification from user's home, as calling it from within a repo
+# (especially a submodule) may fail, despite the fact that --global is used
+subprocess.call([
+    'sh', '-c',
+    'cd /home/maketmp && git config --global url.https://github.com/.insteadOf git://github.com/'
+])
+
 sh_command = (
-    'git config --global url.https://github.com/.insteadOf git://github.com/; ' 
     'eval $(ssh-agent) > /dev/null; '
     'ssh-add 2>&1; '
     '{command} {params}'
