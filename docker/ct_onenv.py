@@ -74,6 +74,12 @@ def main():
         dest='no_clean')
 
     parser.add_argument(
+        '--rsync',
+        action='store_true',
+        help='use rsync instead of local volume mount for deployments from sources',
+        dest='rsync')
+
+    parser.add_argument(
         '--performance', '-p',
         action='store_true',
         default=False,
@@ -163,6 +169,7 @@ def prepare_ct_command(args):
                        os.path.normpath(os.path.join(os.getcwd(), args.path_to_sources))])
 
     ct_command.extend(['-env', 'clean_env', "false" if args.no_clean else "true"])
+    ct_command.extend(['-env', 'rsync', "true" if args.rsync else "false"])
     ct_command.extend(['-env', 'cover', "true" if args.cover else "false"])
 
     if args.suites:
