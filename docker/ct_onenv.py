@@ -167,7 +167,7 @@ def prepare_ct_command(args):
 
     if args.suites:
         ct_command.append('-suite')
-        ct_command.extend(args.suites)
+        ct_command.extend([locate_suite(s) for s in args.suites])
 
     if args.cases:
         ct_command.append('-case')
@@ -295,6 +295,28 @@ def prepare_cover():
 
         print('{{incl_dirs_r, ["{0}]}}.'.format(', "'.join(incl_dirs)), file=cover)
         print('{{excl_mods, [{0}]}}.'.format(', '.join(excl_mods)), file=cover)
+
+
+def locate_suite(name):
+    if '/' in name:
+        print(
+            'NOTE: it is no longer required to provide full path(s) to the suite(s) you wish to run. '
+            'It is enough to provide the suite name (without the "_test_SUITE" suffix).'
+        )
+        name = os.path.basename(name)
+    if '_test_SUITE' not in name:
+        name += '_test_SUITE'
+    if '.erl' not in name:
+        name += '.erl'
+    return find_suite_file(name)
+
+
+def find_suite_file(name):
+    for root, dirs, files in os.walk('test_distributed'):
+        if name in files:
+            return os.path.relpath(os.path.join(root, name), 'test_distributed')
+    print('ERROR: Suite with name {} has not been found in the test_distributed directory'.format(name))
+    sys.exit(1)
 
 
 if __name__ == '__main__':
