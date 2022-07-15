@@ -20,6 +20,19 @@ PARTIAL_EXT = '.partial'
 DEVELOP_BRANCH = 'develop'
 
 
+def named_artifact_path(plan: str, branch: str, artifact: str) -> str:
+    """
+    Returns path to artifact for specific plan and branch. Path is relative
+    to user's home directory on repository machine.
+    :param plan: name of current bamboo plan
+    :param branch: name of current git branch
+    """
+    suffix = artifact.find(ARTIFACTS_EXT)
+    artifact_base_name = artifact[:suffix]
+    return os.path.join(ARTIFACTS_DIR, plan, branch, 
+                        artifact_base_name +  ARTIFACTS_EXT)
+
+
 def artifact_path(plan: str, branch: str) -> str:
     """
     Returns path to artifact for specific plan and branch. Path is relative

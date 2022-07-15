@@ -1,12 +1,12 @@
 #! /usr/bin/env python3
 """
-Pushes build artifact to external repo.
+Pushes build or arbitrary artifact to external repo.
 Artifact should be file with extension .tar.gz
 
 Run the script with -h flag to learn about script's running options.
 """
-__author__ = "Jakub Kudzia"
-__copyright__ = "Copyright (C) 2016-2018 ACK CYFRONET AGH"
+__author__ = "Jakub Kudzia, Darin Nikolow"
+__copyright__ = "Copyright (C) 2016-2022 ACK CYFRONET AGH"
 __license__ = "This software is released under the MIT license cited in " \
               "LICENSE.txt"
 
@@ -15,7 +15,7 @@ import sys
 import argparse
 from paramiko import SSHClient, AutoAddPolicy, SSHException
 from scp import SCPClient, SCPException
-from artifact_utils import (artifact_path, delete_file, partial_extension)
+from artifact_utils import (named_artifact_path, artifact_path, delete_file, partial_extension)
 import boto3
 
 
@@ -44,9 +44,12 @@ def upload_artifact_safe(ssh: SSHClient, artifact: str, plan: str,
 
 
 def s3_upload_artifact_safe(s3: boto3.resources, bucket: str, artifact: str, plan: str,
-                            branch: str) -> None:
+                            branch: str, use_named_artifacts) -> None:
 
-    file_name = artifact_path(plan, branch)
+    if (use_named_artifacts):
+        file_name = named_artifact_path(plan, branch, artifact)
+    else:
+        file_name = artifact_path(plan, branch)
     data = open(artifact, 'rb')
     buck = s3.Bucket(bucket)
     buck.put_object(Key=file_name, Body=data)
@@ -114,8 +117,15 @@ def main():
         help='The S3 bucket name',
         default='bamboo-artifacts-2')
 
-    args = parser.parse_args()
+    parser.add_argument(
+        '--use-named-artifacts',
+        action='store_true',
+        help='The artifact name will be used in the stored file name')
 
+    args = parser.parse_args()
+    # print(args)
+    # return
+    # sys.exit(1)
     if args.hostname != 'S3':
         ssh = SSHClient()
         ssh.set_missing_host_key_policy(AutoAddPolicy())
@@ -132,7 +142,7 @@ def main():
             endpoint_url=args.s3_url
         )
         s3_upload_artifact_safe(s3_res, args.s3_bucket, args.artifact, args.plan,
-                                args.branch)
+                                args.branch, args.use_named_artifacts)
         
 
 if __name__ == '__main__':
