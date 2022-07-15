@@ -10,7 +10,7 @@ providers <-> oz environment.
 """
 
 import subprocess
-from timeouts import *
+from .timeouts import *
 from . import common, docker, dockers_config
 
 

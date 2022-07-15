@@ -8,7 +8,7 @@ Brings up a GlusterFS storage.
 
 import re
 import sys
-from timeouts import *
+from .timeouts import *
 
 from . import common, docker
 

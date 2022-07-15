@@ -10,7 +10,7 @@ import sys
 import time
 import subprocess
 
-from timeouts import *
+from .timeouts import *
 from . import common, docker
 
 SWIFT_COMMAND = 'swift --auth-version 2 -A http://{0}:5000/v2.0 -K swift ' \

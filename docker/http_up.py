@@ -9,7 +9,7 @@ A script that brings up a Ceph storage cluster.
 Run the script with -h flag to learn about script's running options.
 """
 
-from __future__ import print_function
+
 import argparse
 import json
 

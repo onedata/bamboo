@@ -11,7 +11,7 @@ import sys
 
 from . import docker
 from . import common
-from timeouts import NFS_READY_WAIT_SECONDS
+from .timeouts import NFS_READY_WAIT_SECONDS
 
 def _nfs_ready(container):
     output = docker.exec_(container, ['bash', '-c', 'ps aux | grep rpc | grep -v grep'],

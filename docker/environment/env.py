@@ -125,8 +125,8 @@ def up(config_path,
                 'nodes': [],
                 'cookie': ''
             }
-            for cfg_node in config['provider_domains'][provider_name][
-                'op_worker'].keys():
+            for cfg_node in list(config['provider_domains'][provider_name][
+                'op_worker'].keys()):
                 providers_map[provider_name]['nodes'].append(
                     worker.worker_erl_node_name(cfg_node, provider_name, uid))
                 providers_map[provider_name]['cookie'] = \
@@ -139,7 +139,7 @@ def up(config_path,
         # For now, take only the first node of the first OZ
         # as multiple OZs are not supported yet.
         env_configurator_input['oz_cookie'] = \
-            config['zone_domains'].values()[0][
+            list(config['zone_domains'].values())[0][
                 'oz_worker'].values()[0]['vm.args']['setcookie']
         env_configurator_input['oz_node'] = output['oz_worker_nodes'][0]
 

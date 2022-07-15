@@ -38,7 +38,7 @@ def _tweak_config(config, os_config, name, uid):
                          'user_cert': client['user_cert'],
                          'mounting_path': client['mounting_path'],
                          'token_for': client['token_for']}
-        if 'default_timeout' in client.keys():
+        if 'default_timeout' in list(client.keys()):
             client_config['default_timeout'] = client['default_timeout']
 
         node['clients'].append(client_config)
@@ -76,7 +76,7 @@ bindfs --create-for-user={uid} --create-for-group={gid} /tmp /tmp
                                     'zone_domain': client['zone_domain'],
                                     'mounting_path': client['mounting_path'],
                                     'token_for': client['token_for']}
-        if 'default_timeout' in client.keys():
+        if 'default_timeout' in list(client.keys()):
             client_data[client_name]['default_timeout'] = client['default_timeout']
 
         # cert_file_path and key_file_path can both be an absolute path
@@ -114,14 +114,14 @@ EOF
 
     volumes = [(bindir, bindir, 'ro')]
     if os_config['storages']:
-        if isinstance(os_config['storages'][0], basestring):
+        if isinstance(os_config['storages'][0], str):
             posix_storages = config['os_config']['storages']
         else:
             posix_storages = [s['name'] for s in os_config['storages']
                               if s['type'] == 'posix']
 
         for s in posix_storages:
-            if not (storages_dockers and s in storages_dockers['posix'].keys()):
+            if not (storages_dockers and s in list(storages_dockers['posix'].keys())):
                 v = common.volume_for_storage(s)
                 (host_path, docker_path, mode) = v
                 if not storages_dockers:

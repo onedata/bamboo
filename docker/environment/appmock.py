@@ -11,7 +11,7 @@ import json
 import os
 import random
 import string
-from timeouts import *
+from .timeouts import *
 
 from . import common, docker, dns, cluster_manager, worker
 

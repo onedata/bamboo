@@ -65,7 +65,7 @@ class ProviderWorkerConfigurator:
 
     def extra_volumes(self, config, bindir, instance, storages_dockers):
         if 'os_config' in config and config['os_config']['storages']:
-            if isinstance(config['os_config']['storages'][0], basestring):
+            if isinstance(config['os_config']['storages'][0], str):
                 posix_storages = config['os_config']['storages']
             else:
                 posix_storages = []
@@ -92,7 +92,7 @@ class ProviderWorkerConfigurator:
                 storages_dockers = {'posix': {}}
             name = s['name']
             readonly = s['readonly']
-            if name not in storages_dockers['posix'].keys():
+            if name not in list(storages_dockers['posix'].keys()):
                 if 'group' in s and s['group'] in grouped_storages:
                     (host_path, docker_path, mode) = (grouped_storages[s['group']], name, 'ro' if readonly else 'rw')
                 elif 'group' in s:
@@ -159,7 +159,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                     'http': 'create_http_storage.escript',
                     'nulldevice': 'create_nulldevice_storage.escript'}
     pwd = common.get_script_dir()
-    for script_name in script_names.values():
+    for script_name in list(script_names.values()):
         command = ['cp', os.path.join(pwd, script_name),
                    os.path.join(bindir, script_name)]
         subprocess.check_call(command)
@@ -171,10 +171,9 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
     cookie = op_config[worker_name]['vm.args']['setcookie']
     bindir = os.path.abspath(bindir)
     script_paths = dict(
-        map(lambda (k, v): (k, os.path.join(bindir, v)),
-            script_names.iteritems()))
+        [(k_v[0], os.path.join(bindir, k_v[1])) for k_v in iter(script_names.items())])
     for storage in storages:
-        if isinstance(storage, basestring):
+        if isinstance(storage, str):
             storage = {'type': 'posix', 'name': storage}
         if storage['type'] in ['posix']:
             st_path = storage['name']
@@ -286,6 +285,6 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
             raise RuntimeError(
                 'Unknown storage type: {}'.format(storage['type']))
     # clean-up
-    for script_name in script_names.values():
+    for script_name in list(script_names.values()):
         command = ['rm', os.path.join(bindir, script_name)]
         subprocess.check_call(command)

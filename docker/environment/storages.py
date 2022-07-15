@@ -20,9 +20,9 @@ def start_storages(config, config_path, ceph_image, cephrados_image, s3_image,
     docker_ids = []
     if 'os_configs' in config:
         start_iam_mock = False
-        for key, cfg in config['os_configs'].iteritems():
+        for key, cfg in config['os_configs'].items():
             for storage in cfg['storages']:
-                if isinstance(storage, basestring):
+                if isinstance(storage, str):
                     sys.stderr.write('''WARNING:
         Detected deprecated syntax at os_configs.{0}.storages
         Change entry "{1}" to: {{ "type": "posix", "name": "{1}" }}
@@ -90,7 +90,7 @@ def _start_iam_mock(image, uid, storages_dockers):
 
     iam_request_scheme = 'http'
     iam_host = iam_mock_config['host_name']
-    for key in storages_dockers['s3'].keys():
+    for key in list(storages_dockers['s3'].keys()):
         if 'iam_host' not in storages_dockers['s3'][key] and \
                         'request_scheme' not in storages_dockers['s3'][key]:
             storages_dockers['s3'][key]['iam_host'] = iam_host

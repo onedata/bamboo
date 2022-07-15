@@ -102,8 +102,7 @@ escript bamboos/gen_dev/gen_dev.escript /tmp/gen_dev_args.json
 
 
 def _configure_posix_storage(storages):
-    posix_storages = filter(lambda storage: storage.get('type') == 'posix',
-                            storages)
+    posix_storages = [storage for storage in storages if storage.get('type') == 'posix']
     posix_storage_out = {}
     volumes = []
     for storage in posix_storages:

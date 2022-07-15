@@ -9,7 +9,7 @@ A script that brings up a Ceph storage cluster.
 Run the script with -h flag to learn about script's running options.
 """
 
-from __future__ import print_function
+
 import argparse
 import json
 
@@ -43,7 +43,7 @@ parser.add_argument(
 args = parser.parse_args()
 dockers_config.ensure_image(args, 'image', 'cephrados')
 
-pools = map(lambda pool: tuple(pool.split(':')), args.pools)
+pools = [tuple(pool.split(':')) for pool in args.pools]
 
 config = cephrados.up(args.image, pools, 'storage', args.uid)
 

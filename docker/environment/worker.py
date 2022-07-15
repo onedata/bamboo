@@ -10,7 +10,7 @@ import copy
 import json
 import os
 from . import common, docker, couchbase, dns, cluster_manager, test_ca
-from timeouts import *
+from .timeouts import *
 
 
 def cluster_domain(instance, uid):

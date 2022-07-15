@@ -5,13 +5,13 @@ This software is released under the MIT license cited in 'LICENSE.txt'
 Brings up a couchbase cluster.
 """
 
-from __future__ import print_function
+
 
 import re
 import requests
 import sys
 import time
-from timeouts import *
+from .timeouts import *
 
 from . import common, docker, dns as dns_mod
 
@@ -141,7 +141,7 @@ bash'''
                              stdout=sys.stderr)
 
     # Create buckets
-    for bucket_name, bucket_size in buckets.items():
+    for bucket_name, bucket_size in list(buckets.items()):
         assert 0 == docker.exec_(containers[0], docker_host=docker_host,
                                  command=["/opt/couchbase/bin/couchbase-cli",
                                           "bucket-create", "-c",

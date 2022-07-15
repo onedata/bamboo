@@ -10,7 +10,7 @@ configured and ready to start.
 Run the script with -h flag to learn about script's running options.
 """
 
-from __future__ import print_function
+
 import json
 
 from environment import client, common, dockers_config

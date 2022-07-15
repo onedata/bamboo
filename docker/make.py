@@ -203,7 +203,7 @@ command = command.format(
 
 # Mount docker socket so dockers can start dockers
 reflect = [(args.src, 'rw'), ('/var/run/docker.sock', 'rw')]
-reflect.extend(zip(args.reflect, ['rw'] * len(args.reflect)))
+reflect.extend(list(zip(args.reflect, ['rw'] * len(args.reflect))))
 
 # Mount keys required for git and docker config that holds auth to
 # docker.onedata.org, so the docker can pull images from there.
