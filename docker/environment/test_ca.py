@@ -181,7 +181,8 @@ def read_file(path):
 
 
 def write_file(path, content):
-    with open(path, 'w') as f:
+    mode = 'w' if isinstance(content, str) else 'wb'
+    with open(path, mode) as f:
         f.write(content)
 
 
