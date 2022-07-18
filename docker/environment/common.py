@@ -197,7 +197,7 @@ def format_hostname(domain_parts, uid):
     within environment e.g.: ['worker1', 'prov1'], ['cm1', 'prov1'], 'client1'
     uid - timestamp
     """
-    if isinstance(domain_parts, str):
+    if not isinstance(domain_parts, list):
         domain_parts = [domain_parts]
     domain_parts.extend([uid, env_domain_name()])
     # Throw away any '@' signs - they were used some time ago in node names
