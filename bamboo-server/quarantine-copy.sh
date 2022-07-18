@@ -4,6 +4,8 @@
 # Copyright (C) 2022 ACK CYFRONET AGH
 # This software is released under the MIT license cited in 'LICENSE.txt'
 
+# This script looks for quarantined tests in PLAN_SRC and quarantines them in PLAN_DST
+
 . /home/ubuntu/.bamboo-creds
 
 PLAN_SRC=$1
@@ -17,7 +19,7 @@ for i in $CASES; do
     TEST_ID=`echo SELECT TEST_CASE_ID FROM BUILD B JOIN TEST_CLASS TCL ON TCL.PLAN_ID=B.BUILD_ID JOIN TEST_CASE TC ON TC.TEST_CLASS_ID=TCL.TEST_CLASS_ID WHERE B.FULL_KEY LIKE \'${PLAN_DST}\' and TC.TEST_CASE_NAME = \'${CASE}\' and TCL.TEST_CLASS_NAME = \'${SUITE}\' \; | mysql -u  ${DB_CREDS%:*} -p${DB_CREDS#*:} -D bamboo | tail -n +2`
     echo TEST_ID=$TEST_ID
     if [ ${TEST_ID}x = x ]; then
-	echo Warning: Test case not found: SUITE=$SUITE, CASE=$CASE 
+        echo Warning: Test case not found: SUITE=$SUITE, CASE=$CASE 
     fi
     curl -H "Authorization: Bearer ${BAMBOO_TOKEN}" -H "Content-type: application/json" -X POST -d '{"expiryDuration": null}' http://localhost:8085/rest/api/latest/plan/${PLAN_DST}/test/${TEST_ID}/quarantine    
 done
