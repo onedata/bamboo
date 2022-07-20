@@ -20,7 +20,7 @@ from typing import Callable, Optional, Any, Tuple
 from artifact_utils import named_artifact_path, artifact_path, ARTIFACTS_EXT, DEVELOP_BRANCH
 
 
-def download_specific_or_default(ssh: SSHClient, plan: str, branch: str,
+def download_specific_or_default(ssh: SSHClient, plan: str, branch: str, artifact: str,
                                  hostname: str, port: int, username: str,
                                  default_branch: str = DEVELOP_BRANCH) -> None:
     """
@@ -30,15 +30,16 @@ def download_specific_or_default(ssh: SSHClient, plan: str, branch: str,
     :param ssh: sshclient with opened connection
     :param plan: name of current bamboo plan
     :param branch: name of current git branch
+    :param artifact: name of artifact
     :param hostname: hostname of artifacts repository
     :param port: SSH port
     :param username: username to authenticate as
     :param default_branch: name of default git branch
     """
     download_artifact_safe(
-        ssh, plan, branch, hostname, port, username,
+        ssh, plan, branch, artifact, hostname, port, username,
         exc_handler=download_default_artifact,
-        exc_handler_args=(ssh, plan, default_branch, hostname, port,
+        exc_handler_args=(ssh, plan, default_branch, artifact,  hostname, port,
                           username),
         exc_log="Artifact of plan {0}, specific for branch {1} not found, "
                 "pulling artifact from branch {2}.".format(plan, branch,
@@ -57,6 +58,7 @@ def s3_download_specific_or_default(s3: boto3.resources, bucket: str, plan: str,
     :param bucket: The artifacts bucket name
     :param plan: name of current bamboo plan
     :param branch: name of current git branch
+    :param artifact: name of artifact
     :param hostname: hostname of artifacts repository
     :param port: SSH port
     :param username: username to authenticate as
@@ -72,19 +74,20 @@ def s3_download_specific_or_default(s3: boto3.resources, bucket: str, plan: str,
                                                            default_branch))
 
     
-def download_default_artifact(ssh: SSHClient, plan: str, branch: str,
+def download_default_artifact(ssh: SSHClient, plan: str, branch: str, artifact: str,
                               hostname: str, port: int, username: str) -> None:
     """
     Downloads build artifact for specific plan from default branch.
     :param ssh: sshclient with opened connection
     :param plan: name of current bamboo plan
     :param branch: name of git branch
+    :param artifact: name of artifact
     :param hostname: hostname of artifacts repository
     :param port: SSH port
     :param username: username to authenticate as
     """
     download_artifact_safe(
-        ssh, plan, branch, hostname, port, username,
+        ssh, plan, branch, artifact, hostname, port, username,
         exc_log="Pulling artifact of plan {}, from branch {} failed."
                 .format(plan, branch))
 
@@ -98,6 +101,7 @@ def s3_download_default_artifact(s3: boto3.resources, bucket: str,
     :param bucket: The artifacts bucket name
     :param plan: name of current bamboo plan
     :param branch: name of git branch
+    :param artifact: name of artifact
     :param hostname: hostname of artifacts repository
     :param port: SSH port - unused, left for compatibility
     :param username: username to authenticate as - unused, left for compatibility
@@ -108,7 +112,7 @@ def s3_download_default_artifact(s3: boto3.resources, bucket: str,
                 .format(plan, branch))
 
     
-def download_artifact_safe(ssh: SSHClient, plan: str, branch: str,
+def download_artifact_safe(ssh: SSHClient, plan: str, branch: str, artifact: str,
                            hostname: str, port: int, username: str,
                            exc_handler: Optional[Callable[..., Any]] = None,
                            exc_handler_args: Tuple[Any, ...] = (),
@@ -120,6 +124,7 @@ def download_artifact_safe(ssh: SSHClient, plan: str, branch: str,
     :param ssh: sshclient with opened connection
     :param plan: name of current bamboo plan
     :param branch: name of current git branch
+    :param artifact: name of artifact
     :param hostname: hostname of artifacts repository
     :param port: SSH port
     :param username: username to authenticate as
@@ -137,7 +142,7 @@ def download_artifact_safe(ssh: SSHClient, plan: str, branch: str,
     signal.signal(signal.SIGINT, signal_handler)
 
     try:
-        download_artifact(ssh, plan, branch)
+        download_artifact(ssh, plan, branch, artifact)
     except Exception as ex:
         print(exc_log)
         if exc_handler:
@@ -161,6 +166,7 @@ def s3_download_artifact_safe(s3: boto3.resources, bucket: str,
     :param bucket: The artifacts bucket name
     :param plan: name of current bamboo plan
     :param branch: name of current git branch
+    :param artifact: name of artifact
     :param hostname: hostname of artifacts repository
     :param port: SSH port
     :param username: username to authenticate as
@@ -187,16 +193,23 @@ def s3_download_artifact_safe(s3: boto3.resources, bucket: str,
             sys.exit(1)
 
 
-def download_artifact(ssh: SSHClient, plan: str, branch: str) -> None:
+def download_artifact(ssh: SSHClient, plan: str, branch: str, artifact: str) -> None:
     """
     Downloads artifact from repo via SCP protocol.
     :param ssh: sshclient with opened connection
     :param plan: name of current bamboo plan
     :param branch: name of current git branch
+    :param artifact: name of artifact
     """
+    if (artifact == 'None'):
+        src_path = artifact_path(plan, branch)
+        dst_path = plan.replace("-", '_') + ARTIFACTS_EXT
+        print("Arifact name was not specified, using default name: ", src_path)
+    else:
+        src_path = named_artifact_path(plan, branch, artifact)
+        dst_path = artifact
     with SCPClient(ssh.get_transport()) as scp:
-        scp.get(artifact_path(plan, branch),
-                local_path=plan.replace("-", '_') + ARTIFACTS_EXT)
+        scp.get(src_path, local_path=dst_path)
 
         
 def s3_download_artifact(s3: boto3.resources,
@@ -207,14 +220,17 @@ def s3_download_artifact(s3: boto3.resources,
     :param bucket: The artifacts bucket name
     :param plan: name of current bamboo plan
     :param branch: name of current git branch
+    :param artifact: name of artifact
     """
     buck = s3.Bucket(bucket)
-    if (artifact == ''):
-        buck.download_file(artifact_path(plan, branch), plan.replace("-", '_') + ARTIFACTS_EXT)
+    if (artifact == 'None'):
+        src_path = artifact_path(plan, branch)
+        dst_path = plan.replace("-", '_') + ARTIFACTS_EXT
+        print("Arifact name was not specified, using default name: ", src_path)
     else:
-        file_name = named_artifact_path(plan, branch, artifact)
-        buck.download_file(file_name, artifact)
-
+        src_path = named_artifact_path(plan, branch, artifact)
+        dst_path = artifact
+    buck.download_file(src_path, dst_path)
     
 def main():
     parser = argparse.ArgumentParser(
@@ -248,9 +264,9 @@ def main():
         required=True)
 
     parser.add_argument(
-        '--artifact', '-a',
+        '--artifact-name', '-an',
         help='Named artifact to be pulled. It should be file with .tar.gz extension',
-        default="",
+        default="None",
         required=False)
 
     parser.add_argument(
@@ -278,8 +294,8 @@ def main():
         ssh.load_system_host_keys()
         ssh.connect(args.hostname, port=args.port, username=args.username)
 
-        download_specific_or_default(ssh, args.plan, args.branch, args.hostname,
-                                 args.port, args.username, args.default_branch)
+        download_specific_or_default(ssh, args.plan, args.branch, args.artifact_name,
+                                     args.hostname, args.port, args.username, args.default_branch)
 
         ssh.close()
     else:
@@ -290,7 +306,7 @@ def main():
             endpoint_url=args.s3_url
         )
         s3_download_specific_or_default(s3_res, args.s3_bucket, args.plan, args.branch,
-                                        args.artifact,
+                                        args.artifact_name,
                                         args.hostname, args.port, args.username,
                                         args.default_branch)
 

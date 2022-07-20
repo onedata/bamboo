@@ -15,17 +15,24 @@ import sys
 import argparse
 from paramiko import SSHClient, AutoAddPolicy, SSHException
 from scp import SCPClient, SCPException
-from artifact_utils import (named_artifact_path, artifact_path, delete_file, partial_extension)
+from artifact_utils import (named_artifact_path, artifact_path, delete_file,
+                            partial_extension, ARTIFACTS_EXT)
 import boto3
 
 
 def upload_artifact_safe(ssh: SSHClient, artifact: str, plan: str,
                          branch: str, hostname: str, port: int,
-                         username: str) -> None:
+                         username: str, artifact_name: str) -> None:
 
-    file_name = artifact_path(plan, branch)
-    ext = partial_extension()
-    partial_file_name = file_name + ext
+    if (artifact_name != 'None'):
+        src_path = artifact_name
+        dst_path = named_artifact_path(plan, branch, artifact_name)
+    else:
+        src_path = plan.replace("-", '_') + ARTIFACTS_EXT
+        print("Arifact name was not specified, using default name: ", src_path)
+        dst_path = artifact_path(plan, branch)
+     ext = partial_extension()
+    partial_file_name = dst_path + ext
 
     def signal_handler(_signum, _frame):
         ssh.connect(hostname, port=port, username=username)
@@ -34,25 +41,27 @@ def upload_artifact_safe(ssh: SSHClient, artifact: str, plan: str,
     signal.signal(signal.SIGINT, signal_handler)
 
     try:
-        upload_artifact(ssh, artifact, partial_file_name)
-        rename_uploaded_file(ssh, partial_file_name, file_name)
+        upload_artifact(ssh, src_path, partial_file_name)
+        rename_uploaded_file(ssh, partial_file_name, dst_path)
     except (SCPException, SSHException) as e:
         print("Uploading artifact of plan {0}, on branch {1} failed"
               .format(plan, branch))
         delete_file(ssh, partial_file_name)
         raise e
 
-
 def s3_upload_artifact_safe(s3: boto3.resources, bucket: str, artifact: str, plan: str,
-                            branch: str, use_named_artifacts) -> None:
+                            branch: str, artifact_name: str) -> None:
 
-    if (use_named_artifacts):
-        file_name = named_artifact_path(plan, branch, artifact)
+    if (artifact_name != 'None'):
+        src_path = artifact_name
+        dst_path = named_artifact_path(plan, branch, artifact_name)
     else:
-        file_name = artifact_path(plan, branch)
-    data = open(artifact, 'rb')
+        src_path = plan.replace("-", '_') + ARTIFACTS_EXT
+        print("Arifact name was not specified, using default name: ", src_path)
+        dst_path = artifact_path(plan, branch)
+    data = open(src_path, 'rb')
     buck = s3.Bucket(bucket)
-    buck.put_object(Key=file_name, Body=data)
+    buck.put_object(Key=dst_path, Body=data)
 
 
 def upload_artifact(ssh: SSHClient, artifact: str, remote_path: str) -> None:
@@ -95,7 +104,14 @@ def main():
     parser.add_argument(
         '--artifact', '-a',
         help='Artifact to be pushed. It should be file with .tar.gz extension',
-        required=True)
+        default='None',
+        required=False)
+
+    parser.add_argument(
+        '--artifact-name', '-an',
+        help='Artifact to be pushed. It should be file with .tar.gz extension',
+        default='None',
+        required=False)
 
     parser.add_argument(
         '--branch', '-b',
@@ -117,22 +133,16 @@ def main():
         help='The S3 bucket name',
         default='bamboo-artifacts-2')
 
-    parser.add_argument(
-        '--use-named-artifacts',
-        action='store_true',
-        help='The artifact name will be used in the stored file name')
 
     args = parser.parse_args()
-    # print(args)
-    # return
-    # sys.exit(1)
     if args.hostname != 'S3':
         ssh = SSHClient()
         ssh.set_missing_host_key_policy(AutoAddPolicy())
         ssh.load_system_host_keys()
         ssh.connect(args.hostname, port=args.port, username=args.username)
         upload_artifact_safe(ssh, args.artifact, args.plan, args.branch,
-                             args.hostname, args.port, args.username)
+                             args.hostname, args.port, args.username,
+                             args.artifact_name)
         ssh.close()
     else:
         s3_session = boto3.session.Session()
@@ -142,7 +152,7 @@ def main():
             endpoint_url=args.s3_url
         )
         s3_upload_artifact_safe(s3_res, args.s3_bucket, args.artifact, args.plan,
-                                args.branch, args.use_named_artifacts)
+                                args.branch, args.artifact_name)
         
 
 if __name__ == '__main__':
