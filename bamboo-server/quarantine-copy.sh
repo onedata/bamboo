@@ -4,9 +4,17 @@
 # Copyright (C) 2022 ACK CYFRONET AGH
 # This software is released under the MIT license cited in 'LICENSE.txt'
 
-# This script looks for quarantined tests in PLAN_SRC and quarantines them in PLAN_DST
-
-. /home/ubuntu/.bamboo-creds
+# This script looks for quarantined tests in PLAN_SRC and quarantines them
+# in PLAN_DST
+# The script resides on the bamboo server in /home/ubuntu/bin.
+# It needs some credentials which are placed in /home/ubuntu/.bamboo-creds
+#
+# Example content of .bamboo-creds:
+#
+#   export DB_CREDS=myuser:mypass
+#   export BAMBOO_TOKEN=my_bamboo_token
+#
+. /home/ubuntu/.bamboo-creds # 
 
 PLAN_SRC=$1
 PLAN_DST=$2
