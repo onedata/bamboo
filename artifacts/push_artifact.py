@@ -1,16 +1,19 @@
 #! /usr/bin/env python3
 """
-Pushes build or arbitrary artifact to external repo. Artifacts are 
-file packages - typically gzip compressed tarballs. Build artifacts 
-in the remote external repo are always named based on the plan repo and 
-the plan branch. For example, `op-worker/develop.tar.gz`. The name 
-of the local build artifact is always based on the plan name. For 
-example `op_worker.tar.gz`. Note that `-` is replaced by `_`.  
-Arbitrary artifacts may have arbitrary names. In this case the local 
-and remote artifact names are identical. The remote artifact is placed
-in a directory according to the plan and branch, For example, 
-op-worker/feature/VFS-1234-my-branch/. Locally the artifact is placed 
-in the current dir by default but can be specified with --source-file.
+Pushes an artifact to external repo. Artifacts are file packages -
+typically gzip compressed tarballs.
+
+Artifacts are identified by names, which are later used during pulling.
+If no name is provided, default build artifact name is used.
+
+Build artifacts in the external repo are always named based on the
+plan's repo and branch, for example: `op-worker/develop.tar.gz`.
+The local name of the build archive is always based on the plan name.
+For example: `op_worker.tar.gz` (note that dashes are replaced by underscores).
+
+Artifacts with custom names are placed in a directory depending on
+the plan's repo and branch, for example:
+`op-worker/feature/VFS-1234-my-branch/custom-artifact.tar.gz`
 
 Run the script with -h flag to learn about script's running options.
 """
@@ -22,11 +25,16 @@ __license__ = "This software is released under the MIT license cited in " \
 import signal
 import sys
 import argparse
+import time
+import boto3
+
 from paramiko import SSHClient, AutoAddPolicy, SSHException
 from scp import SCPClient, SCPException
-from artifact_utils import (choose_artifact_paths, named_artifact_path, artifact_path, delete_file,
-                            partial_extension, ARTIFACTS_EXT)
-import boto3
+from . import artifact_utils
+
+
+PARTIAL_EXT = '.partial'
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -51,22 +59,23 @@ def parse_args():
 
     parser.add_argument(
         '--artifact', '-a',
-        help='IGNORED, use --artifact-name instead. Artifact to be pushed. It should be file with .tar.gz extension',
+        help='IGNORED, use --artifact-name instead.',
         default='None',
         required=False)
 
     parser.add_argument(
         '--artifact-name', '-an',
-        help='Artifact to be pushed. It should be file with .tar.gz extension',
+        help='Name for the artifact, with .tar.gz extension, used for artifact identification. ' +
+             'If not specified, uses default build artifact name.',
         default='None',
         required=False)
 
     parser.add_argument(
         '--source-file', '-sf',
-        help='Path to a file to read the artifact',
+        help='Path to the .tar.gz file to be pushed as an artifact. Defaults to the artifact name in CWD.',
         default='None',
         required=False)
-    
+
     parser.add_argument(
         '--branch', '-b',
         help='Name of current git branch',
@@ -89,33 +98,42 @@ def parse_args():
 
     return parser.parse_args()
 
-def upload_artifact_safe(ssh: SSHClient, artifact: str, plan: str,
-                         branch: str, hostname: str, port: int,
+
+def upload_artifact_safe(ssh: SSHClient, plan: str, branch: str, hostname: str, port: int,
                          username: str, artifact_name: str, source_file: str) -> None:
-    src_path, dst_path = choose_artifact_paths(artifact_name, source_file, plan, branch)
-    print(src_path, dst_path)
-    ext = partial_extension()
-    partial_file_name = dst_path + ext
+    src_path = artifact_utils.build_local_path(source_file, artifact_name, plan)
+    dst_path = artifact_utils.build_repo_path(artifact_name, plan, branch)
+    print("Uploading artifact")
+    print("    source path: {}".format(src_path))
+    print("    dest.  path: {}".format(dst_path))
+
+    partial_file_name = dst_path + partial_extension()
 
     def signal_handler(_signum, _frame):
         ssh.connect(hostname, port=port, username=username)
         delete_file(ssh, partial_file_name)
         sys.exit(1)
+
     signal.signal(signal.SIGINT, signal_handler)
 
     try:
         upload_artifact(ssh, src_path, partial_file_name)
-        rename_uploaded_file(ssh, partial_file_name, dst_path)
+        rename_file(ssh, partial_file_name, dst_path)
     except (SCPException, SSHException) as e:
         print("Uploading artifact of plan {0}, on branch {1} failed"
               .format(plan, branch))
         delete_file(ssh, partial_file_name)
         raise e
 
-def s3_upload_artifact_safe(s3: boto3.resources, bucket: str, artifact: str, plan: str,
+
+def s3_upload_artifact_safe(s3: boto3.resources, bucket: str, plan: str,
                             branch: str, artifact_name: str, source_file) -> None:
-    src_path, dst_path = choose_artifact_paths(artifact_name, source_file, plan, branch)
-    print(src_path, dst_path)
+    src_path = artifact_utils.build_local_path(source_file, artifact_name, plan)
+    dst_path = artifact_utils.build_repo_path(artifact_name, plan, branch)
+    print("Uploading artifact")
+    print("    source path: {}".format(src_path))
+    print("    dest.  path: {}".format(dst_path))
+
     data = open(src_path, 'rb')
     buck = s3.Bucket(bucket)
     buck.put_object(Key=dst_path, Body=data)
@@ -131,22 +149,44 @@ def upload_artifact(ssh: SSHClient, artifact: str, remote_path: str) -> None:
     with SCPClient(ssh.get_transport()) as scp:
         scp.put(artifact, remote_path=remote_path)
 
-        
-def rename_uploaded_file(ssh: SSHClient, src_file: str,
-                         target_file: str) -> None:
+
+def partial_extension() -> str:
+    return "{partial}.{timestamp}".format(
+        partial=PARTIAL_EXT,
+        timestamp=time.time()
+    )
+
+
+def rename_file(ssh: SSHClient, src_file: str,
+                target_file: str) -> None:
     ssh.exec_command("mv {0} {1}".format(src_file, target_file))
+
+
+def delete_file(ssh: SSHClient, file_name: str) -> None:
+    """
+    Delete file named file_name via ssh.
+    :param ssh: sshclient with opened connection
+    :param file_name: name of file to be unlocked
+    """
+
+    ssh.exec_command("rm -rf {}".format(file_name))
 
 
 def main():
     args = parse_args()
-    if args.artifact != 'None':
-        print('The option --artifact is ignored. The name of artifact is ', args.plan.replace('-', '_') + ARTIFACTS_EXT, '. To specify another name use --artifact_name.', sep="") 
+    if args.artifact:
+        print(
+            'The option --artifact is obsolete and has no effect. ' +
+            'Please use --artifact-name and --source-file options.',
+            file=sys.stderr
+        )
+
     if args.hostname != 'S3':
         ssh = SSHClient()
         ssh.set_missing_host_key_policy(AutoAddPolicy())
         ssh.load_system_host_keys()
         ssh.connect(args.hostname, port=args.port, username=args.username)
-        upload_artifact_safe(ssh, args.artifact, args.plan, args.branch,
+        upload_artifact_safe(ssh, args.plan, args.branch,
                              args.hostname, args.port, args.username,
                              args.artifact_name, args.source_file)
         ssh.close()
@@ -157,9 +197,9 @@ def main():
             service_name='s3',
             endpoint_url=args.s3_url
         )
-        s3_upload_artifact_safe(s3_res, args.s3_bucket, args.artifact, args.plan,
+        s3_upload_artifact_safe(s3_res, args.s3_bucket, args.plan,
                                 args.branch, args.artifact_name, args.source_file)
-        
+
 
 if __name__ == '__main__':
     main()
