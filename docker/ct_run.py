@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """Author: Konrad Zemek
 Copyright (C) 2015 ACK CYFRONET AGH
