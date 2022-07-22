@@ -44,8 +44,6 @@ def named_artifact_path(plan: str, branch: str, artifact: str) -> str:
     :param branch: name of current git branch
     :param artifact: artifact name
     """
-    # suffix = artifact.find(ARTIFACTS_EXT)
-    # artifact_base_name = artifact[:suffix]
     return os.path.join(ARTIFACTS_DIR, plan, branch, artifact)
 
 
