@@ -65,14 +65,14 @@ def parse_args():
 
     parser.add_argument(
         '--artifact-name', '-an',
-        help='Name for the artifact, with .tar.gz extension, used for artifact identification. ' +
+        help='Name for the artifact, with '+ARTIFACTS_EXT+' extension, used for artifact identification. ' +
              'If not specified, uses default build artifact name.',
         default='None',
         required=False)
 
     parser.add_argument(
         '--source-file', '-sf',
-        help='Path to the .tar.gz file to be pushed as an artifact. Defaults to the artifact name in CWD.',
+        help='Path to the '+ARTIFACTS_EXT+' file to be pushed as an artifact. Defaults to the artifact name in CWD.',
         default='None',
         required=False)
 
