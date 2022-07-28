@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """Author: Michal Stanisz
 Copyright (C) 2020 ACK CYFRONET AGH
