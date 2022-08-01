@@ -228,7 +228,7 @@ def create_users(container, users):
         uid = str(hash(user) % 50000 + 10000)
         command = ["adduser", "--disabled-password", "--gecos", "''",
                    "--uid", uid, user]
-        assert 0 is docker.exec_(container, command, interactive=True)
+        assert 0 == docker.exec_(container, command, interactive=True)
 
 
 def create_groups(container, groups):
@@ -237,10 +237,10 @@ def create_groups(container, groups):
     for group in groups:
         gid = str(hash(group) % 50000 + 10000)
         command = ["groupadd", "-g", gid, group]
-        assert 0 is docker.exec_(container, command, interactive=True)
+        assert 0 == docker.exec_(container, command, interactive=True)
         for user in groups[group]:
             command = ["usermod", "-a", "-G", group, user]
-            assert 0 is docker.exec_(container, command, interactive=True)
+            assert 0 == docker.exec_(container, command, interactive=True)
 
 
 def volume_for_storage(storage, readonly=False):

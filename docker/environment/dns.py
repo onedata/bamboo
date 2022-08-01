@@ -66,7 +66,7 @@ def maybe_restart_with_configuration(config, uid, output):
 
 def up(uid, hosts, dnses, dns_to_restart):
     dns = dns_to_restart
-    if dns is 'none':
+    if dns == 'none':
         # Start new DNS docker (just the docker, don't start the DNS server yet)
         dns = docker.run(
             image=dockers_config.get_image('dns'),
