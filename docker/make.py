@@ -235,5 +235,5 @@ ret = docker.run(tty=True,
                  image=args.image,
                  privileged=args.privileged,
                  cpuset_cpus=args.cpuset_cpus,
-                 command=['python', '-c', command])
+                 command=['python3', '-c', command])
 sys.exit(ret)
