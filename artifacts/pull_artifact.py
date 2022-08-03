@@ -29,8 +29,8 @@ import signal
 import sys
 import boto3
 from typing import Callable, Optional, Any, Tuple
-
-from . import artifact_utils
+import artifact_utils
+from artifact_utils import *
 
 
 DEVELOP_BRANCH = 'develop'
@@ -71,13 +71,13 @@ def parse_args():
         '--artifact-name', '-an',
         help='Name of the artifact to be pulled, corresponding to the name used during artifact push. ' +
              'If not specified, uses default build artifact name.',
-        default="None",
+        default=None,
         required=False)
 
     parser.add_argument(
         '--target-file', '-tf',
         help='Location where the pulled artifact will be saved. Defaults to the artifact name in CWD.',
-        default='None',
+        default=None,
         required=False)
     
     parser.add_argument(
@@ -92,6 +92,11 @@ def parse_args():
 
     parser.add_argument(
         '--default-branch',
+        help='Deprecated - use --fallback-branch. Name of git branch to which script will fallback if artifact for desired ' +
+             'branch is not found',
+        default=DEVELOP_BRANCH
+    parser.add_argument(
+        '--fallback-branch',
         help='Name of git branch to which script will fallback if artifact for desired ' +
              'branch is not found',
         default=DEVELOP_BRANCH
@@ -102,27 +107,27 @@ def parse_args():
 
 def download_specific_or_default(ssh: SSHClient, plan: str, branch: str, artifact: str,
                                  target_file: str, hostname: str, port: int, username: str,
-                                 default_branch: str = DEVELOP_BRANCH) -> None:
+                                 fallback_branch: str = DEVELOP_BRANCH) -> None:
     download_artifact_safe(
         ssh, plan, branch, artifact, target_file, hostname, port, username,
         exc_handler=download_default_artifact,
-        exc_handler_args=(ssh, plan, default_branch, artifact, target_file, hostname, port,
+        exc_handler_args=(ssh, plan, fallback_branch, artifact, target_file, hostname, port,
                           username),
         exc_log="Artifact of plan {0}, specific for branch {1} not found, "
                 "pulling artifact from branch {2}.".format(plan, branch,
-                                                           default_branch))
+                                                           fallback_branch))
 
     
 def s3_download_specific_or_default(s3: boto3.resources, bucket: str, plan: str, branch: str,
                                     artifact: str, target_file: str,
-                                    default_branch: str = DEVELOP_BRANCH) -> None:
+                                    fallback_branch: str = DEVELOP_BRANCH) -> None:
     s3_download_artifact_safe(
         s3, bucket, plan, branch, artifact, target_file,
         exc_handler=s3_download_default_artifact,
-        exc_handler_args=(s3, bucket, plan, default_branch, artifact, target_file),
+        exc_handler_args=(s3, bucket, plan, fallback_branch, artifact, target_file),
         exc_log="Artifact of plan {0}, specific for branch {1} not found, "
                 "pulling artifact from branch {2}.".format(plan, branch,
-                                                           default_branch))
+                                                           fallback_branch))
 
     
 def download_default_artifact(ssh: SSHClient, plan: str, branch: str, artifact: str,
@@ -214,6 +219,13 @@ def s3_download_artifact(s3: boto3.resources, bucket: str, plan: str,
 
 def main():
     args = parse_args()
+    if args.default_branch != DEVELOP_BRANCH && args.fallback_branch == DEVELOP_BRANCH:
+        args.fallback_branch = args.default_branch
+        print(
+            'The option --default_branch is obsolete and has no effect. ' +
+            'Please use --fallback_branch options.',
+            file=sys.stderr
+        )
     if args.hostname != 'S3':
         ssh = SSHClient()
         ssh.set_missing_host_key_policy(AutoAddPolicy())
@@ -222,7 +234,7 @@ def main():
 
         download_specific_or_default(ssh, args.plan, args.branch, args.artifact_name,
                                      args.target_file, args.hostname, args.port,
-                                     args.username, args.default_branch)
+                                     args.username, args.fallback_branch)
 
         ssh.close()
     else:
@@ -233,7 +245,7 @@ def main():
             endpoint_url=args.s3_url
         )
         s3_download_specific_or_default(s3_res, args.s3_bucket, args.plan, args.branch,
-                                        args.artifact_name, args.target_file, args.default_branch)
+                                        args.artifact_name, args.target_file, args.fallback_branch)
 
 
 if __name__ == '__main__':

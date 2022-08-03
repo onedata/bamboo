@@ -27,14 +27,13 @@ import sys
 import argparse
 import time
 import boto3
+import artifact_utils
 
 from paramiko import SSHClient, AutoAddPolicy, SSHException
 from scp import SCPClient, SCPException
-from . import artifact_utils
-
+from artifact_utils import *
 
 PARTIAL_EXT = '.partial'
-
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -60,20 +59,20 @@ def parse_args():
     parser.add_argument(
         '--artifact', '-a',
         help='IGNORED, use --artifact-name instead.',
-        default='None',
+        default=None,
         required=False)
 
     parser.add_argument(
         '--artifact-name', '-an',
         help='Name for the artifact, with '+ARTIFACTS_EXT+' extension, used for artifact identification. ' +
              'If not specified, uses default build artifact name.',
-        default='None',
+        default=None,
         required=False)
 
     parser.add_argument(
         '--source-file', '-sf',
         help='Path to the '+ARTIFACTS_EXT+' file to be pushed as an artifact. Defaults to the artifact name in CWD.',
-        default='None',
+        default=None,
         required=False)
 
     parser.add_argument(
@@ -98,8 +97,7 @@ def parse_args():
 
     return parser.parse_args()
 
-
-def upload_artifact_safe(ssh: SSHClient, plan: str, branch: str, hostname: str, port: int,
+def ssh_upload_artifact_safe(ssh: SSHClient, plan: str, branch: str, hostname: str, port: int,
                          username: str, artifact_name: str, source_file: str) -> None:
     src_path = artifact_utils.build_local_path(source_file, artifact_name, plan)
     dst_path = artifact_utils.build_repo_path(artifact_name, plan, branch)
@@ -115,9 +113,10 @@ def upload_artifact_safe(ssh: SSHClient, plan: str, branch: str, hostname: str, 
         sys.exit(1)
 
     signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     try:
-        upload_artifact(ssh, src_path, partial_file_name)
+        ssh_upload_artifact(ssh, src_path, partial_file_name)
         rename_file(ssh, partial_file_name, dst_path)
     except (SCPException, SSHException) as e:
         print("Uploading artifact of plan {0}, on branch {1} failed"
@@ -125,8 +124,35 @@ def upload_artifact_safe(ssh: SSHClient, plan: str, branch: str, hostname: str, 
         delete_file(ssh, partial_file_name)
         raise e
 
+def ssh_upload_artifact(ssh: SSHClient, artifact_name: str, remote_path: str) -> None:
+    """
+    Uploads given artifact to repo.
+    :param ssh: sshclient with opened connection
+    :param artifact_name: name of artifact to be pushed
+    :param remote_path: path for uploaded file
+    """
+    with SCPClient(ssh.get_transport()) as scp:
+        scp.put(artifact_name, remote_path=remote_path)
 
-def s3_upload_artifact_safe(s3: boto3.resources, bucket: str, plan: str,
+def partial_extension() -> str:
+    return "{partial}.{timestamp}".format(
+        partial=PARTIAL_EXT,
+        timestamp=time.time()
+    )
+
+def rename_file(ssh: SSHClient, src_file: str,
+                target_file: str) -> None:
+    ssh.exec_command("mv {0} {1}".format(src_file, target_file))
+
+def delete_file(ssh: SSHClient, file_name: str) -> None:
+    """
+    Delete file named file_name via ssh.
+    :param ssh: sshclient with opened connection
+    :param file_name: name of file to be unlocked
+    """
+    ssh.exec_command("rm -rf {}".format(file_name))
+
+def s3_upload_artifact(s3: boto3.resources, bucket: str, plan: str,
                             branch: str, artifact_name: str, source_file) -> None:
     src_path = artifact_utils.build_local_path(source_file, artifact_name, plan)
     dst_path = artifact_utils.build_repo_path(artifact_name, plan, branch)
@@ -137,40 +163,6 @@ def s3_upload_artifact_safe(s3: boto3.resources, bucket: str, plan: str,
     data = open(src_path, 'rb')
     buck = s3.Bucket(bucket)
     buck.put_object(Key=dst_path, Body=data)
-
-
-def upload_artifact(ssh: SSHClient, artifact: str, remote_path: str) -> None:
-    """
-    Uploads given artifact to repo.
-    :param ssh: sshclient with opened connection
-    :param artifact: name of artifact to be pushed
-    :param remote_path: path for uploaded file
-    """
-    with SCPClient(ssh.get_transport()) as scp:
-        scp.put(artifact, remote_path=remote_path)
-
-
-def partial_extension() -> str:
-    return "{partial}.{timestamp}".format(
-        partial=PARTIAL_EXT,
-        timestamp=time.time()
-    )
-
-
-def rename_file(ssh: SSHClient, src_file: str,
-                target_file: str) -> None:
-    ssh.exec_command("mv {0} {1}".format(src_file, target_file))
-
-
-def delete_file(ssh: SSHClient, file_name: str) -> None:
-    """
-    Delete file named file_name via ssh.
-    :param ssh: sshclient with opened connection
-    :param file_name: name of file to be unlocked
-    """
-
-    ssh.exec_command("rm -rf {}".format(file_name))
-
 
 def main():
     args = parse_args()
@@ -186,7 +178,7 @@ def main():
         ssh.set_missing_host_key_policy(AutoAddPolicy())
         ssh.load_system_host_keys()
         ssh.connect(args.hostname, port=args.port, username=args.username)
-        upload_artifact_safe(ssh, args.plan, args.branch,
+        ssh_upload_artifact_safe(ssh, args.plan, args.branch,
                              args.hostname, args.port, args.username,
                              args.artifact_name, args.source_file)
         ssh.close()
@@ -197,7 +189,7 @@ def main():
             service_name='s3',
             endpoint_url=args.s3_url
         )
-        s3_upload_artifact_safe(s3_res, args.s3_bucket, args.plan,
+        s3_upload_artifact(s3_res, args.s3_bucket, args.plan,
                                 args.branch, args.artifact_name, args.source_file)
 
 

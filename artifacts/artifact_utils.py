@@ -17,32 +17,38 @@ ARTIFACTS_DIR = 'artifacts'
 ARTIFACTS_EXT = '.tar.gz'
 
 
-# the path on the client machine from which an artifact is uploaded to the repo
-# or to which an artifact is downloaded from the repo
 def build_local_path(source_file: str, artifact_name: str, plan: str):
-    if artifact_name == 'None':
-        if source_file == 'None':
-            local_path = plan.replace("-", '_') + ARTIFACTS_EXT
-            print("Source path was not specified, using default local path: ", local_path)
-        else:
-            local_path = source_file
+    """
+    Build the path on the client machine from which an artifact will be uploaded to the repo
+    or to which an artifact will be downloaded from the repo.
+    :source_file: path to the '+ARTIFACTS_EXT+' file to be pushed as an artifact.
+    :artifact_name: path to the '+ARTIFACTS_EXT+' file to be pushed as an artifact.
+    :plan: name of current bamboo plan.
+    """
+    if source_file:
+        local_path = source_file
+    elif artifact_name:
+        local_path = artifact_name
     else:
-        if source_file == 'None':
-            local_path = artifact_name
-        else:
-            local_path = source_file
+        local_path = plan.replace("-", '_') + ARTIFACTS_EXT
+        print("Neither source file nor artifact name was specified, using default local path: ", local_path)  
     return local_path
 
 
-# the path in the artifacts repo to which an artifact is uploaded from the client
-# or from which an artifact is downloaded to the client
 def build_repo_path(artifact_name: str, plan: str, branch: str) -> str:
+    """
+    The path in the artifacts repo to which an artifact is uploaded from the client
+    or from which an artifact is downloaded to the client.
+    :artifact_name: path to the '+ARTIFACTS_EXT+' file to be pushed as an artifact.
+    :plan: name of current bamboo plan.
+    :branch: name of current git branch.
+    """
     if artifact_name:
         if not artifact_name.endswith(ARTIFACTS_EXT):
-            print('The artifact name must have the extension \'{}.\''.format(ARTIFACTS_EXT), file=sys.stderr)
+            print('The artifact name must have the extension \'{}\''.format(ARTIFACTS_EXT), file=sys.stderr)
             sys.exit(1)
         return os.path.join(ARTIFACTS_DIR, plan, branch, artifact_name)
     else:
-        print("Artifact name was not specified, will use default build artifact name")
+        print("Artifact name was not specified, will be treated as a default build artifact")
         # the default build artifact name in the repo is an empty string
         return os.path.join(ARTIFACTS_DIR, plan, branch + ARTIFACTS_EXT)

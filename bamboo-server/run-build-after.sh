@@ -4,8 +4,10 @@
 # Copyright (C) 2022 ACK CYFRONET AGH
 # This software is released under the MIT license cited in 'LICENSE.txt'
 
+# Usage: ./run-build-after.sh <PLAN_TO_RUN> <PLAN_TO_CHECK>
+# 
 # This script waits until the build of PLAN_TO_CHECK finishes and after
-# that run a new build of PLAN_TO_RUN.
+# that runs a new build of PLAN_TO_RUN.
 # The script resides on the bamboo server in /home/ubuntu/bin.
 #
 # .bamboo-creds contains the necessary credentials. Example content:
@@ -34,7 +36,7 @@ while [ $STATUS = 'NOT_FINISHED' ]; do
         sleep 30             # Time to wait before retrying next request in case of connectivity problems
     fi
 done
-sleep 30                     # Cooldown time to let bamboo finishes its operation regarding the build, e.g., updating DB records
+sleep 30                     # Cooldown time to let bamboo finish its operation regarding the build, e.g., updating DB records
 ${BAMBOO_CLI} -a queueBuild --build ${PLAN_TO_RUN} --server https://bamboo.onedata.org --user ${BAMBOO_CREDS%:*} --password ${BAMBOO_CREDS#*:}
 
 

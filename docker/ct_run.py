@@ -46,6 +46,7 @@ def skipped_test_exists(junit_report_path):
 
 
 def locate_suite(name):
+# TODO: https://jira.onedata.org/browse/VFS-9025
     if '/' in name:
         print(
             'NOTE: it is no longer required to provide full path(s) to the suite(s) you wish to run. '
