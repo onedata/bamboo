@@ -94,13 +94,13 @@ def parse_args():
         '--default-branch',
         help='Deprecated - use --fallback-branch. Name of git branch to which script will fallback if artifact for desired ' +
              'branch is not found',
-        default=DEVELOP_BRANCH
+        default=DEVELOP_BRANCH)
+    
     parser.add_argument(
         '--fallback-branch',
         help='Name of git branch to which script will fallback if artifact for desired ' +
              'branch is not found',
-        default=DEVELOP_BRANCH
-    )
+        default=DEVELOP_BRANCH)
 
     return parser.parse_args()
 
@@ -219,7 +219,7 @@ def s3_download_artifact(s3: boto3.resources, bucket: str, plan: str,
 
 def main():
     args = parse_args()
-    if args.default_branch != DEVELOP_BRANCH && args.fallback_branch == DEVELOP_BRANCH:
+    if args.default_branch != DEVELOP_BRANCH and args.fallback_branch == DEVELOP_BRANCH:
         args.fallback_branch = args.default_branch
         print(
             'The option --default_branch is obsolete and has no effect. ' +
