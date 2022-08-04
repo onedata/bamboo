@@ -70,7 +70,7 @@ def parse_args():
         required=False)
 
     parser.add_argument(
-        '--source-file', '-sf',
+        '--source-file-path', '-sf',
         help='Path to the '+ARTIFACTS_EXT+' file to be pushed as an artifact. Defaults to the artifact name in CWD.',
         default=None,
         required=False)
@@ -97,9 +97,9 @@ def parse_args():
 
     return parser.parse_args()
 
-def ssh_upload_artifact_safe(ssh: SSHClient, plan: str, branch: str, hostname: str, port: int,
-                         username: str, artifact_name: str, source_file: str) -> None:
-    src_path = artifact_utils.build_local_path(source_file, artifact_name, plan)
+def ssh_upload_artifact(ssh: SSHClient, plan: str, branch: str, hostname: str, port: int,
+                         username: str, artifact_name: str, source_file_path: str) -> None:
+    src_path = artifact_utils.build_local_path(source_file_path, artifact_name, plan)
     dst_path = artifact_utils.build_repo_path(artifact_name, plan, branch)
     print("Uploading artifact")
     print("    source path: {}".format(src_path))
@@ -116,7 +116,7 @@ def ssh_upload_artifact_safe(ssh: SSHClient, plan: str, branch: str, hostname: s
     signal.signal(signal.SIGTERM, signal_handler)
 
     try:
-        ssh_upload_artifact(ssh, src_path, partial_file_name)
+        ssh_upload_artifact_unsafe(ssh, src_path, partial_file_name)
         rename_file(ssh, partial_file_name, dst_path)
     except (SCPException, SSHException) as e:
         print("Uploading artifact of plan {0}, on branch {1} failed"
@@ -124,7 +124,7 @@ def ssh_upload_artifact_safe(ssh: SSHClient, plan: str, branch: str, hostname: s
         delete_file(ssh, partial_file_name)
         raise e
 
-def ssh_upload_artifact(ssh: SSHClient, artifact_name: str, remote_path: str) -> None:
+def ssh_upload_artifact_unsafe(ssh: SSHClient, artifact_name: str, remote_path: str) -> None:
     """
     Uploads given artifact to repo.
     :param ssh: sshclient with opened connection
@@ -153,8 +153,8 @@ def delete_file(ssh: SSHClient, file_name: str) -> None:
     ssh.exec_command("rm -rf {}".format(file_name))
 
 def s3_upload_artifact(s3: boto3.resources, bucket: str, plan: str,
-                            branch: str, artifact_name: str, source_file) -> None:
-    src_path = artifact_utils.build_local_path(source_file, artifact_name, plan)
+                            branch: str, artifact_name: str, source_file_path) -> None:
+    src_path = artifact_utils.build_local_path(source_file_path, artifact_name, plan)
     dst_path = artifact_utils.build_repo_path(artifact_name, plan, branch)
     print("Uploading artifact")
     print("    source path: {}".format(src_path))
@@ -178,9 +178,9 @@ def main():
         ssh.set_missing_host_key_policy(AutoAddPolicy())
         ssh.load_system_host_keys()
         ssh.connect(args.hostname, port=args.port, username=args.username)
-        ssh_upload_artifact_safe(ssh, args.plan, args.branch,
+        ssh_upload_artifact(ssh, args.plan, args.branch,
                              args.hostname, args.port, args.username,
-                             args.artifact_name, args.source_file)
+                             args.artifact_name, args.source_file_path)
         ssh.close()
     else:
         s3_session = boto3.session.Session()
@@ -190,7 +190,7 @@ def main():
             endpoint_url=args.s3_url
         )
         s3_upload_artifact(s3_res, args.s3_bucket, args.plan,
-                                args.branch, args.artifact_name, args.source_file)
+                                args.branch, args.artifact_name, args.source_file_path)
 
 
 if __name__ == '__main__':
