@@ -24,6 +24,8 @@ def cmd(args):
 
     with open('/dev/null', 'w') as dev_null:
         result = subprocess.check_output(args, stderr=dev_null)
+    if isinstance(result, bytes):
+        result = result.decode()
     return result.rstrip('\n')
 
 
@@ -43,7 +45,6 @@ def get_tags():
     tags = []
     commit = cmd(['git', 'rev-parse', 'HEAD'])
     branch = cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
-    ticket = re.search(r'VFS-\d+.*', branch)
 
     git_tags = cmd(['git', 'tag', '--points-at', commit]).split('\n')
     git_tags = filter(lambda tag: tag, git_tags)
@@ -51,21 +52,25 @@ def get_tags():
     if git_tags:
         tags.append(('git-tag', git_tags[0]))
 
-    if branch.startswith('develop'):
-        tags.append(('git-branch', 'develop'))
-
-    for prefix in ['release/', 'hotfix/']:
-        if branch.startswith(prefix):
-            tag = '{0}-{1}'.format(branch[len(prefix):], commit[0:7])
-            tags.append(('git-branch', tag))
-
-    for prefix in ['feature/', 'bugfix/']:
-        if branch.startswith(prefix) and ticket:
-            tags.append(('git-branch', ticket.group(0)))
+    tags.append(('git-branch', get_branch_tag(branch)))
 
     tags.append(('git-commit', 'ID-{0}'.format(commit[0:10])))
 
     return tags
+
+
+def get_branch_tag(branch):
+    ticket = re.search(r'VFS-\d+.*', branch)
+    if branch.startswith('develop'):
+        return 'develop'
+
+    for prefix in ['feature/', 'bugfix/']:
+        if branch.startswith(prefix) and ticket:
+            return ticket.group(0)
+    for prefix in ['release/', 'hotfix/']:
+        if branch.startswith(prefix):
+            return branch.lstrip(prefix)
+    return branch.replace('/', '_')
 
 
 def write_short_report(file_name, images):

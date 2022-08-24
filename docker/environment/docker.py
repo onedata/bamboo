@@ -271,6 +271,19 @@ def pull_image(image):
     subprocess.check_call(['docker', 'pull', image])
 
 
+def image_exists(image):
+    """Checks whether docker image is in the repository."""
+
+    with open(os.devnull, 'w') as DEVNULL:
+        if subprocess.call(
+            ['docker', 'manifest', 'inspect', image],
+            stdout=DEVNULL,
+            stderr=DEVNULL
+        ) == 0:
+            return True
+        return False
+
+
 def remove_image(image):
     """Removes docker image."""
 
