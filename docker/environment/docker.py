@@ -12,6 +12,8 @@ import subprocess
 import sys
 from six import string_types
 
+PULL_DOCKER_IMAGE_RETRIES = 5
+
 
 # Adds a bind-mount consistency option depending on the container's access_level.
 # This option applies to macOS only, otherwise is ignored by Docker. It relaxes
@@ -271,17 +273,32 @@ def pull_image(image):
     subprocess.check_call(['docker', 'pull', image])
 
 
+def pull_image_with_retries(image, retries=PULL_DOCKER_IMAGE_RETRIES):
+    attempts = 0
+
+    while attempts < retries:
+        try:
+            pull_image(image)
+        except subprocess.CalledProcessError as e:
+            attempts += 1
+            if attempts >= retries:
+                print('Could not download image {}. Tried {} times. \n'
+                      'Captured output from last call: {} \n'
+                      .format(image, retries, e.output))
+                raise
+        else:
+            return
+
+
 def image_exists(image):
     """Checks whether docker image is in the repository."""
 
     with open(os.devnull, 'w') as DEVNULL:
-        if subprocess.call(
+        return 0 == subprocess.call(
             ['docker', 'manifest', 'inspect', image],
             stdout=DEVNULL,
             stderr=DEVNULL
-        ) == 0:
-            return True
-        return False
+        )
 
 
 def remove_image(image):

@@ -27,7 +27,7 @@ import xml.etree.ElementTree as ElementTree
 
 from environment import docker, dockers_config
 from environment.common import HOST_STORAGE_PATH, remove_dockers_and_volumes
-from onenv_utils import get_image_from_branch_config, pull_docker_image_with_retries
+from branch_config import get_image_from_branch_config
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(script_dir, 'bamboos/docker'))
@@ -84,7 +84,7 @@ def main():
     parser.add_argument(
         '-sf', '--sources-filter',
         action='append',
-        help='sources filters passed to onenv up script'
+        help='Sources filter passed to onenv up script. Can be provided multiple times.'
     )
 
     parser.add_argument(
@@ -172,12 +172,11 @@ def prepare_ct_command(args):
 
 
 def prepare_image(image, service_name, pull):
-    if image:
-        print('Using image: {} for {} service'.format(image, service_name))
-        if pull:
-            pull_docker_image_with_retries(image)
-    else:
-        image = get_image_from_branch_config(service_name, pull=pull)
+    if not image:
+        image = get_image_from_branch_config(service_name)
+    print('\n[INFO] Using image {} for service {}'.format(image, service_name))
+    if pull:
+        docker.pull_image_with_retries(image)
     return image
 
 

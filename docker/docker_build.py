@@ -60,10 +60,10 @@ def get_tags():
 
 
 def get_branch_tag(branch):
-    ticket = re.search(r'VFS-\d+.*', branch)
-    if branch.startswith('develop'):
+    if branch == 'develop':
         return 'develop'
 
+    ticket = re.search(r'VFS-\d+.*', branch)
     for prefix in ['feature/', 'bugfix/']:
         if branch.startswith(prefix) and ticket:
             return ticket.group(0)
