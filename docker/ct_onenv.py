@@ -27,7 +27,7 @@ import xml.etree.ElementTree as ElementTree
 
 from environment import docker, dockers_config
 from environment.common import HOST_STORAGE_PATH, remove_dockers_and_volumes
-from branch_config import get_image_from_branch_config
+import images_branch_config
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(script_dir, 'bamboos/docker'))
@@ -173,7 +173,7 @@ def prepare_ct_command(args):
 
 def prepare_image(image, service_name, pull):
     if not image:
-        image = get_image_from_branch_config(service_name)
+        image = images_branch_config.resolve_image(service_name)
     print('\n[INFO] Using image {} for service {}'.format(image, service_name))
     if pull:
         docker.pull_image_with_retries(image)

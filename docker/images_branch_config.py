@@ -7,7 +7,7 @@ Branch config is a yaml file in following format:
       onezone: current_branch
       oneprovider: some_branch
 
-Allowed sources keys: [oz-worker, op-worker, onepanel, oneclient]
+Allowed images keys: [onezone, oneprovider, oneclient, rest_cli]
 Allowed values: current_branch, default(only under `images` key), release/{version},
                 {any image tag}, {any branch name}
 """
@@ -30,7 +30,7 @@ SERVICE_TO_IMAGE = {
 }
 
 
-def get_image_from_branch_config(service):
+def resolve_image(service):
     """Returns service image based on branch from branchConfig.yaml file"""
     branch_config_path = os.path.join(os.getcwd(), 'branchConfig.yaml')
     try:
