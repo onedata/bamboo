@@ -14,6 +14,7 @@ import argparse
 import json
 import re
 import subprocess
+import os
 
 from environment import docker
 
@@ -44,7 +45,7 @@ def get_tags():
 
     tags = []
     commit = cmd(['git', 'rev-parse', 'HEAD'])
-    branch = cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+    branch = get_current_branch()
 
     git_tags = cmd(['git', 'tag', '--points-at', commit]).split('\n')
     git_tags = filter(lambda tag: tag, git_tags)
@@ -57,6 +58,19 @@ def get_tags():
     tags.append(('git-commit', 'ID-{0}'.format(commit[0:10])))
 
     return tags
+
+
+def get_current_branch():
+    if 'bamboo_planRepository_branchName' in os.environ:
+        branch_name = os.environ['bamboo_planRepository_branchName']
+        print('[INFO] ENV variable "bamboo_planRepository_branchName" is set to {} - using it '
+              'as current branch name'.format(branch_name))
+    else:
+        branch_name = cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+    if branch_name == 'HEAD':
+        raise ValueError('Could not resolve branch name - repository in detached HEAD state. '
+                         'You must run this script on the newest commit of the current branch.')
+    return branch_name
 
 
 def get_branch_tag(branch):

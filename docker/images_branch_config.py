@@ -19,7 +19,7 @@ __license__ = "This software is released under the MIT license cited in " \
 import os
 import yaml
 
-from docker_build import cmd, get_branch_tag
+from docker_build import get_current_branch, get_branch_tag
 from environment import docker
 
 SERVICE_TO_IMAGE = {
@@ -40,7 +40,7 @@ def resolve_image(service):
             fallback_tag = get_branch_tag(fallback_branch)
             service_branch = branch_config['images'][service]
             if service_branch == 'current_branch':
-                branch = cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+                branch = get_current_branch()
                 branch_tag = get_branch_tag(branch)
             elif service_branch == 'default':
                 branch_tag = fallback_tag
@@ -52,7 +52,7 @@ def resolve_image(service):
             if docker.image_exists(image):
                 return image
             else:
-                print('\n[INFO] Image {} for service {} not found. Fallbacking to {}'.format(
+                print('\n[INFO] Image {} for service {} not found. Falling back to {}'.format(
                     image, service, fallback_image))
                 return fallback_image
     except (IOError, KeyError) as e:
