@@ -72,7 +72,7 @@ def main():
             branch_cfg = yaml.load(branch_cfg_file)
             default_branch = branch_cfg.get(DEFAULT_BRANCH)
 
-            for plan, branch in branch_cfg.get('branches').items():
+            for plan, branch in branch_cfg.get('sources').items():
                 if branch != CURRENT_BRANCH:
                     print('Getting artifact for plan {}\'s from branch {}'
                           .format(plan, branch))
@@ -101,7 +101,7 @@ def main():
             branch_cfg = yaml.load(branch_cfg_file)
             default_branch = branch_cfg.get(DEFAULT_BRANCH)
 
-            for plan, branch in branch_cfg.get('branches').items():
+            for plan, branch in branch_cfg.get('sources').items():
                 if branch != CURRENT_BRANCH:
                     print('Getting artifact for plan {}\'s from branch {}'
                           .format(plan, branch))
@@ -118,7 +118,7 @@ def main():
                                                     args.hostname, args.port,
                                                     args.username,
                                                     default_branch=default_branch)
-        
+
 
 if __name__ == '__main__':
     main()
