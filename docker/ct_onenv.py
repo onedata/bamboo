@@ -27,6 +27,7 @@ import xml.etree.ElementTree as ElementTree
 
 from environment import docker, dockers_config
 from environment.common import HOST_STORAGE_PATH, remove_dockers_and_volumes
+import images_branch_config
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(script_dir, 'bamboos/docker'))
@@ -80,6 +81,32 @@ def main():
         help='run cover analysis',
         dest='cover')
 
+    parser.add_argument(
+        '-sf', '--sources-filter',
+        action='append',
+        help='Sources filter passed to onenv up script. Can be provided multiple times.'
+    )
+
+    parser.add_argument(
+        '-zi', '--onezone-image',
+        help='onezone image to use',
+        dest='onezone_image'
+    )
+
+    parser.add_argument(
+        '-pi', '--oneprovider-image',
+        help='oneprovider image to use',
+        dest='oneprovider_image'
+    )
+
+    parser.add_argument(
+        '--no-pull',
+        action='store_true',
+        help='By default all tests scenarios force pulling docker images '
+             'even if they are already present on host machine. When this '
+             'option is passed no images will be downloaded.',
+        dest='no_pull')
+
     args = parser.parse_args()
     dockers_config.ensure_image(args, 'image', 'worker')
 
@@ -123,6 +150,12 @@ def prepare_ct_command(args):
 
     ct_command.extend(['-env', 'clean_env', "false" if args.no_clean else "true"])
     ct_command.extend(['-env', 'cover', "true" if args.cover else "false"])
+    if args.sources_filter:
+        ct_command.extend(['-env', 'sources_filters', ';'.join(args.sources_filter)])
+    ct_command.extend(['-env', 'onezone_image',
+                       prepare_image(args.onezone_image, 'onezone', not args.no_pull)])
+    ct_command.extend(['-env', 'oneprovider_image',
+                       prepare_image(args.oneprovider_image, 'oneprovider', not args.no_pull)])
 
     if args.suites:
         ct_command.append('-suite')
@@ -136,6 +169,15 @@ def prepare_ct_command(args):
         ct_command.extend(['-cover', COVER_TMP_SPEC])
 
     return ct_command
+
+
+def prepare_image(image, service_name, pull):
+    if not image:
+        image = images_branch_config.resolve_image(service_name)
+    print('\n[INFO] Using image {} for service {}'.format(image, service_name))
+    if pull:
+        docker.pull_image_with_retries(image)
+    return image
 
 
 def prepare_docker_command(args):
