@@ -13,7 +13,7 @@ import random
 import string
 from timeouts import *
 
-from . import common, docker, dns, cluster_manager, worker
+from . import common, docker, dns, cluster_manager, worker, test_ca
 
 
 def domain(appmock_instance, uid):
@@ -83,7 +83,10 @@ def _node_up(image, bindir, config, config_path, dns_servers, logdir):
     # file_name must be preserved as it must match the Erlang module name
     sys_config['app_description_file'] = '/tmp/' + app_desc_file_name
 
+    key, cert, cacert = test_ca.generate_webcert(hostname)
+
     command = '''mkdir -p /root/bin/node/log/
+mkdir -p /root/bin/node/etc/certs
 bindfs --create-for-user={uid} --create-for-group={gid} /root/bin/node/log /root/bin/node/log
 set -e
 cat <<"EOF" > /tmp/{app_desc_file_name}
@@ -91,6 +94,15 @@ cat <<"EOF" > /tmp/{app_desc_file_name}
 EOF
 cat <<"EOF" > /tmp/gen_dev_args.json
 {gen_dev_args}
+EOF
+cat <<"EOF" > /root/bin/node/etc/certs/web_key.pem
+{key}
+EOF
+cat <<"EOF" > /root/bin/node/etc/certs/web_cert.pem
+{cert}
+EOF
+cat <<"EOF" > /root/bin/node/etc/certs/web_chain.pem
+{cacert}
 EOF
 escript bamboos/gen_dev/gen_dev.escript /tmp/gen_dev_args.json
 /root/bin/node/bin/appmock console
@@ -100,7 +112,11 @@ sleep 5'''  # Add sleep so logs can be chowned
         gid=os.getegid(),
         app_desc_file_name=app_desc_file_name,
         app_desc_file=open(app_desc_file_path, 'r').read(),
-        gen_dev_args=json.dumps({'appmock': config}))
+        gen_dev_args=json.dumps({'appmock': config}),
+        key=key,
+        cert=cert,
+        cacert=cacert
+    )
 
     bindir = os.path.abspath(bindir)
     volumes = ['/root/bin', (bindir, bindir, 'ro')]
