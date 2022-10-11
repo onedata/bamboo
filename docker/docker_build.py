@@ -201,7 +201,8 @@ if __name__ == '__main__':
         docker.tag_image(image, image_tag)
         images.append((tag[0], image_tag))
 
-    for _, image in images:
+    unique_images = list(set([x for _,x in images]))
+    for image in unique_images:
         if args.publish:
             docker.push_image(image)
 
