@@ -205,6 +205,7 @@ def s3_download_artifact_safe(s3: boto3.resources, bucket: str,
 def download_artifact(ssh: SSHClient, plan: str, branch: str, artifact_name: str, target_file_path: str) -> None:
     dst_path = artifact_utils.build_local_path(target_file_path, artifact_name, plan)
     src_path = artifact_utils.build_repo_path(artifact_name, plan, branch)
+    print("Pulling artifact for branch '{}' from repo path: '{}' ...".format(branch, src_path))
     with SCPClient(ssh.get_transport()) as scp:
         scp.get(src_path, local_path=dst_path)
 
@@ -214,6 +215,7 @@ def s3_download_artifact(s3: boto3.resources, bucket: str, plan: str,
     buck = s3.Bucket(bucket)
     dst_path = artifact_utils.build_local_path(target_file_path, artifact_name, plan)
     src_path = artifact_utils.build_repo_path(artifact_name, plan, branch)
+    print("Pulling artifact for branch '{}' from repo path: '{}' ...".format(branch, src_path))
     buck.download_file(src_path, dst_path)
 
 
