@@ -72,7 +72,7 @@ def parse_args():
         help='Name of the artifact to be pulled, corresponding to the name used during artifact push. ' +
              'If not specified, uses default build artifact name.',
         default=None,
-        required=False)
+        required=True)
 
     parser.add_argument(
         '--target-file-path', '-tf',
