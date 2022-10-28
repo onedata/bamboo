@@ -69,10 +69,9 @@ def parse_args():
 
     parser.add_argument(
         '--artifact-name', '-an',
-        help='Name of the artifact to be pulled, corresponding to the name used during artifact push. ' +
-             'If not specified, uses default build artifact name.',
+        help='Name of the artifact to be pulled, corresponding to the name used during artifact push. ',
         default=None,
-        required=True)
+        required=False)
 
     parser.add_argument(
         '--target-file-path', '-tf',
@@ -89,12 +88,6 @@ def parse_args():
         '--s3-bucket',
         help='The S3 bucket name',
         default='bamboo-artifacts-2')
-
-    parser.add_argument(
-        '--default-branch',
-        help='Deprecated - use --fallback-branch. Name of git branch to which script will fallback if artifact for desired ' +
-             'branch is not found',
-        default=DEVELOP_BRANCH)
     
     parser.add_argument(
         '--fallback-branch',
@@ -193,6 +186,7 @@ def s3_download_artifact_safe(s3: boto3.resources, bucket: str,
 
     try:        
         s3_download_artifact(s3, bucket, plan, branch, artifact, target_file_path)
+        print("artifact=", artifact)
     except Exception as ex:
         print(exc_log)
         if exc_handler:
@@ -221,13 +215,13 @@ def s3_download_artifact(s3: boto3.resources, bucket: str, plan: str,
 
 def main():
     args = parse_args()
-    if args.default_branch != DEVELOP_BRANCH and args.fallback_branch == DEVELOP_BRANCH:
-        args.fallback_branch = args.default_branch
-        print(
-            'The option --default_branch is deprecated. ' +
-            'Please use --fallback_branch options.',
-            file=sys.stderr
-        )
+    # if args.default_branch != DEVELOP_BRANCH and args.fallback_branch == DEVELOP_BRANCH:
+    #     args.fallback_branch = args.default_branch
+    #     print(
+    #         'The option --default_branch is deprecated. ' +
+    #         'Please use --fallback_branch options.',
+    #         file=sys.stderr
+    #     )
     if args.hostname != 'S3':
         ssh = SSHClient()
         ssh.set_missing_host_key_policy(AutoAddPolicy())

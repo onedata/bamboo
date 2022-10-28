@@ -54,4 +54,4 @@ def build_repo_path(artifact_name: str, plan: str, branch: str) -> str:
     else:
         print("Artifact name was not specified, will be treated as a default build artifact")
         # the default build artifact name in the repo is an empty string
-        return os.path.join(ARTIFACTS_DIR, plan, branch + ARTIFACTS_EXT)
+        return os.path.join(ARTIFACTS_DIR, plan, branch, plan.replace("-", '_') + ARTIFACTS_EXT)

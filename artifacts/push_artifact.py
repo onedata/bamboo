@@ -7,7 +7,7 @@ Artifacts are identified by names, which are later used during pulling.
 If no name is provided, default build artifact name is used.
 
 Build artifacts in the external repo are always named based on the
-plan's repo and branch, for example: `op-worker/develop.tar.gz`.
+plan's repo and branch, for example: `op-worker/develop/op_worker.tar.gz`.
 The local name of the build archive is always based on the plan name.
 For example: `op_worker.tar.gz` (note that dashes are replaced by underscores).
 
