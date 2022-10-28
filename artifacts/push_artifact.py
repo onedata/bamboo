@@ -57,12 +57,6 @@ def parse_args():
         required=True)
 
     parser.add_argument(
-        '--artifact', '-a',
-        help='IGNORED, use --artifact-name instead.',
-        default=None,
-        required=False)
-
-    parser.add_argument(
         '--artifact-name', '-an',
         help='Name for the artifact, with '+ARTIFACTS_EXT+' extension, used for artifact identification. ' +
              'If not specified, uses default build artifact name.',
