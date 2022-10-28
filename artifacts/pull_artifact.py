@@ -186,7 +186,6 @@ def s3_download_artifact_safe(s3: boto3.resources, bucket: str,
 
     try:        
         s3_download_artifact(s3, bucket, plan, branch, artifact, target_file_path)
-        print("artifact=", artifact)
     except Exception as ex:
         print(exc_log)
         if exc_handler:
