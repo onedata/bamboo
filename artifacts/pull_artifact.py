@@ -215,13 +215,6 @@ def s3_download_artifact(s3: boto3.resources, bucket: str, plan: str,
 
 def main():
     args = parse_args()
-    # if args.default_branch != DEVELOP_BRANCH and args.fallback_branch == DEVELOP_BRANCH:
-    #     args.fallback_branch = args.default_branch
-    #     print(
-    #         'The option --default_branch is deprecated. ' +
-    #         'Please use --fallback_branch options.',
-    #         file=sys.stderr
-    #     )
     if args.hostname != 'S3':
         ssh = SSHClient()
         ssh.set_missing_host_key_policy(AutoAddPolicy())
