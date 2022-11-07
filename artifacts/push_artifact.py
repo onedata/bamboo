@@ -160,13 +160,6 @@ def s3_upload_artifact(s3: boto3.resources, bucket: str, plan: str,
 
 def main():
     args = parse_args()
-    if args.artifact:
-        print(
-            'The option --artifact is obsolete and has no effect. ' +
-            'Please use --artifact-name and --source-file options.',
-            file=sys.stderr
-        )
-
     if args.hostname != 'S3':
         ssh = SSHClient()
         ssh.set_missing_host_key_policy(AutoAddPolicy())
