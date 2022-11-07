@@ -54,7 +54,7 @@ def build_repo_path(artifact_name: str, plan: str, branch: str) -> str:
     else:
         print("Artifact name was not specified, will be treated as a default build artifact")
         # the default build artifact name in the repo is an empty string
-        return os.path.join(ARTIFACTS_DIR, plan, branch, default_build_artifact_name(plan)
+        return os.path.join(ARTIFACTS_DIR, plan, branch, default_build_artifact_name(plan))
 
     
 def default_build_artifact_name(plan: str) -> str:
@@ -62,4 +62,4 @@ def default_build_artifact_name(plan: str) -> str:
     The default artifact is based on the plan in which dashes are replaced with underscores
     :plan: name of the plan
     """
-    return(plan.replace("-", '_')+ARTIFACTS_EXT)
+    return plan.replace('-', '_') + ARTIFACTS_EXT
