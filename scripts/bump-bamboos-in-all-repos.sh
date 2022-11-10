@@ -45,6 +45,7 @@ ALL_REPOS=(
     macaroons
     oneclient-pkg
     onedata-acceptance
+    onedata-documentation
     onedatafs-jupyter
     onenv-ct
     onepanel

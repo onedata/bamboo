@@ -7,7 +7,7 @@ Artifacts are identified by names, which are later used during pulling.
 If no name is provided, default build artifact name is used.
 
 Build artifacts in the external repo are always named based on the
-plan's repo and branch, for example: `op-worker/develop.tar.gz`.
+plan's repo and branch, for example: `op-worker/develop/op_worker.tar.gz`.
 The local name of the build archive is always based on the plan name.
 For example: `op_worker.tar.gz` (note that dashes are replaced by underscores).
 
@@ -55,12 +55,6 @@ def parse_args():
         '--username', '-u',
         help='The username to authenticate as',
         required=True)
-
-    parser.add_argument(
-        '--artifact', '-a',
-        help='IGNORED, use --artifact-name instead.',
-        default=None,
-        required=False)
 
     parser.add_argument(
         '--artifact-name', '-an',
@@ -166,13 +160,6 @@ def s3_upload_artifact(s3: boto3.resources, bucket: str, plan: str,
 
 def main():
     args = parse_args()
-    if args.artifact:
-        print(
-            'The option --artifact is obsolete and has no effect. ' +
-            'Please use --artifact-name and --source-file options.',
-            file=sys.stderr
-        )
-
     if args.hostname != 'S3':
         ssh = SSHClient()
         ssh.set_missing_host_key_policy(AutoAddPolicy())
