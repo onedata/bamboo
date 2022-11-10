@@ -32,7 +32,7 @@ def build_local_path(file_path: str, artifact_name: str, plan: str):
     elif artifact_name:
         local_path = artifact_name
     else:
-        local_path = plan.replace("-", '_') + ARTIFACTS_EXT
+        local_path = default_build_artifact_name(plan)
         print("Neither source file nor artifact name was specified, using default local path:", local_path)  
     return local_path
 
@@ -54,4 +54,12 @@ def build_repo_path(artifact_name: str, plan: str, branch: str) -> str:
     else:
         print("Artifact name was not specified, will be treated as a default build artifact")
         # the default build artifact name in the repo is an empty string
-        return os.path.join(ARTIFACTS_DIR, plan, branch + ARTIFACTS_EXT)
+        return os.path.join(ARTIFACTS_DIR, plan, branch, default_build_artifact_name(plan))
+
+    
+def default_build_artifact_name(plan: str) -> str:
+    """
+    The default artifact is based on the plan in which dashes are replaced with underscores
+    :plan: name of the plan
+    """
+    return plan.replace('-', '_') + ARTIFACTS_EXT
