@@ -27,13 +27,13 @@ then
               -v ${ONEDATA_STORAGE_PATH}:${ONEDATA_STORAGE_PATH} \
               -v ${ONE_ENV_DEPLOYMENT_DIR}:${ONE_ENV_DEPLOYMENT_DIR} \
               -v ${ONE_ENV_ARTIFACTS_DIR}:${ONE_ENV_ARTIFACTS_DIR} \
-              alpine sh -c "rm -rf ${ONEDATA_STORAGE_PATH}/* ${ONE_ENV_DEPLOYMENT_DIR}/* ${ONE_ENV_ARTIFACTS_DIR}/*"
+              alpine sh -c \"rm -rf ${ONEDATA_STORAGE_PATH}/* ${ONE_ENV_DEPLOYMENT_DIR}/* ${ONE_ENV_ARTIFACTS_DIR}/*\"
 else
   echo "Clearing ${ONEDATA_STORAGE_PATH} and ${ONE_ENV_DEPLOYMENT_DIR}"
   execute_with_timeout ${CLEAR_DIRECTORIES_TIMEOUT} docker run \
               -v ${ONEDATA_STORAGE_PATH}:${ONEDATA_STORAGE_PATH} \
               -v ${ONE_ENV_DEPLOYMENT_DIR}:${ONE_ENV_DEPLOYMENT_DIR} \
-              alpine sh -c "rm -rf ${ONEDATA_STORAGE_PATH}/* ${ONE_ENV_DEPLOYMENT_DIR}/*"
+              alpine sh -c \"rm -rf ${ONEDATA_STORAGE_PATH}/* ${ONE_ENV_DEPLOYMENT_DIR}/*\"
 fi
 
 
