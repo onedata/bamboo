@@ -147,7 +147,7 @@ if {shed_privileges}:
         useradd.extend(['-G', ','.join({groups})])
 
     subprocess.call(useradd)
-
+    subprocess.call(['bash', '-c', 'echo "maketmp ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/S51-maketmp'])
     os.environ['PATH'] = os.environ['PATH'].replace('sbin', 'bin')
     os.environ['HOME'] = '/home/maketmp'
     ssh_home = '/home/maketmp/.ssh'
@@ -182,6 +182,7 @@ except:
 subprocess.call([
     'sh', '-c',
     'cd /home/maketmp && git config --global url.https://github.com/.insteadOf git://github.com/'
+    #'cd /root && git config --global url.https://github.com/.insteadOf git://github.com/'
 ])
 
 sh_command = (
@@ -199,6 +200,7 @@ command = command.format(
     gid=os.getegid(),
     src=args.src,
     shed_privileges=(platform.system() == 'Linux' and os.geteuid() != 0),
+    # shed_privileges=False,
     groups=args.groups)
 
 # Mount docker socket so dockers can start dockers
