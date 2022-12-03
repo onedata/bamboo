@@ -147,9 +147,7 @@ if {shed_privileges}:
         useradd.extend(['-G', ','.join({groups})])
 
     subprocess.call(useradd)
-    if grep focal /etc/os-release; then
-        subprocess.call(['bash', '-c', 'echo "maketmp ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/S51-maketmp'])
-    fi
+    subprocess.call(['bash', '-c', 'if grep focal /etc/os-release; then echo "maketmp ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/S51-maketmp; fi'])
 
     os.environ['PATH'] = os.environ['PATH'].replace('sbin', 'bin')
     os.environ['HOME'] = '/home/maketmp'
