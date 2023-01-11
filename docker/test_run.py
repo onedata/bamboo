@@ -102,14 +102,14 @@ parser.add_argument(
     help="Name of docker container where tests will be running",
     dest='docker_name',
     default='test_run_docker_{}'.format(int(time.time()))
-)    
+)
 
 parser.add_argument(
     '--no-etc-passwd',
     action='store_true',
     help="Do not mount /etc/passwd to container, warning: some tests may not work",
     dest='no_etc_passwd'
-)    
+)
 
 [args, pass_args] = parser.parse_known_args()
 dockers_config.ensure_image(args, 'image', 'worker')

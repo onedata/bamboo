@@ -45,6 +45,29 @@ def skipped_test_exists(junit_report_path):
     return False
 
 
+def locate_suite(name):
+# TODO: https://jira.onedata.org/browse/VFS-9025
+    if '/' in name:
+        print(
+            'NOTE: it is no longer required to provide full path(s) to the suite(s) you wish to run. '
+            'It is enough to provide the suite name (without the "_test_SUITE" suffix).'
+        )
+        name = os.path.basename(name)
+    if '_test_SUITE' not in name:
+        name += '_test_SUITE'
+    if '.erl' not in name:
+        name += '.erl'
+    return find_suite_file(name)
+
+
+def find_suite_file(name):
+    for root, dirs, files in os.walk('test_distributed'):
+        if name in files:
+            return os.path.relpath(os.path.join(root, name), 'test_distributed')
+    print('ERROR: Suite with name {} has not been found in the test_distributed directory'.format(name))
+    sys.exit(1)
+
+
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     description='Run Common Tests.')
@@ -192,7 +215,7 @@ ct_command.extend(code_paths)
 
 if args.suites:
     ct_command.append('-suite')
-    ct_command.extend(args.suites)
+    ct_command.extend([locate_suite(s) for s in args.suites])
 
 if args.cases:
     ct_command.append('-case')

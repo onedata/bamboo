@@ -182,8 +182,7 @@ except:
 # (especially a submodule) may fail, despite the fact that --global is used
 subprocess.call([
     'sh', '-c',
-    'cd /home/maketmp && git config --global url.https://github.com/.insteadOf git://github.com/'
-    #'cd /root && git config --global url.https://github.com/.insteadOf git://github.com/'
+    'cd && git config --global url.https://github.com/.insteadOf git://github.com/'
 ])
 
 sh_command = (

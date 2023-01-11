@@ -95,6 +95,15 @@ EOF
 cat <<"EOF" > /tmp/gen_dev_args.json
 {gen_dev_args}
 EOF
+cat <<"EOF" > /root/bin/node/etc/certs/web_key.pem
+{key}
+EOF
+cat <<"EOF" > /root/bin/node/etc/certs/web_cert.pem
+{cert}
+EOF
+cat <<"EOF" > /root/bin/node/etc/certs/web_chain.pem
+{cacert}
+EOF
 escript bamboos/gen_dev/gen_dev.escript /tmp/gen_dev_args.json
 
 cat <<"EOF" > /root/bin/node/etc/certs/web_key.pem
