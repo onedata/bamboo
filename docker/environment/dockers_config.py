@@ -53,9 +53,13 @@ DOCKERS_CONFIG_FILE = 'dockers.config'
 
 
 def default_image(type):
+    # those two dockers do not have a sane default; force the user to specify the right image
+    if type == 'builder' or type == 'worker':
+        print('ERROR: no image specified for the {} image in dockers.config nor {} ENV, exiting'.format(
+            type, image_override_env(type)
+        ))
+        sys.exit(1)
     return {
-        'builder': 'onedata/builder',
-        'worker': 'onedata/worker',
         'dns': 'onedata/dns',
         'ceph': 'onedata/ceph',
         'cephrados': 'onedata/ceph',
