@@ -23,7 +23,7 @@ def _dns_ready(dns):
         result = subprocess.check_output(
             ['timeout', '10', 'dig', '+short', '@{0}'.format(ip), hostname],
             stdin=None, stderr=None)
-        return result.strip('\n') == ip
+        return result.strip(b'\n') == ip.encode()
     except:
         return False
 
