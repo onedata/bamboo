@@ -139,8 +139,8 @@ def up(config_path,
         # For now, take only the first node of the first OZ
         # as multiple OZs are not supported yet.
         env_configurator_input['oz_cookie'] = \
-            list(config['zone_domains'].values())[0][
-                'oz_worker'].values()[0]['vm.args']['setcookie']
+            list(list(config['zone_domains'].values())[0][
+                'oz_worker'].values())[0]['vm.args']['setcookie']
         env_configurator_input['oz_node'] = output['oz_worker_nodes'][0]
 
         env_configurator_dir = '{0}/../../env_configurator'.format(
