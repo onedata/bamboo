@@ -7,7 +7,7 @@ Branch config is a yaml file in following format:
       onezone: current_branch
       oneprovider: some_branch
 
-Allowed images keys: [onezone, oneprovider, oneclient, rest_cli]
+Allowed images keys: [onezone, oneprovider, oneclient, rest-cli]
 Allowed values: current_branch, default(only under `images` key), release/{version},
                 {any image tag}, {any branch name}
 """
@@ -26,7 +26,7 @@ SERVICE_TO_IMAGE = {
     'onezone': 'docker.onedata.org/onezone-dev',
     'oneprovider': 'docker.onedata.org/oneprovider-dev',
     'oneclient': 'docker.onedata.org/oneclient-dev',
-    'rest_cli': 'docker.onedata.org/rest-cli'
+    'rest-cli': 'docker.onedata.org/rest-cli'
 }
 
 
