@@ -96,8 +96,8 @@ def filesystem_root():
 
 def ensure_image(args, arg_name, type):
     if arg_name in vars(args) and vars(args)[arg_name]:
-        print(('Using commandline image for {}: {}'.format(type,
-                                                          vars(args)[arg_name])))
+        print('Using commandline image for {}: {}'.format(type,
+                                                          vars(args)[arg_name]))
         return
     else:
         vars(args)[arg_name] = get_image(type)
@@ -106,7 +106,7 @@ def ensure_image(args, arg_name, type):
 def get_image(type):
     if image_override_env(type) in os.environ:
         image = os.environ[image_override_env(type)]
-        print(('Using overriden image for {}: {}'.format(type, image)))
+        print('Using overriden image for {}: {}'.format(type, image))
         return image
 
     # look for DOCKERS_CONFIG_FILE starting from the place where the script is
@@ -125,7 +125,7 @@ def get_image(type):
 
     # if all methods fail, return the default image defined statically
     image = default_image(type)
-    print(('Using default image for {}: {}'.format(type, image)))
+    print('Using default image for {}: {}'.format(type, image))
     return image
 
 
@@ -135,8 +135,8 @@ def search_for_config_with_entry(current_path, end_path, type):
         config = json.load(open(cfg_path))
         if type in config:
             image = config[type]
-            print(('Found dockers config in {}'.format(os.path.normpath(cfg_path))))
-            print(('Using preconfigured image for {}: {}'.format(type, image)))
+            print('Found dockers config in {}'.format(os.path.normpath(cfg_path)))
+            print('Using preconfigured image for {}: {}'.format(type, image))
             return image
 
     if current_path == end_path:

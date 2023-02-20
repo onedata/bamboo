@@ -200,7 +200,6 @@ command = command.format(
     gid=os.getegid(),
     src=args.src,
     shed_privileges=(platform.system() == 'Linux' and os.geteuid() != 0),
-    # shed_privileges=False,
     groups=args.groups)
 
 # Mount docker socket so dockers can start dockers

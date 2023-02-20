@@ -12,14 +12,14 @@ from . import common, docker
 
 
 def override_gui(gui_config, instance_domain):
-    print(('GUI override for: {0}'.format(instance_domain)))
+    print('GUI override for: {0}'.format(instance_domain))
     # Prepare static dockers with GUI (if required) - they are reused by
     # whole cluster (instance)
     mount_path = gui_config['mount_path']
-    print(('    static root: {0}'.format(mount_path)))
+    print('    static root: {0}'.format(mount_path))
     if 'host' in gui_config['mount_from']:
         host_volume_path = gui_config['mount_from']['host']
-        print(('    from host:   {0}'.format(host_volume_path)))
+        print('    from host:   {0}'.format(host_volume_path))
     elif 'docker' in gui_config['mount_from']:
         static_docker_image = gui_config['mount_from']['docker']
         # Create volume name from docker image name and instance domain
@@ -31,9 +31,9 @@ def override_gui(gui_config, instance_domain):
             name=volume_name,
             image=static_docker_image,
             command='/bin/true')
-        print(('    from docker: {0}'.format(static_docker_image)))
+        print('    from docker: {0}'.format(static_docker_image))
     livereload_flag = gui_config['livereload']
-    print(('    livereload:  {0}'.format(livereload_flag)))
+    print('    livereload:  {0}'.format(livereload_flag))
 
 
 def extra_volumes(gui_config, instance_domain):
