@@ -106,16 +106,6 @@ cat <<"EOF" > /root/bin/node/etc/certs/web_chain.pem
 EOF
 escript bamboos/gen_dev/gen_dev.escript /tmp/gen_dev_args.json
 
-cat <<"EOF" > /root/bin/node/etc/certs/web_key.pem
-{key}
-EOF
-cat <<"EOF" > /root/bin/node/etc/certs/web_cert.pem
-{cert}
-EOF
-cat <<"EOF" > /root/bin/node/etc/certs/web_chain.pem
-{cacert}
-EOF
-
 /root/bin/node/bin/appmock console
 sleep 5'''  # Add sleep so logs can be chowned
     command = command.format(
