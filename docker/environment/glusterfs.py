@@ -33,6 +33,9 @@ def _node_up(image, volumes, name, uid, transport, mountpoint):
     ip = settings['NetworkSettings']['IPAddress']
     port = 24007
 
+    # Depending on the host setup glusterd starts automatically in the container
+    # or not, in which case this command ensures that it is started before
+    # the volume setup can proceed
     output = docker.exec_(container, [
             'bash', '-c', "glusterd || true"], output=True, stdout=sys.stderr)
 
