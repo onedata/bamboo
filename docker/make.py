@@ -125,6 +125,13 @@ parser.add_argument(
     dest='privileged')
 
 parser.add_argument(
+    '--grant-sudo-rights',
+    action='store_true',
+    default=False,
+    help='grant sudo rights for the user maketmp created eventually',
+    dest='grant_sudo_rights')
+
+parser.add_argument(
     '--cpuset-cpus',
     action='store',
     default=None,
@@ -147,7 +154,8 @@ if {shed_privileges}:
         useradd.extend(['-G', ','.join({groups})])
 
     subprocess.call(useradd)
-    subprocess.call(['bash', '-c', 'if grep focal /etc/os-release; then echo "maketmp ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/S51-maketmp; fi'])
+    if {grant_sudo_rights}:
+        subprocess.call(['bash', '-c', 'if grep focal /etc/os-release; then echo "maketmp ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/S51-maketmp; fi'])
 
     os.environ['PATH'] = os.environ['PATH'].replace('sbin', 'bin')
     os.environ['HOME'] = '/home/maketmp'
@@ -200,6 +208,7 @@ command = command.format(
     gid=os.getegid(),
     src=args.src,
     shed_privileges=(platform.system() == 'Linux' and os.geteuid() != 0),
+    grant_sudo_rights=args.grant_sudo_rights,
     groups=args.groups)
 
 # Mount docker socket so dockers can start dockers
