@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     '-i', '--image',
     action='store',
-    default='gluster/gluster-centos:gluster3u7_centos7',
+    default='gluster/gluster-centos:gluster4u1_centos7',
     help='docker image to use for the container',
     dest='image')
 
