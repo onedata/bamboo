@@ -32,6 +32,7 @@ main([Cookie, Node, Name, ClusterName, MonitorHostname, PoolName, Username,
     safe_call(NodeAtom, storage, on_storage_created, [StorageId]).
 
 safe_call(Node, Module, Function, Args) ->
+    true = net_kernel:hidden_connect_node(Node),
     case rpc:call(Node, Module, Function, Args) of
         {badrpc, X} ->
             io:format(standard_error,
