@@ -67,7 +67,7 @@ def default_image(type):
         'swift': 'onedata/dockswift',
         'glusterfs': 'gluster/gluster-centos:gluster4u1_centos7',
         'webdav': 'onedata/sabredav:v1',
-        'xrootd': 'onedata/xrootd:v1',
+        'xrootd': 'onedata/xrootd:v2',
         'nfs': 'onedata/nfs:v1',
         'http': 'onedata/lighttpd:v1'
     }[type]
