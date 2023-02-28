@@ -36,6 +36,7 @@ main([Cookie, Node, Name, Endpoint, CredentialsType,
 
 
 safe_call(Node, Module, Function, Args) ->
+    true = net_kernel:hidden_connect_node(Node),
     case rpc:call(Node, Module, Function, Args) of
         {badrpc, X} ->
             io:format(standard_error,

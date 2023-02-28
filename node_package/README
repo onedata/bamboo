@@ -1,0 +1,2 @@
+The rebar in this directory is needed by node_package during package building.
+This is rebar2 compiled with Erlang 25

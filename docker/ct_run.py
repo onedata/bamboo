@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """Author: Konrad Zemek
 Copyright (C) 2015 ACK CYFRONET AGH
@@ -13,7 +13,7 @@ All paths used are relative to script's path, not to the running user's CWD.
 Run the script with -h flag to learn about script's running options.
 """
 
-from __future__ import print_function
+
 
 from os.path import expanduser
 import argparse
@@ -254,44 +254,44 @@ elif args.cover:
             if repo_name == "onepanel" and 'onepanel_domains' in data:
                 for onepanel in data['onepanel_domains']:
                     configs_to_change.append(
-                        ('onepanel', data['onepanel_domains'][onepanel][
-                            'onepanel'].values())
+                        ('onepanel', list(data['onepanel_domains'][onepanel][
+                            'onepanel'].values()))
                     )
             elif repo_name == "op-worker" and 'provider_domains' in data:
                 for provider in data['provider_domains']:
                     if 'op_worker' in data['provider_domains'][provider]:
                         configs_to_change.append(
-                            ('op_worker', data['provider_domains'][provider][
-                                'op_worker'].values())
+                            ('op_worker', list(data['provider_domains'][provider][
+                                'op_worker'].values()))
                         )
                     if 'cluster_manager' in data['provider_domains'][provider]:
                         configs_to_change.append(
                             ('cluster_manager',
-                             data['provider_domains'][provider][
-                                 'cluster_manager'].values())
+                             list(data['provider_domains'][provider][
+                                 'cluster_manager'].values()))
                         )
             elif repo_name == "oz-worker" and 'zone_domains' in data:
                 for zone in data['zone_domains']:
                     configs_to_change.append(
                         ('oz_worker',
-                         data['zone_domains'][zone]['oz_worker'].values())
+                         list(data['zone_domains'][zone]['oz_worker'].values()))
                     )
                     configs_to_change.append(
                         ('oz_worker',
-                         data['zone_domains'][zone]['cluster_manager'].values())
+                         list(data['zone_domains'][zone]['cluster_manager'].values()))
                     )
             elif repo_name == "cluster-manager" and 'cluster_domains' in data:
                 for cluster in data['cluster_domains']:
                     if 'cluster_worker' in data['cluster_domains'][cluster]:
                         configs_to_change.append(
-                            ('cluster_worker', data['cluster_domains'][cluster][
-                                'cluster_worker'].values())
+                            ('cluster_worker', list(data['cluster_domains'][cluster][
+                                'cluster_worker'].values()))
                         )
                     if 'cluster_manager' in data['cluster_domains'][cluster]:
                         configs_to_change.append(
                             ('cluster_manager',
-                             data['cluster_domains'][cluster][
-                                 'cluster_manager'].values())
+                             list(data['cluster_domains'][cluster][
+                                 'cluster_manager'].values()))
                         )
 
             for (app_name, configs) in configs_to_change:

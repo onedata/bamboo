@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding=utf-8
 
 """Author: Łukasz Opioła
@@ -9,7 +9,7 @@ Brings up dockers with full onedata environment.
 Run the script with -h flag to learn about script's running options.
 """
 
-from __future__ import print_function
+
 
 import argparse
 import json

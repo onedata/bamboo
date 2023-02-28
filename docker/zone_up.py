@@ -10,7 +10,7 @@ They can create separate clusters.
 Run the script with -h flag to learn about script's running options.
 """
 
-from __future__ import print_function
+
 
 import json
 import os

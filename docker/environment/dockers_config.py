@@ -53,17 +53,21 @@ DOCKERS_CONFIG_FILE = 'dockers.config'
 
 
 def default_image(type):
+    # those two dockers do not have a sane default; force the user to specify the right image
+    if type == 'builder' or type == 'worker':
+        print('ERROR: no image specified for the {} image in dockers.config nor {} ENV, exiting'.format(
+            type, image_override_env(type)
+        ))
+        sys.exit(1)
     return {
-        'builder': 'onedata/builder',
-        'worker': 'onedata/worker',
         'dns': 'onedata/dns',
         'ceph': 'onedata/ceph',
         'cephrados': 'onedata/ceph',
         's3': 'onedata/minio:v1',
         'swift': 'onedata/dockswift',
-        'glusterfs': 'gluster/gluster-centos:gluster3u7_centos7',
+        'glusterfs': 'gluster/gluster-centos:gluster4u1_centos7',
         'webdav': 'onedata/sabredav:v1',
-        'xrootd': 'onedata/xrootd:v1',
+        'xrootd': 'onedata/xrootd:v2',
         'nfs': 'onedata/nfs:v1',
         'http': 'onedata/lighttpd:v1'
     }[type]

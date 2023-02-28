@@ -6,7 +6,7 @@ This software is released under the MIT license cited in 'LICENSE.txt'
 A custom utils library used across docker scripts.
 """
 
-from __future__ import print_function
+
 import argparse
 import inspect
 import json
@@ -15,7 +15,7 @@ import requests
 import time
 import sys
 from . import docker
-from timeouts import *
+from .timeouts import *
 import tempfile
 import stat
 import pytest
@@ -112,7 +112,7 @@ def merge(d, merged):
     """Merge the dict merged into dict d by adding their values on
     common keys
     """
-    for key, value in iter(merged.items()):
+    for key, value in iter(list(merged.items())):
         if key in d:
             if isinstance(value, dict):
                 merge(d[key], value)
@@ -146,7 +146,7 @@ def fix_sys_config_walk(element, current_app_name, parents, file_path):
     app_names = apps_with_sysconfig()
 
     if isinstance(element, dict):
-        for key, next_element in element.items():
+        for key, next_element in list(element.items()):
             parents_of_next = list(parents)
             parents_of_next.append(key)
 
@@ -197,7 +197,7 @@ def format_hostname(domain_parts, uid):
     within environment e.g.: ['worker1', 'prov1'], ['cm1', 'prov1'], 'client1'
     uid - timestamp
     """
-    if isinstance(domain_parts, (str, unicode)):
+    if not isinstance(domain_parts, list):
         domain_parts = [domain_parts]
     domain_parts.extend([uid, env_domain_name()])
     # Throw away any '@' signs - they were used some time ago in node names
@@ -228,7 +228,7 @@ def create_users(container, users):
         uid = str(hash(user) % 50000 + 10000)
         command = ["adduser", "--disabled-password", "--gecos", "''",
                    "--uid", uid, user]
-        assert 0 is docker.exec_(container, command, interactive=True)
+        assert 0 == docker.exec_(container, command, interactive=True)
 
 
 def create_groups(container, groups):
@@ -237,10 +237,10 @@ def create_groups(container, groups):
     for group in groups:
         gid = str(hash(group) % 50000 + 10000)
         command = ["groupadd", "-g", gid, group]
-        assert 0 is docker.exec_(container, command, interactive=True)
+        assert 0 == docker.exec_(container, command, interactive=True)
         for user in groups[group]:
             command = ["usermod", "-a", "-G", group, user]
-            assert 0 is docker.exec_(container, command, interactive=True)
+            assert 0 == docker.exec_(container, command, interactive=True)
 
 
 def volume_for_storage(storage, readonly=False):

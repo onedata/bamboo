@@ -9,7 +9,7 @@ clusters.
 Run the script with -h flag to learn about script's running options.
 """
 
-from __future__ import print_function
+
 import json
 import os
 from environment import common, cluster_worker, cluster_manager, dns, \

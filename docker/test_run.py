@@ -32,7 +32,7 @@ def get_local_etc_hosts_entries():
         hosts_content = f.read()
 
     re_exclude_entry = re.compile(r'\s*#.*|.*localhost.*|.*broadcasthost.*|^\s*$')
-    entries = filter(lambda line: not re_exclude_entry.match(line), hosts_content.splitlines())
+    entries = [line for line in hosts_content.splitlines() if not re_exclude_entry.match(line)]
 
     return '### /etc/hosts from host ###\n' + '\n'.join(entries)
 
@@ -182,7 +182,7 @@ ret = docker.run(tty=True,
                  volumes=[(os.path.join(os.path.expanduser('~'),
                                         '.docker'), '/tmp/.docker', 'rw')],
                  image=args.image,
-                 command=['python', '-c', command],
+                 command=['python3', '-c', command],
                  run_params=run_params)
 
 if ret != 0 and not skipped_test_exists(args.report_path):

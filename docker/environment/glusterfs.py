@@ -8,7 +8,8 @@ Brings up a GlusterFS storage.
 
 import re
 import sys
-from timeouts import *
+import time
+from .timeouts import *
 
 from . import common, docker
 
@@ -31,6 +32,12 @@ def _node_up(image, volumes, name, uid, transport, mountpoint):
     settings = docker.inspect(container)
     ip = settings['NetworkSettings']['IPAddress']
     port = 24007
+
+    # Depending on the host setup glusterd starts automatically in the container
+    # or not, in which case this command ensures that it is started before
+    # the volume setup can proceed
+    output = docker.exec_(container, [
+            'bash', '-c', "glusterd || true"], output=True, stdout=sys.stderr)
 
     common.wait_until(_glusterfs_ready, [container], GLUSTERFS_READY_WAIT_SECONDS)
 

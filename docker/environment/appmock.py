@@ -11,7 +11,7 @@ import json
 import os
 import random
 import string
-from timeouts import *
+from .timeouts import *
 
 from . import common, docker, dns, cluster_manager, worker, test_ca
 
@@ -105,6 +105,7 @@ cat <<"EOF" > /root/bin/node/etc/certs/web_chain.pem
 {cacert}
 EOF
 escript bamboos/gen_dev/gen_dev.escript /tmp/gen_dev_args.json
+
 /root/bin/node/bin/appmock console
 sleep 5'''  # Add sleep so logs can be chowned
     command = command.format(

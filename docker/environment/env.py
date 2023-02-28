@@ -28,16 +28,16 @@ def default(key):
 
 
 def up(config_path,
-       image=dockers_config.default_image('worker'),
-       ceph_image=dockers_config.default_image('ceph'),
-       cephrados_image=dockers_config.default_image('cephrados'),
-       s3_image=dockers_config.default_image('s3'),
-       swift_image=dockers_config.default_image('swift'),
-       glusterfs_image=dockers_config.default_image('glusterfs'),
-       webdav_image=dockers_config.default_image('webdav'),
-       xrootd_image=dockers_config.default_image('xrootd'),
-       nfs_image=dockers_config.default_image('nfs'),
-       http_image=dockers_config.default_image('http'),
+       image=dockers_config.get_image('worker'),
+       ceph_image=dockers_config.get_image('ceph'),
+       cephrados_image=dockers_config.get_image('cephrados'),
+       s3_image=dockers_config.get_image('s3'),
+       swift_image=dockers_config.get_image('swift'),
+       glusterfs_image=dockers_config.get_image('glusterfs'),
+       webdav_image=dockers_config.get_image('webdav'),
+       xrootd_image=dockers_config.get_image('xrootd'),
+       nfs_image=dockers_config.get_image('nfs'),
+       http_image=dockers_config.get_image('http'),
        bin_am=default('bin_am'),
        bin_oz=default('bin_oz'),
        bin_cluster_manager=default('bin_cluster_manager'),
@@ -125,8 +125,8 @@ def up(config_path,
                 'nodes': [],
                 'cookie': ''
             }
-            for cfg_node in config['provider_domains'][provider_name][
-                'op_worker'].keys():
+            for cfg_node in list(config['provider_domains'][provider_name][
+                'op_worker'].keys()):
                 providers_map[provider_name]['nodes'].append(
                     worker.worker_erl_node_name(cfg_node, provider_name, uid))
                 providers_map[provider_name]['cookie'] = \
@@ -139,8 +139,8 @@ def up(config_path,
         # For now, take only the first node of the first OZ
         # as multiple OZs are not supported yet.
         env_configurator_input['oz_cookie'] = \
-            config['zone_domains'].values()[0][
-                'oz_worker'].values()[0]['vm.args']['setcookie']
+            list(list(config['zone_domains'].values())[0][
+                'oz_worker'].values())[0]['vm.args']['setcookie']
         env_configurator_input['oz_node'] = output['oz_worker_nodes'][0]
 
         env_configurator_dir = '{0}/../../env_configurator'.format(

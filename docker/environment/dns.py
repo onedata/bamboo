@@ -10,7 +10,7 @@ providers <-> oz environment.
 """
 
 import subprocess
-from timeouts import *
+from .timeouts import *
 from . import common, docker, dockers_config
 
 
@@ -23,7 +23,7 @@ def _dns_ready(dns):
         result = subprocess.check_output(
             ['timeout', '10', 'dig', '+short', '@{0}'.format(ip), hostname],
             stdin=None, stderr=None)
-        return result.strip('\n') == ip
+        return result.strip(b'\n') == ip.encode()
     except:
         return False
 
@@ -66,7 +66,7 @@ def maybe_restart_with_configuration(config, uid, output):
 
 def up(uid, hosts, dnses, dns_to_restart):
     dns = dns_to_restart
-    if dns is 'none':
+    if dns == 'none':
         # Start new DNS docker (just the docker, don't start the DNS server yet)
         dns = docker.run(
             image=dockers_config.get_image('dns'),

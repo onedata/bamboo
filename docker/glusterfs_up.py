@@ -9,12 +9,12 @@ A script that brings up a GlusterFS storage.
 Run the script with -h flag to learn about script's running options.
 """
 
-from __future__ import print_function
+
 
 import argparse
 import json
 
-from environment import common
+from environment import common, dockers_config
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     '-i', '--image',
     action='store',
-    default='gluster/gluster-centos:gluster3u7_centos7',
+    default=None,
     help='docker image to use for the container',
     dest='image')
 
@@ -49,6 +49,7 @@ parser.add_argument(
     dest='transport')
 
 args = parser.parse_args()
+dockers_config.ensure_image(args, 'image', 'glusterfs')
 config = glusterfs.up(args.image, args.volumes, 'storage', args.uid, args.transport)
 
 print(json.dumps(config))

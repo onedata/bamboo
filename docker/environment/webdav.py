@@ -9,7 +9,7 @@ Brings up a WebDAV server.
 import re
 import subprocess
 import sys
-from timeouts import *
+from .timeouts import *
 
 from . import common, docker
 

@@ -5,7 +5,7 @@ This software is released under the MIT license cited in 'LICENSE.txt'
 Brings up a set of oneprovider cm nodes. They can create separate clusters.
 """
 
-from __future__ import print_function
+
 
 import copy
 import json

@@ -37,6 +37,7 @@ main([Cookie, Node, Name, LatencyMin, LatencyMax, TimeoutProbability, Filter,
 
 
 safe_call(Node, Module, Function, Args) ->
+    true = net_kernel:hidden_connect_node(Node),
     case rpc:call(Node, Module, Function, Args) of
         {badrpc, X} ->
             io:format(standard_error, "ERROR: in module ~p:~n {badrpc, ~p} in rpc:call(~p, ~p, ~p, ~p).~n",

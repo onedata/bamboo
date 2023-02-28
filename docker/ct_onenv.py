@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """Author: Michal Stanisz
 Copyright (C) 2020 ACK CYFRONET AGH
@@ -14,7 +14,7 @@ All paths used are relative to script's path, not to the running user's CWD.
 Run the script with -h flag to learn about script's running options.
 """
 
-from __future__ import print_function
+
 
 from os.path import expanduser
 import argparse

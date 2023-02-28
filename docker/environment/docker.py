@@ -49,7 +49,7 @@ def run(image, docker_host=None, detach=False, dns_list=[], add_host={},
     for addr in dns_list:
         cmd.extend(['--dns', addr])
 
-    for key, value in add_host.items():
+    for key, value in list(add_host.items()):
         cmd.extend(['--add-host', '{0}:{1}'.format(key, value)])
 
     for key in envs:
@@ -67,7 +67,7 @@ def run(image, docker_host=None, detach=False, dns_list=[], add_host={},
         if tty:
             cmd.append('-t')
 
-    for container, alias in link.items():
+    for container, alias in list(link.items()):
         cmd.extend(['--link', '{0}:{1}'.format(container, alias)])
 
     if name:

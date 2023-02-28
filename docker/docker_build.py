@@ -34,7 +34,7 @@ def get_repository_name():
     """Returns repository name."""
 
     remote = subprocess.check_output(['git', 'remote', '-v'])
-    remote = filter(lambda r: r.startswith('origin'), remote.split('\n'))
+    remote = [r for r in remote.split('\n') if r.startswith('origin')]
     return remote[0].split('/')[-1].split('.')[0]
 
 
@@ -48,7 +48,7 @@ def get_tags():
     branch = get_current_branch()
 
     git_tags = cmd(['git', 'tag', '--points-at', commit]).split('\n')
-    git_tags = filter(lambda tag: tag, git_tags)
+    git_tags = [tag for tag in git_tags if tag]
 
     if git_tags:
         tags.append(('git-tag', git_tags[0]))

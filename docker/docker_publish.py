@@ -97,7 +97,7 @@ if __name__ == '__main__':
         repository = args.repository
         name = args.name
         tag = args.tag
-        priv_image = report.items()[0][1]
+        priv_image = list(report.items())[0][1]
 
         if not name:
             [repository, name, _] = re.split(r'[/:]', priv_image)

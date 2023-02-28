@@ -43,34 +43,34 @@ TIMEOUT = 60 * 10
 
 
 def print_logs(service_name, service_docker_logs):
-    print '{} docker logs:'.format(service_name)
-    print service_docker_logs
+    print('{} docker logs:'.format(service_name))
+    print(service_docker_logs)
 
     path = os.path.join(scenario_path, 'config_' + service_name, 'var', 'log')
     try:
         directories = os.listdir(path)
     except IOError:
-        print 'Couldn\'t find {}'.format(path)
+        print('Couldn\'t find {}'.format(path))
     else:
         for directory in directories:
             try:
                 files = os.listdir(os.path.join(path, directory))
             except IOError:
-                print 'Couldn\'t find {}'.format(os.path.join(path, directory))
+                print('Couldn\'t find {}'.format(os.path.join(path, directory)))
             else:
                 for file in files:
                     try:
                         with open(os.path.join(path, directory, file), 'r') \
                                 as logs:
-                            print '{service_name} {dir} {file}'.format(
+                            print('{service_name} {dir} {file}'.format(
                                 service_name=service_name,
                                 dir=directory,
-                                file=file)
+                                file=file))
 
-                            print logs.readlines()
+                            print(logs.readlines())
                     except IOError:
-                        print 'Couldn\'t find {}'.format(
-                            os.path.join(path, directory, file))
+                        print('Couldn\'t find {}'.format(
+                            os.path.join(path, directory, file)))
 
 
 PERSISTENCE = ('# configuration persistance',
@@ -113,11 +113,11 @@ def wait_for_service_start(service_name, docker_name, pattern, timeout):
                                 stderr=STDOUT)
         docker_logs = service_process.communicate()[0]
         if re.search('Error', docker_logs):
-            print 'Error while starting {}'.format(service_name)
+            print('Error while starting {}'.format(service_name))
             print_logs(service_name, docker_logs)
             exit(1)
         if time.time() > timeout:
-            print 'Timeout while starting {}\'s'.format(service_name)
+            print('Timeout while starting {}\'s'.format(service_name))
             print_logs(service_name, docker_logs)
             exit(1)
         time.sleep(2)
@@ -134,7 +134,7 @@ def start_service(start_service_path, start_service_args, service_name,
                             stdout=PIPE, stderr=STDOUT, cwd=start_service_path)
     service_output = service_process.communicate()[0]
 
-    print service_output
+    print(service_output)
 
     docker_name = re.search(r'Creating\s*(?P<name>{})\b'.format(
         service_name), service_output).group('name')
@@ -249,7 +249,7 @@ etc_hosts_entries = {}
 
 zone_dockerfile = os.path.join(SCENARIOS_DIR_PATH, args.scenario,
                                ZONE_DOCKER_COMPOSE_FILE)
-print 'Starting onezone'
+print('Starting onezone')
 start_onezone_args = ['--zone', '--detach', '--with-clean', '--name',
                       args.zone_name]
 rm_persistence(scenario_path, 'onezone')
@@ -295,7 +295,7 @@ with open(provider_dockerfile) as f:
     base_provider_dockerfile = f.read()
 
 for provider in args.providers_names:
-    print 'Starting provider: ' + provider
+    print('Starting provider: ' + provider)
     start_oneprovider_args = ['--provider', '--detach', '--without-clean',
                               '--name', provider]
     try:
@@ -335,6 +335,6 @@ if '2_0' in args.scenario:
     print('OZ connectivity established')
 
 for hostname in etc_hosts_entries:
-    print '{} {}'.format(etc_hosts_entries[hostname], hostname)
+    print('{} {}'.format(etc_hosts_entries[hostname], hostname))
 
-print json.dumps(output)
+print(json.dumps(output))
