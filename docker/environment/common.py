@@ -68,7 +68,7 @@ def wait_until(condition, containers, timeout, docker_host=None):
                 message = 'Timeout while waiting for condition {0} ' \
                           'of container {1}'
                 message = message.format(condition.__name__, container)
-                pytest.skip(message)
+                pytest.fail(message)
 
             time.sleep(1)
 
