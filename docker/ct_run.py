@@ -132,6 +132,12 @@ parser.add_argument(
     help='compile test suites before run',
     dest='auto_compile')
 
+parser.add_argument(
+    '--no-clean',
+    action='store_true',
+    help='if set, environment will not be cleaned up after tests',
+    dest='no_clean')
+
 args = parser.parse_args()
 dockers_config.ensure_image(args, 'image', 'worker')
 
@@ -223,6 +229,8 @@ if args.cases:
 
 if args.stress_time:
     ct_command.extend(['-env', 'stress_time', args.stress_time])
+
+ct_command.extend(['-env', 'clean_env', "false" if args.no_clean else "true"])
 
 if args.performance:
     ct_command.extend(['-env', 'performance', 'true'])
@@ -368,7 +376,9 @@ command = command.format(
     cmd=ct_command,
     shed_privileges=(platform.system() == 'Linux'))
 
-volumes = []
+os.makedirs('/tmp/onedata', exist_ok=True)
+volumes = [('/tmp/onedata', '/tmp/onedata', 'rw')]
+
 if os.path.isdir(expanduser('~/.docker')):
     volumes += [(expanduser('~/.docker'), '/tmp/docker_config', 'ro')]
 

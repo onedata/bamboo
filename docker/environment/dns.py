@@ -71,6 +71,7 @@ def up(uid, hosts, dnses, dns_to_restart):
         dns = docker.run(
             image=dockers_config.get_image('dns'),
             name=dns_hostname(uid),
+            hostname=dns_hostname(uid),
             detach=True,
             interactive=True,
             tty=True,
