@@ -86,6 +86,12 @@ parser.add_argument(
     dest='suites')
 
 parser.add_argument(
+    '--group', '-g',
+    action='append',
+    help='name of the test group',
+    dest='groups')
+
+parser.add_argument(
     '--case', '-c',
     action='append',
     help='name of the test case',
@@ -226,6 +232,10 @@ if args.suites:
 if args.cases:
     ct_command.append('-case')
     ct_command.extend(args.cases)
+
+if args.groups:
+    ct_command.append('-group')
+    ct_command.extend(args.groups)
 
 if args.stress_time:
     ct_command.extend(['-env', 'stress_time', args.stress_time])
