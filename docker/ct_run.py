@@ -88,13 +88,13 @@ parser.add_argument(
 parser.add_argument(
     '--group', '-g',
     action='append',
-    help='name of the test group',
+    help='name of the test group (can ne repeated)',
     dest='groups')
 
 parser.add_argument(
     '--case', '-c',
     action='append',
-    help='name of the test case',
+    help='name of the test case (can ne repeated)',
     dest='cases')
 
 parser.add_argument(
