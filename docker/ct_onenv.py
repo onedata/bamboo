@@ -56,9 +56,15 @@ def main():
         dest='suites')
 
     parser.add_argument(
+        '--group', '-g',
+        action='append',
+        help='name of the test group (can be repeated)',
+        dest='groups')
+
+    parser.add_argument(
         '--case', '-c',
         action='append',
-        help='name of the test case',
+        help='name of the test case (can be repeated)',
         dest='cases')
 
     parser.add_argument(
@@ -212,6 +218,10 @@ def prepare_ct_command(args):
     if args.cases:
         ct_command.append('-case')
         ct_command.extend(args.cases)
+
+    if args.groups:
+        ct_command.append('-group')
+        ct_command.extend(args.groups)
 
     if args.cover:
         ct_command.extend(['-cover', COVER_TMP_SPEC])

@@ -86,9 +86,15 @@ parser.add_argument(
     dest='suites')
 
 parser.add_argument(
+    '--group', '-g',
+    action='append',
+    help='name of the test group (can be repeated)',
+    dest='groups')
+
+parser.add_argument(
     '--case', '-c',
     action='append',
-    help='name of the test case',
+    help='name of the test case (can be repeated)',
     dest='cases')
 
 parser.add_argument(
@@ -131,6 +137,12 @@ parser.add_argument(
     default=False,
     help='compile test suites before run',
     dest='auto_compile')
+
+parser.add_argument(
+    '--no-clean',
+    action='store_true',
+    help='if set, environment will not be cleaned up after tests',
+    dest='no_clean')
 
 args = parser.parse_args()
 dockers_config.ensure_image(args, 'image', 'worker')
@@ -221,8 +233,14 @@ if args.cases:
     ct_command.append('-case')
     ct_command.extend(args.cases)
 
+if args.groups:
+    ct_command.append('-group')
+    ct_command.extend(args.groups)
+
 if args.stress_time:
     ct_command.extend(['-env', 'stress_time', args.stress_time])
+
+ct_command.extend(['-env', 'clean_env', "false" if args.no_clean else "true"])
 
 if args.performance:
     ct_command.extend(['-env', 'performance', 'true'])
@@ -368,7 +386,9 @@ command = command.format(
     cmd=ct_command,
     shed_privileges=(platform.system() == 'Linux'))
 
-volumes = []
+os.makedirs('/tmp/onedata', exist_ok=True)
+volumes = [('/tmp/onedata', '/tmp/onedata', 'rw')]
+
 if os.path.isdir(expanduser('~/.docker')):
     volumes += [(expanduser('~/.docker'), '/tmp/docker_config', 'ro')]
 
