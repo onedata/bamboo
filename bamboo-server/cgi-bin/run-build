@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Authors: Darin Nikolow
+# Copyright (C) 2022 ACK CYFRONET AGH
+# This software is released under the MIT license cited in 'LICENSE.txt'
+
+# Usage: curl 10.87.23.72:3080/cgi-bin/run-build.sh?<PLAN_TO_RUN> 
+# 
+# This CGI script runs a new build of PLAN_TO_RUN.
+# The script resides on the bamboo server in /usr/lib/cgi-bin.
+# Note that a running apache http on port 3080 is required. The apache server should allow CGI requests.
+# HTTP status 401 is send in return if the Bamboo CLI script fails.
+#
+
+print_headers() {
+    printf "Status: $1\n"
+    printf "Content-type: text/plain\n\n"
+}
+
+if [ $# != 1 ]; then
+    print_headers "400"
+    printf "There should be one positional parameter: <plan_to_run>"
+    exit 1
+fi
+
+PLAN_TO_RUN=$1
+sudo -u ubuntu /home/ubuntu/bin/run-build.sh $PLAN_TO_RUN >/tmp/run-build.msg 2>&1
+if [ $? == 0 ]; then
+    print_headers "200"
+    cat /tmp/run-build.msg
+else
+    print_headers "401"
+    echo Build request failed
+    cat /tmp/run-build.msg
+fi
