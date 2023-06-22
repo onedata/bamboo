@@ -29,7 +29,7 @@ if [ $? == 0 ]; then
     print_headers "200"
     cat /tmp/run-build.msg
 else
-    print_headers "401"
+    print_headers "500"
     echo Build request failed
     cat /tmp/run-build.msg
 fi
