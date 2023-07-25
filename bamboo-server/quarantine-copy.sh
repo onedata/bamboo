@@ -25,7 +25,7 @@ CASES=`echo SELECT TEST_CLASS_NAME, TEST_CASE_NAME FROM BUILD B JOIN TEST_CLASS 
 IFS=$'\n'  # Set the input field separator. Necessary to properly iterate $CASES. 
 for i in $CASES; do
     SUITE=`echo $i | awk '{print $1}'`
-    CASE=`echo $i | awk '{print $2}'`
+    CASE=`echo $i | awk '{$1=""; print substr($0, 2)}'`
     TEST_ID=`echo SELECT TEST_CASE_ID FROM BUILD B JOIN TEST_CLASS TCL ON TCL.PLAN_ID=B.BUILD_ID JOIN TEST_CASE TC ON TC.TEST_CLASS_ID=TCL.TEST_CLASS_ID WHERE B.FULL_KEY LIKE \'${PLAN_DST}\' and TC.TEST_CASE_NAME = \'${CASE}\' and TCL.TEST_CLASS_NAME = \'${SUITE}\' \; | mysql -u  ${DB_CREDS%:*} -p${DB_CREDS#*:} -D bamboo | tail -n +2`
     echo TEST_ID=$TEST_ID
     if [ ${TEST_ID}x = x ]; then
