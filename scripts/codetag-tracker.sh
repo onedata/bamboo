@@ -108,6 +108,10 @@ while [ $# -gt 0 ]; do
             IFS=',' read -ra EXTRA_DIRS_TO_EXCLUDE <<< "${1#*=}";
             EXCLUDED_DIRS+=("${EXTRA_DIRS_TO_EXCLUDE[@]}");
             ;;
+        --excluded-files=*)
+            IFS=',' read -ra EXTRA_FILES_TO_EXCLUDE <<< "${1#*=}";
+            EXCLUDED_FILES+=("${EXTRA_FILES_TO_EXCLUDE[@]}");
+            ;;
         *)
             printf "***************************\n"
             printf "* Error: Invalid argument.*\n"
