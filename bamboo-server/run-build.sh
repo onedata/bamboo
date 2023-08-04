@@ -19,7 +19,8 @@
 
 PLAN_TO_RUN=$1
 
-${BAMBOO_CLI} -a queueBuild --build ${PLAN_TO_RUN} --server https://bamboo.onedata.org --user ${BAMBOO_CREDS%:*} --password ${BAMBOO_CREDS#*:}
+curl -s -u $BAMBOO_CREDS -X POST -H "Accept: application/json" http://localhost:8085/rest/api/latest/queue/${PLAN_TO_RUN}
+
 
 
 
