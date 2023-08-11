@@ -229,6 +229,8 @@ def prepare_ct_command(args):
     if args.performance:
         ct_command.extend(['-env', 'performance', 'true'])
 
+    ct_command.extend(['-erl_args', '-enable-feature', 'maybe_expr'])
+
     return ct_command
 
 
