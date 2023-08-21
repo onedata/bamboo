@@ -183,7 +183,7 @@ def get_docker_volumes():
     for dir_name in CONFIG_DIRS:
         dir_path = expanduser(os.path.join("~", dir_name))
         if os.path.isdir(dir_path):
-            volumes.append([(dir_path, os.path.join("/tmp", dir_name), "ro")])
+            volumes.append((dir_path, os.path.join("/tmp", dir_name), "ro"))
 
     return volumes
 
