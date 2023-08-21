@@ -6,6 +6,7 @@ __license__ = "This software is released under the MIT license cited in LICENSE.
 
 
 import argparse
+import glob
 import os
 import platform
 import sys
@@ -250,8 +251,9 @@ def find_suite_file(name):
 
 
 def any_test_skipped(junit_report_path):
-    reports = sorted(junit_report_path)
+    reports = glob.glob(junit_report_path)
     # if there are many reports, check only the last one
-    test_suites = ElementTree.parse(reports[-1]).getroot()
+    reports.sort()
+    tree = ElementTree.parse(reports[-1])
 
-    return any(test_suite.attrib["skipped"] != "0" for test_suite in test_suites)
+    return any(test_suite.attrib["skipped"] != "0" for test_suite in tree.getroot())
