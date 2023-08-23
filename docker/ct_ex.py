@@ -43,7 +43,7 @@ def main():
 
 
 def run_tests(args):
-    ct_cmd = prepare_ct_command()
+    ct_cmd = prepare_ct_command(args)
     ct_env = ct_utils.prepare_ct_environment(args)
 
     return docker.run(
@@ -66,7 +66,7 @@ def run_tests(args):
     )
 
 
-def prepare_ct_command():
+def prepare_ct_command(args):
     cmd = [
         "elixir",
         "--hidden",
@@ -74,10 +74,28 @@ def prepare_ct_command():
         "testmaster@testmaster",
         "-S",
         "mix",
-        "common_test",
+        "ct",
     ]
 
+    for suite in args.suites:
+        cmd.extend(["--suite", ensure_full_suite_name(suite)])
+
+    for group in args.groups:
+        cmd.extend(["--group", group])
+
+    for case in args.cases:
+        cmd.extend(["--case", case])
+
     return cmd
+
+
+def ensure_full_suite_name(suite):
+    if not suite.endswith("TestSuite"):
+        suite += "TestSuite"
+    if not suite.startswith("Elixir."):
+        suite = f"Elixir.{suite}"
+
+    return suite
 
 
 if __name__ == "__main__":
