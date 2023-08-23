@@ -85,6 +85,7 @@ def parse_args():
     parser.add_argument(
         "--suite",
         "-s",
+        default=[],
         action="append",
         help="name of the test suite (can be repeated)",
         dest="suites",
@@ -93,6 +94,7 @@ def parse_args():
     parser.add_argument(
         "--group",
         "-g",
+        default=[],
         action="append",
         help="name of the test group (can be repeated)",
         dest="groups",
@@ -101,6 +103,7 @@ def parse_args():
     parser.add_argument(
         "--case",
         "-c",
+        default=[],
         action="append",
         help="name of the test case (can be repeated)",
         dest="cases",
