@@ -17,7 +17,7 @@ import images_branch_config
 from environment import docker
 
 
-CONFIG_DIRS = [".docker", ".kube", ".minikube", ".one-env"]
+CONFIG_DIRS = [".docker", ".kube", ".minikube/profiles", ".one-env"]
 
 DOCKER_CMD_TEMPLATE = """
 import os, shutil, subprocess, sys, stat
@@ -39,10 +39,22 @@ if {shed_privileges}:
 
 config_dirs={config_dirs}
 
+def ignore_files(dir_path, _children):
+    if dir_path == '/tmp/.minikube':
+        # ignore (when copying) not used but potentially large dirs 
+        # (e.g. in case of virtualbox machines/ may have ~20GB)
+        return ['machines', 'cache']
+
+    return []
+
 # Try to copy config dirs, continue if it fails (might not exist on host).
 for dirname in config_dirs:
     try:
-        shutil.copytree(os.path.join('/tmp', dirname), os.path.join(home, dirname))
+        shutil.copytree(
+            os.path.join('/tmp', dirname), 
+            os.path.join(home, dirname),
+            ignore=ignore_files
+        )
     except:
         pass
 
@@ -54,11 +66,11 @@ ct_env.update({ct_env})
 ret = subprocess.run(ct_cmd, env=ct_env).returncode
 
 import xml.etree.ElementTree as ElementTree, glob, re
-for file in glob.glob('logs/*/surefire.xml'):
+for file in glob.glob('**/logs/*/surefire.xml', recursive=True):
     tree = ElementTree.parse(file)
     for suite in tree.findall('.//testsuite'):
         for test in suite.findall('testcase'):
-            match = re.match('(init|end)_per_suite', test.attrib['name'])
+            match = re.match('(init|end)_per_(suite|group)', test.attrib['name'])
             if match is not None:
                 suite.remove(test)
     tree.write(file)
