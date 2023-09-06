@@ -12,14 +12,13 @@
 # .bamboo-creds contains the necessary credentials. Example content:
 #
 #   export BAMBOO_CREDS=bamboo_user:password
-#   export BAMBOO_TOKEN=my_bamboo_token
-#   export BAMBOO_CLI='/home/ubuntu/ACLI/acli bamboo'
 #
 . /home/ubuntu/.bamboo-creds
 
 PLAN_TO_RUN=$1
 
-${BAMBOO_CLI} -a queueBuild --build ${PLAN_TO_RUN} --server https://bamboo.onedata.org --user ${BAMBOO_CREDS%:*} --password ${BAMBOO_CREDS#*:}
+curl -s -u $BAMBOO_CREDS -X POST -H "Accept: application/json" http://localhost:8085/rest/api/latest/queue/${PLAN_TO_RUN}
+
 
 
 
