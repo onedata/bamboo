@@ -12,8 +12,6 @@
 # .bamboo-creds contains the necessary credentials. Example content:
 #
 #   export BAMBOO_CREDS=bamboo_user:password
-#   export BAMBOO_TOKEN=my_bamboo_token
-#   export BAMBOO_CLI='/home/ubuntu/ACLI/acli bamboo'
 #
 . /home/ubuntu/.bamboo-creds
 
