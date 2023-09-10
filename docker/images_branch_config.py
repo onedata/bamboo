@@ -7,7 +7,10 @@ Branch config is a yaml file in following format:
       onezone: current_branch
       oneprovider: some_branch
 
-Allowed images keys: [onezone, oneprovider, oneclient, rest-cli, openfaas-pod-status-monitor]
+Allowed images keys: [
+    onezone, oneprovider, oneclient, rest-cli,
+    openfaas-pod-status-monitor, openfaas-lambda-result-streamer
+]
 Allowed values: current_branch, default(only under `images` key), release/{version},
                 {any image tag}, {any branch name}
 """
@@ -27,7 +30,8 @@ SERVICE_TO_IMAGE = {
     'oneprovider': 'docker.onedata.org/oneprovider-dev',
     'oneclient': 'docker.onedata.org/oneclient-dev',
     'rest-cli': 'docker.onedata.org/rest-cli',
-    'openfaas-pod-status-monitor': 'docker.onedata.org/openfaas-pod-status-monitor'
+    'openfaas-pod-status-monitor': 'docker.onedata.org/openfaas-pod-status-monitor',
+    'openfaas-lambda-result-streamer': 'docker.onedata.org/openfaas-lambda-result-streamer'
 }
 
 
