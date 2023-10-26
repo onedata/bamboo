@@ -191,8 +191,8 @@ except:
 subprocess.call([
     'sh', '-c',
     """
-    cd && git config --global url.http://10.87.23.78:8080/github.com/.insteadOf git://github.com/
-    git config --global url.http://10.87.23.78:8081/github.com/.insteadOf https://github.com/
+    cd && git config --global url.http://proxy.devel.onedata.org:8080/github.com/.insteadOf git://github.com/
+    git config --global url.http://proxy.devel.onedata.org:8081/github.com/.insteadOf https://github.com/
     """
 ])
 
