@@ -190,7 +190,10 @@ except:
 # (especially a submodule) may fail, despite the fact that --global is used
 subprocess.call([
     'sh', '-c',
-    'cd && git config --global url.https://github.com/.insteadOf git://github.com/'
+    """
+    cd && git config --global url.http://10.87.23.78:8080/github.com/.insteadOf git://github.com/
+    git config --global url.http://10.87.23.78:8081/github.com/.insteadOf https://github.com/
+    """
 ])
 
 sh_command = (
