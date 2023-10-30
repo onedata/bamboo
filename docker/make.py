@@ -186,14 +186,24 @@ try:
 except:
     pass
 
-# call git config modification from user's home, as calling it from within a repo
-# (especially a submodule) may fail, despite the fact that --global is used
+# Call git config modification from user's home, as calling it from within a repo
+# (especially a submodule) may fail, despite the fact that --global is used.
+# If the script is run on a bamboo agent git-cache-http-server will be used.
+# As proxy.devel.onedata.org resolves to a private address in the onedata-devel tenant
+# it should not be used when building outside of bamboo.
+if 'bamboo_planKey' in os.environ:
+    script="""
+    cd 
+    git config --global --replace-all url.http://proxy.devel.onedata.org:8080/github.com/.insteadOf git://github.com/
+    git config --global --add url.http://proxy.devel.onedata.org:8080/github.com/.insteadOf https://github.com/
+    """
+else:
+    script="""
+    cd 
+    git config --global url.https://github.com/.insteadOf git://github.com/
+    """
 subprocess.call([
-    'sh', '-c',
-    """
-    cd && git config --global url.http://proxy.devel.onedata.org:8080/github.com/.insteadOf git://github.com/
-    git config --global url.http://proxy.devel.onedata.org:8081/github.com/.insteadOf https://github.com/
-    """
+    'sh', '-c', script
 ])
 
 sh_command = (
