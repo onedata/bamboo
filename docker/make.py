@@ -20,6 +20,8 @@ import argparse
 import os
 import platform
 import sys
+import socket
+import re
 
 from environment import docker, dockers_config
 
@@ -141,6 +143,24 @@ parser.add_argument(
 [args, pass_args] = parser.parse_known_args()
 dockers_config.ensure_image(args, 'image', 'builder')
 
+# Check if make.py is run on a bamboo agent
+# If the script is run on a bamboo agent git-cache-http-server will be used.
+# As proxy.devel.onedata.org resolves to a private address in the onedata-devel tenant
+# it should not be used when not building on a bamboo agent.
+# Call git config modification from user's home, as calling it from within a repo
+# (especially a submodule) may fail, despite the fact that --global is used.
+if re.match('bamboo-agent-.*', socket.gethostname()):
+    git_config_sh="""
+    cd 
+    git config --global --replace-all url.http://proxy.devel.onedata.org:8080/github.com/.insteadOf git://github.com/
+    git config --global --add url.http://proxy.devel.onedata.org:8080/github.com/.insteadOf https://github.com/
+    """
+else:
+    git_config_sh="""
+    cd 
+    git config --global url.https://github.com/.insteadOf git://github.com/
+    """
+
 command = '''
 import os, shutil, subprocess, sys
 
@@ -186,24 +206,8 @@ try:
 except:
     pass
 
-# Call git config modification from user's home, as calling it from within a repo
-# (especially a submodule) may fail, despite the fact that --global is used.
-# If the script is run on a bamboo agent git-cache-http-server will be used.
-# As proxy.devel.onedata.org resolves to a private address in the onedata-devel tenant
-# it should not be used when building outside of bamboo.
-if 'bamboo_planKey' in os.environ:
-    script="""
-    cd 
-    git config --global --replace-all url.http://proxy.devel.onedata.org:8080/github.com/.insteadOf git://github.com/
-    git config --global --add url.http://proxy.devel.onedata.org:8080/github.com/.insteadOf https://github.com/
-    """
-else:
-    script="""
-    cd 
-    git config --global url.https://github.com/.insteadOf git://github.com/
-    """
 subprocess.call([
-    'sh', '-c', script
+    'sh', '-c', git_config_sh
 ])
 
 sh_command = (
