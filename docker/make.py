@@ -150,14 +150,12 @@ dockers_config.ensure_image(args, 'image', 'builder')
 # Call git config modification from user's home, as calling it from within a repo
 # (especially a submodule) may fail, despite the fact that --global is used.
 if re.match('bamboo-agent-.*', socket.gethostname()):
-    git_config_sh="""
-    cd 
+    git_config_sh="""    cd 
     git config --global --replace-all url.http://proxy.devel.onedata.org:8080/github.com/.insteadOf git://github.com/
     git config --global --add url.http://proxy.devel.onedata.org:8080/github.com/.insteadOf https://github.com/
     """
 else:
-    git_config_sh="""
-    cd 
+    git_config_sh="""    cd 
     git config --global url.https://github.com/.insteadOf git://github.com/
     """
 
@@ -207,7 +205,8 @@ except:
     pass
 
 subprocess.call([
-    'sh', '-c', git_config_sh
+    'sh', '-c', \'\'\'
+''' + git_config_sh +'''\'\'\'
 ])
 
 sh_command = (
@@ -218,6 +217,7 @@ sh_command = (
 ret = subprocess.call(['sh', '-c', sh_command])
 sys.exit(ret)
 '''
+
 command = command.format(
     command=args.command,
     params=' '.join(pass_args),
