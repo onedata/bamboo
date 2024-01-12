@@ -388,8 +388,17 @@ command = command.format(
     cmd=ct_command,
     shed_privileges=(platform.system() == 'Linux'))
 
-os.makedirs('/tmp/onedata', exist_ok=True)
-volumes = [('/tmp/onedata', '/tmp/onedata', 'rw')]
+volumes = []
+
+# The /tmp/onedata directory is required for the no_clean option to work
+# (test_node_starter stores the previous env there)
+if args.no_clean:
+    os.makedirs('/tmp/onedata', exist_ok=True)
+    stat_info = os.stat('/tmp/onedata')
+    if stat_info.st_uid != os. geteuid() or stat_info.st_gid != os. getegid():
+        print('Directory /tmp/onedata does not belong to the current user. Delete it and run again.')
+        sys.exit(1)
+    volumes += [('/tmp/onedata', '/tmp/onedata', 'rw')]
 
 if os.path.isdir(expanduser('~/.docker')):
     volumes += [(expanduser('~/.docker'), '/tmp/docker_config', 'ro')]
