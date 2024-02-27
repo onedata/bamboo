@@ -31,7 +31,7 @@
         fi
         if [ ${ENABLED}X != "trueX" ]; then
             echo `date` Error
-            echo `date` "The Cleanup of $1 ended with error (Checking agent ststus)." >> ${SUMMARY_LOG}
+            echo `date` "The Cleanup of $1 ended with error (Checking agent status)." >> ${SUMMARY_LOG}
             exit -1
         fi          
     fi
@@ -54,7 +54,12 @@
     flock ${AGENT_STATUS_LOG} echo `date +%s` ${AGENT_NO_SPACE} DISABLED >> ${AGENT_STATUS_LOG}
     echo `date` Cleanup with ansible
     cd ${ANSIBLE_BAMBOO}
-    ansible-playbook -i hosts -l ${AGENT_NO_SPACE} -f 20 -T 50 bamboo-cleanup-minikube.yml
+    if [[ ${AGENT_NO_SPACE} =~ 'bamboo-agent-pub' ]]; then
+	ANSIBLE_SCRIPT=bamboo-cleanup-pub.yml
+    else
+	ANSIBLE_SCRIPT=bamboo-cleanup-minikube.yml
+    fi
+    ansible-playbook -i hosts -l ${AGENT_NO_SPACE} -f 20 -T 50 ${ANSIBLE_SCRIPT}
     if [ $? -ne 0 ]; then
         echo `date` Error
         echo `date` "The Cleanup of $1 ended with error (ansible)." >> ${SUMMARY_LOG}
