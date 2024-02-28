@@ -55,9 +55,9 @@
     echo `date` Cleanup with ansible
     cd ${ANSIBLE_BAMBOO}
     if [[ ${AGENT_NO_SPACE} =~ 'bamboo-agent-pub' ]]; then
-	ANSIBLE_SCRIPT=bamboo-cleanup-pub.yml
+        ANSIBLE_SCRIPT=bamboo-cleanup-pub.yml
     else
-	ANSIBLE_SCRIPT=bamboo-cleanup-minikube.yml
+        ANSIBLE_SCRIPT=bamboo-cleanup-minikube.yml
     fi
     ansible-playbook -i hosts -l ${AGENT_NO_SPACE} -f 20 -T 50 ${ANSIBLE_SCRIPT}
     if [ $? -ne 0 ]; then
