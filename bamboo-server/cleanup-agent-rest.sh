@@ -17,6 +17,7 @@
 {
     source ~/agent
     source ~/.bamboo-creds
+    export PATH=${PATH}:/home/ubuntu/.local/bin
     ANSIBLE_BAMBOO=/home/ubuntu/ansible-bamboo
     AGENT_NO_SPACE=`echo $1 | cut -d' ' -f1`
     SUMMARY_LOG=/tmp/cleanup-summary.log
@@ -45,10 +46,15 @@
     fi
     echo `date` Waiting for $1 to become idle
     count=0
-    while [ `curl -s -u $BAMBOO_CREDS http://localhost:8085/rest/api/latest/agent/${ID} | jq .general.busy`X == "trueX" ]; do 
+    until [ `curl -s -u $BAMBOO_CREDS http://localhost:8085/rest/api/latest/agent/${ID} | jq .general.busy`X == "falseX" ]; do 
         sleep 30
         let count+=30
         printf "\r$1 still not idle - $count seconds elapsed"
+        if [[ $count -gt 72000 ]]; then
+            echo `date` Error: Agent has not become idle after 20h
+            echo `date` "The Cleanup of $1 ended with error (Timeout for waiting to become idle)." >> ${SUMMARY_LOG}
+            exit -1
+        fi
     done
     echo `date` Exit status was $?
     flock ${AGENT_STATUS_LOG} echo `date +%s` ${AGENT_NO_SPACE} DISABLED >> ${AGENT_STATUS_LOG}
