@@ -49,12 +49,14 @@ EXCLUDED_THIRD_PARTY_DEPS=(
     goldrush
     hackney
     hut
+    idna
     jiffy
     jsx
     lager
     locus
     meck
     observer_cli
+    parse_trans
     proper
     ranch
     recon
@@ -65,7 +67,7 @@ EXCLUDED_THIRD_PARTY_DEPS=(
 
 
 print_failure_summary() {
-    echo "Oh no! Found some forgotten fixmes, todos or forbidden functions!"
+    echo "Oh no! Found some forgotten fixmes, todos, forbidden functions or formats!"
     echo "---------------------------------------------------------------------"
     echo "Please keep in mind the following guidelines:"
     echo " * fixme         - not tolerated at all, use it to mark places in your code"
@@ -86,6 +88,9 @@ print_failure_summary() {
     echo " * rpc:multicall - not tolerated due to a bug in Erlang OTP that may cause"
     echo "                   a complete VM crash, use utils:rpc_multicall/4,5 from"
     echo "                   ctool instead."
+    echo " "
+    echo " * ~p, ~s        - not tolerated as it may not handle unicode properly,"
+    echo "                   use ~tp and ~ts instead."
     echo "---------------------------------------------------------------------"
     echo "Below is the dump of all offending lines:"
     echo " "
