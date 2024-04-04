@@ -152,7 +152,7 @@ replace_vm_arg(VMArgsPath, FullArgName, ArgValue) ->
 %%--------------------------------------------------------------------
 -spec term_to_string(term()) -> string().
 term_to_string(Term) ->
-    io_lib:fwrite("~p", [Term]).
+    io_lib:fwrite("~tp", [Term]).
 
 %%%===================================================================
 %%% Internal functions

@@ -636,10 +636,10 @@ e2j_vec_test() ->
     test_one(e2j_test_vec(utf8), 1).
 
 test_one([], _N) ->
-    %% io:format("~p tests passed~n", [N-1]),
+    %% io:format("~tp tests passed~n", [N-1]),
     ok;
 test_one([{E, J} | Rest], N) ->
-    %% io:format("[~p] ~p ~p~n", [N, E, J]),
+    %% io:format("[~tp] ~tp ~tp~n", [N, E, J]),
     true = equiv(E, decode(J)),
     true = equiv(E, decode(encode(E))),
     test_one(Rest, 1+N).
