@@ -46,7 +46,9 @@ ALL_REPOS=(
     oneclient-pkg
     onedata-acceptance
     onedata-documentation
+    onedatafilerestclient
     onedatafs-jupyter
+    onedatarestfs
     onenv-ct
     onepanel
     onepanel-gui
