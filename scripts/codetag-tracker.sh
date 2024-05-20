@@ -55,6 +55,7 @@ EXCLUDED_THIRD_PARTY_DEPS=(
     lager
     locus
     meck
+    metrics
     observer_cli
     parse_trans
     proper
