@@ -36,28 +36,37 @@ EXCLUDED_FILES=(
 # list of third party deps that we do not want to scan as we cannot fix the fixmes there
 EXCLUDED_THIRD_PARTY_DEPS=(
     base64url
+    bear
     bp_tree
     cowboy
     cowlib
     cberl
     edown
+    enif_protobuf
     esaml
     erldns
     exometer_core
+    exometer_graphite
     exometer_lager
+    folsom
+    gen_server2
     gen_smtp
     goldrush
+    gproc
     hackney
     hut
     idna
     jiffy
     jsx
     lager
+    lbm_kv
     locus
     meck
     metrics
     observer_cli
     parse_trans
+    plain_fsm
+    poolboy
     proper
     ranch
     recon
