@@ -77,7 +77,7 @@ EXCLUDED_THIRD_PARTY_DEPS=(
 
 
 print_failure_summary() {
-    echo "Oh no! Found some forgotten fixmes, todos, forbidden functions or formats!"
+    echo "Oh no! Found some forgotten fixmes, todos or forbidden function calls!"
     echo "---------------------------------------------------------------------"
     echo "Please keep in mind the following guidelines:"
     echo " * fixme         - not tolerated at all, use it to mark places in your code"
@@ -99,8 +99,11 @@ print_failure_summary() {
     echo "                   a complete VM crash, use utils:rpc_multicall/4,5 from"
     echo "                   ctool instead."
     echo " "
-    echo " * ~p, ~s        - not tolerated as it may not handle unicode properly,"
-    echo "                   use ~tp and ~ts instead."
+    echo " * ~p, ~s        - (in erlang format strings) not tolerated as they do not"
+    echo "                   handle unicode properly, use ~tp and ~ts instead."
+    echo " "
+    echo " * ?autoformat   - not tolerated as a pattern value"
+    echo "                   (e.g., ?warning('...', [?autoformat(...)]))"
     echo "---------------------------------------------------------------------"
     echo "Below is the dump of all offending lines:"
     echo " "
@@ -178,6 +181,7 @@ check_path() {
     run_grep '\btodo\b' ${FILEPATH} | sed -E '/VFS-[0-9]+/d' >> ${OUTPUT_FILE}
     run_grep 'rpc:multicall' ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep '~[ps]' ${FILEPATH} | sed '/~[PS]/d' >> ${OUTPUT_FILE}
+    run_grep '\[.*\?,?autoformat.*\]' ${FILEPATH} >> ${OUTPUT_FILE}
     if [ -n "${VFS_TAG}" ]; then
         run_grep ${VFS_TAG} ${FILEPATH} >> ${OUTPUT_FILE}
     fi
