@@ -41,6 +41,7 @@ EXCLUDED_THIRD_PARTY_DEPS=(
     cowboy
     cowlib
     cberl
+    dns
     edown
     enif_protobuf
     esaml
@@ -102,8 +103,11 @@ print_failure_summary() {
     echo " * ~p, ~s        - (in erlang format strings) not tolerated as they do not"
     echo "                   handle unicode properly, use ~tp and ~ts instead."
     echo " "
-    echo " * ?autoformat   - not tolerated as a pattern value"
-    echo "                   (e.g., ?warning('...', [?autoformat(...)]))"
+    echo " * ?autoformat   - has been reworked and no longer produces a string, so "
+    echo "                   usages as ?warning(\"~s\", [?autoformat(TermsToPrint)])"
+    echo "                   are no longer allowed - now you can use it like this:"
+    echo "                   ?warning(?autoformat(TermsToPrint))"
+    echo "                   ?warning(?autoformat_with_msg(Format, Args, TermsToPrint))"
     echo "---------------------------------------------------------------------"
     echo "Below is the dump of all offending lines:"
     echo " "
@@ -181,7 +185,7 @@ check_path() {
     run_grep '\btodo\b' ${FILEPATH} | sed -E '/VFS-[0-9]+/d' >> ${OUTPUT_FILE}
     run_grep 'rpc:multicall' ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep '~[ps]' ${FILEPATH} | sed '/~[PS]/d' >> ${OUTPUT_FILE}
-    run_grep '\[.*\?,?autoformat.*\]' ${FILEPATH} >> ${OUTPUT_FILE}
+    run_grep '[^\]]*?,.*?[.*?\?autoformat.*?]' ${FILEPATH} >> ${OUTPUT_FILE}
     if [ -n "${VFS_TAG}" ]; then
         run_grep ${VFS_TAG} ${FILEPATH} >> ${OUTPUT_FILE}
     fi
