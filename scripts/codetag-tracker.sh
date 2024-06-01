@@ -185,7 +185,7 @@ check_path() {
     run_grep '\btodo\b' ${FILEPATH} | sed -E '/VFS-[0-9]+/d' >> ${OUTPUT_FILE}
     run_grep 'rpc:multicall' ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep '~[ps]' ${FILEPATH} | sed '/~[PS]/d' >> ${OUTPUT_FILE}
-    run_grep '[^\]]*?,.*?[.*?\?autoformat.*?]' ${FILEPATH} >> ${OUTPUT_FILE}
+    run_grep '[^\]]*\[.*?\?autoformat.*?\]' ${FILEPATH} >> ${OUTPUT_FILE}
     if [ -n "${VFS_TAG}" ]; then
         run_grep ${VFS_TAG} ${FILEPATH} >> ${OUTPUT_FILE}
     fi
