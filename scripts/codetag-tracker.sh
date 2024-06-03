@@ -169,7 +169,7 @@ run_grep() {
     ADDITIONAL_GREP_OPTS=""
 
     if [[ ${PATTERN} =~ "autoformat" ]]; then
-               ADDITIONAL_GREP_OPTS="-Pz"
+               ADDITIONAL_GREP_OPTS="-Pzo"
     fi
 
     if [ -d "${FILEPATH}" ]; then
