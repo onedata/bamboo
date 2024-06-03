@@ -166,22 +166,27 @@ for FILE in "${EXCLUDED_FILES[@]}"; do EXCLUDE_GREP_OPTS+=(--exclude=${FILE}); d
 run_grep() {
     PATTERN=${1}
     FILEPATH=${2}
-    ADDITIONAL_GREP_OPTS=""
 
     if [[ ${PATTERN} =~ "autoformat" ]]; then
-               ADDITIONAL_GREP_OPTS="-Pzo"
+        AUTOFORMAT_RESULT=$(grep "${EXCLUDE_GREP_OPTS[@]}" "-rIsinPz" ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}")
+        if [ -n "${AUTOFORMAT_RESULT}" ]; then
+          RESULT_FILEPATH=${AUTOFORMAT_RESULT%%:*}
+          LINK="https://git.onedata.org/projects/VFS/repos/ctool/browse/LOGGING.md"
+          echo  "${RESULT_FILEPATH}: there is a wrong ?autoformat usage in this file that must be fixed, see: ${LINK}"
+        fi
+    else
+      if [ -d "${FILEPATH}" ]; then
+          GREP_OPTS="-rIsin"
+          # no postprocessing - just feed it further
+          POST_PROCESS=( cat )
+      else
+          GREP_OPTS="-Isin"
+          # add the file name as prefix to each line of the output for the same format as grep -r gives
+          POST_PROCESS=( sed -e "s|^|${FILEPATH}:|" )
+      fi
+      grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}" | "${POST_PROCESS[@]}"
     fi
 
-    if [ -d "${FILEPATH}" ]; then
-        GREP_OPTS="-rIsin"
-        # no postprocessing - just feed it further
-        POST_PROCESS=( cat )
-    else
-        GREP_OPTS="-Isin"
-        # add the file name as prefix to each line of the output for the same format as grep -r gives
-        POST_PROCESS=( sed -e "s|^|${FILEPATH}:|" )
-    fi
-    grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} ${ADDITIONAL_GREP_OPTS} ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}" | "${POST_PROCESS[@]}"
 }
 
 check_path() {
