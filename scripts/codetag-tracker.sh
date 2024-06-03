@@ -166,6 +166,12 @@ for FILE in "${EXCLUDED_FILES[@]}"; do EXCLUDE_GREP_OPTS+=(--exclude=${FILE}); d
 run_grep() {
     PATTERN=${1}
     FILEPATH=${2}
+    ADDITIONAL_GREP_OPTS=""
+
+    if [[ ${PATTERN} =~ "autoformat" ]]; then
+               ADDITIONAL_GREP_OPTS="-Pz"
+    fi
+
     if [ -d "${FILEPATH}" ]; then
         GREP_OPTS="-rIsin"
         # no postprocessing - just feed it further
@@ -175,7 +181,7 @@ run_grep() {
         # add the file name as prefix to each line of the output for the same format as grep -r gives
         POST_PROCESS=( sed -e "s|^|${FILEPATH}:|" )
     fi
-    grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}" | "${POST_PROCESS[@]}"
+    grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} ${ADDITIONAL_GREP_OPTS} ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}" | "${POST_PROCESS[@]}"
 }
 
 check_path() {
@@ -185,7 +191,7 @@ check_path() {
     run_grep '\btodo\b' ${FILEPATH} | sed -E '/VFS-[0-9]+/d' >> ${OUTPUT_FILE}
     run_grep 'rpc:multicall' ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep '~[ps]' ${FILEPATH} | sed '/~[PS]/d' >> ${OUTPUT_FILE}
-    run_grep '[^\]]*\[.*?\?autoformat.*?\]' ${FILEPATH} >> ${OUTPUT_FILE}
+    run_grep '"[^]]*?"[^]]*?\[[^]]*?/?autoformat.*?' ${FILEPATH} >> ${OUTPUT_FILE}
     if [ -n "${VFS_TAG}" ]; then
         run_grep ${VFS_TAG} ${FILEPATH} >> ${OUTPUT_FILE}
     fi
