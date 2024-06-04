@@ -163,27 +163,42 @@ EXCLUDE_GREP_OPTS=()
 for DIR in "${EXCLUDED_DIRS[@]}"; do EXCLUDE_GREP_OPTS+=(--exclude-dir=${DIR}); done
 for FILE in "${EXCLUDED_FILES[@]}"; do EXCLUDE_GREP_OPTS+=(--exclude=${FILE}); done
 
+check_autoformat_usage() {
+    GREP_OPTS=${1}
+    PATTERN=${2}
+    FILEPATH=${3}
+
+    AUTOFORMAT_RESULT=$(grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} "-Pz" ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}")
+    if [ -n "${AUTOFORMAT_RESULT}" ]; then
+        RESULT_FILEPATH=""
+        AUTOFORMAT_FILEPATH=${AUTOFORMAT_RESULT%%:*}
+        LINK="https://git.onedata.org/projects/VFS/repos/ctool/browse/LOGGING.md"
+        if [[ ${AUTOFORMAT_FILEPATH} =~ "Binary file" ]]; then
+            RESULT_FILEPATH=${FILEPATH}
+        else
+            RESULT_FILEPATH=${AUTOFORMAT_FILEPATH}
+        fi
+        echo  "${RESULT_FILEPATH}: there is a wrong ?autoformat usage in this file that must be fixed, see: ${LINK}"
+    fi
+}
+
 run_grep() {
     PATTERN=${1}
     FILEPATH=${2}
 
-    if [[ ${PATTERN} =~ "autoformat" ]]; then
-        AUTOFORMAT_RESULT=$(grep "${EXCLUDE_GREP_OPTS[@]}" "-rIsinPz" ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}")
-        if [ -n "${AUTOFORMAT_RESULT}" ]; then
-          RESULT_FILEPATH=${AUTOFORMAT_RESULT%%:*}
-          LINK="https://git.onedata.org/projects/VFS/repos/ctool/browse/LOGGING.md"
-          echo  "${RESULT_FILEPATH}: there is a wrong ?autoformat usage in this file that must be fixed, see: ${LINK}"
-        fi
+    if [ -d "${FILEPATH}" ]; then
+        GREP_OPTS="-rIsin"
+        # no postprocessing - just feed it further
+        POST_PROCESS=( cat )
     else
-      if [ -d "${FILEPATH}" ]; then
-          GREP_OPTS="-rIsin"
-          # no postprocessing - just feed it further
-          POST_PROCESS=( cat )
-      else
-          GREP_OPTS="-Isin"
-          # add the file name as prefix to each line of the output for the same format as grep -r gives
-          POST_PROCESS=( sed -e "s|^|${FILEPATH}:|" )
-      fi
+        GREP_OPTS="-Isin"
+        # add the file name as prefix to each line of the output for the same format as grep -r gives
+        POST_PROCESS=( sed -e "s|^|${FILEPATH}:|" )
+    fi
+    if [[ ${PATTERN} =~ "autoformat" ]]; then
+      check_autoformat_usage ${GREP_OPTS} ${PATTERN} ${FILEPATH}
+    else
+
       grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}" | "${POST_PROCESS[@]}"
     fi
 
