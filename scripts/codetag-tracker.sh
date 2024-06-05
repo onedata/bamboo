@@ -104,7 +104,7 @@ print_failure_summary() {
     echo "                   handle unicode properly, use ~tp and ~ts instead."
     echo " "
     echo " * ?autoformat   - has been reworked and no longer produces a string, so "
-    echo "                   usages as ?warning(\"~s\", [?autoformat(TermsToPrint)])"
+    echo "                   usages as ?warning(\"~s\", [?autoformat(TermsToPrint)])" # @codetag-tracker-ignore
     echo "                   are no longer allowed - now you can use it like this:"
     echo "                   ?warning(?autoformat(TermsToPrint))"
     echo "                   ?warning(?autoformat_with_msg(Format, Args, TermsToPrint))"
@@ -163,25 +163,6 @@ EXCLUDE_GREP_OPTS=()
 for DIR in "${EXCLUDED_DIRS[@]}"; do EXCLUDE_GREP_OPTS+=(--exclude-dir=${DIR}); done
 for FILE in "${EXCLUDED_FILES[@]}"; do EXCLUDE_GREP_OPTS+=(--exclude=${FILE}); done
 
-check_autoformat_usage() {
-    GREP_OPTS=${1}
-    PATTERN=${2}
-    FILEPATH=${3}
-
-    AUTOFORMAT_RESULT=$(grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} "-Pz" ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}")
-    if [ -n "${AUTOFORMAT_RESULT}" ]; then
-        RESULT_FILEPATH=""
-        AUTOFORMAT_FILEPATH=${AUTOFORMAT_RESULT%%:*}
-        LINK="https://git.onedata.org/projects/VFS/repos/ctool/browse/LOGGING.md"
-        if [[ ${AUTOFORMAT_FILEPATH} =~ "Binary file" ]]; then
-            RESULT_FILEPATH=${FILEPATH}
-        else
-            RESULT_FILEPATH=${AUTOFORMAT_FILEPATH}
-        fi
-        echo  "${RESULT_FILEPATH}: there is a wrong ?autoformat usage in this file that must be fixed, see: ${LINK}"
-    fi
-}
-
 run_grep() {
     PATTERN=${1}
     FILEPATH=${2}
@@ -195,13 +176,33 @@ run_grep() {
         # add the file name as prefix to each line of the output for the same format as grep -r gives
         POST_PROCESS=( sed -e "s|^|${FILEPATH}:|" )
     fi
-    if [[ ${PATTERN} =~ "autoformat" ]]; then
-      check_autoformat_usage ${GREP_OPTS} ${PATTERN} ${FILEPATH}
-    else
+    grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}" | "${POST_PROCESS[@]}"
+}
 
-      grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}" | "${POST_PROCESS[@]}"
-    fi
+check_autoformat_awk() {
+  FILEPATH=${1}
+  find ${FILEPATH} -type f -exec awk -v IGNORE_TAG="${IGNORE_LINE_TAG}" '
+     function find_number_of_bracket_from_to_index(start, end) {
+         for (i=start; i<=end; i++) {
+             if (substr($0, i, 1) == "[") {
+                 bracket_count++
+             } else if (substr($0, i, 1) == "]") {
+                 bracket_count--
+             }
+         }
+     }
 
+     BEGIN { bracket_count = 0 }
+
+     !/^%/ && index($0, IGNORE_TAG) == 0 {
+         autoformat_index = match($0, /\?autoformat/)
+         N = (autoformat_index == 0) ? length($0) : autoformat_index
+         find_number_of_bracket_from_to_index(1, N)
+         if (bracket_count > 0 && autoformat_index) {
+             print FILENAME ":" FNR ":" $0
+         }
+         find_number_of_bracket_from_to_index(N+1, length($0))
+     }' {} +;
 }
 
 check_path() {
@@ -211,7 +212,7 @@ check_path() {
     run_grep '\btodo\b' ${FILEPATH} | sed -E '/VFS-[0-9]+/d' >> ${OUTPUT_FILE}
     run_grep 'rpc:multicall' ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep '~[ps]' ${FILEPATH} | sed '/~[PS]/d' >> ${OUTPUT_FILE}
-    run_grep '"[^]]*?"[^]]*?\[[^]]*?/?autoformat.*?' ${FILEPATH} >> ${OUTPUT_FILE}
+    check_autoformat_awk ${FILEPATH} >> ${OUTPUT_FILE}
     if [ -n "${VFS_TAG}" ]; then
         run_grep ${VFS_TAG} ${FILEPATH} >> ${OUTPUT_FILE}
     fi
