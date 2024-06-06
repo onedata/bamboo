@@ -194,6 +194,8 @@ check_autoformat_awk() {
 
      BEGIN { bracket_count = 0 }
 
+     {if (FNR == 1) bracket_count = 0}
+
      !/^%/ && index($0, IGNORE_TAG) == 0 {
          autoformat_index = match($0, /\?autoformat/)
          N = (autoformat_index == 0) ? length($0) : autoformat_index
