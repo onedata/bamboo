@@ -166,23 +166,31 @@ for FILE in "${EXCLUDED_FILES[@]}"; do EXCLUDE_GREP_OPTS+=(--exclude=${FILE}); d
 run_grep() {
     PATTERN=${1}
     FILEPATH=${2}
+    ONLY_ERLANG_FILES=${3:-false}
 
     if [ -d "${FILEPATH}" ]; then
         GREP_OPTS="-rIsin"
+        if [ "$ONLY_ERLANG_FILES" = true ]; then
+            GREP_OPTS+=" --include=*.hrl --include=*.erl"
+        fi
         # no postprocessing - just feed it further
         POST_PROCESS=( cat )
     else
         GREP_OPTS="-Isin"
         # add the file name as prefix to each line of the output for the same format as grep -r gives
+        if [[ ${FILEPATH} != *.hrl && ${FILEPATH} != *.erl ]]; then
+            return
+        fi
         POST_PROCESS=( sed -e "s|^|${FILEPATH}:|" )
     fi
     grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}" | "${POST_PROCESS[@]}"
 }
 
-check_autoformat_awk() {
+# checks if ?autoformat is inside brackets and reports such lines because such usage of autoformat is no longer allowed
+check_autoformat() {
   FILEPATH=${1}
-  find ${FILEPATH} -type f -exec awk -v IGNORE_TAG="${IGNORE_LINE_TAG}" '
-     function find_number_of_bracket_from_to_index(start, end) {
+  find ${FILEPATH} -type f \( -name "*.hrl" -o -name "*.erl" \) -exec awk -v IGNORE_TAG="${IGNORE_LINE_TAG}" '
+     function count_brackets_in_range(start, end) {
          for (i=start; i<=end; i++) {
              if (substr($0, i, 1) == "[") {
                  bracket_count++
@@ -192,18 +200,16 @@ check_autoformat_awk() {
          }
      }
 
-     BEGIN { bracket_count = 0 }
-
      {if (FNR == 1) bracket_count = 0}
 
-     !/^%/ && index($0, IGNORE_TAG) == 0 {
+     !/^[[:space:]]*%/ && index($0, IGNORE_TAG) == 0 {
          autoformat_index = match($0, /\?autoformat/)
          N = (autoformat_index == 0) ? length($0) : autoformat_index
-         find_number_of_bracket_from_to_index(1, N)
+         count_brackets_in_range(1, N)
          if (bracket_count > 0 && autoformat_index) {
              print FILENAME ":" FNR ":" $0
          }
-         find_number_of_bracket_from_to_index(N+1, length($0))
+         count_brackets_in_range(N+1, length($0))
      }' {} +;
 }
 
@@ -213,8 +219,8 @@ check_path() {
     run_grep '\bwriteme\b'  ${FILEPATH} >> ${OUTPUT_FILE}
     run_grep '\btodo\b' ${FILEPATH} | sed -E '/VFS-[0-9]+/d' >> ${OUTPUT_FILE}
     run_grep 'rpc:multicall' ${FILEPATH} >> ${OUTPUT_FILE}
-    run_grep '~[ps]' ${FILEPATH} | sed '/~[PS]/d' >> ${OUTPUT_FILE}
-    check_autoformat_awk ${FILEPATH} >> ${OUTPUT_FILE}
+    run_grep '~[ps]' ${FILEPATH} true | sed '/~[PS]/d' >> ${OUTPUT_FILE}
+    check_autoformat ${FILEPATH} >> ${OUTPUT_FILE}
     if [ -n "${VFS_TAG}" ]; then
         run_grep ${VFS_TAG} ${FILEPATH} >> ${OUTPUT_FILE}
     fi
