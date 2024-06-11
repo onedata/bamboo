@@ -183,7 +183,7 @@ run_grep() {
         fi
         POST_PROCESS=( sed -e "s|^|${FILEPATH}:|" )
     fi
-    grep "${EXCLUDE_GREP_OPTS[@]}" ${GREP_OPTS} ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}" | "${POST_PROCESS[@]}"
+    grep ${GREP_OPTS} "${EXCLUDE_GREP_OPTS[@]}" ${PATTERN} ${FILEPATH} | grep -v "${IGNORE_LINE_TAG}" | "${POST_PROCESS[@]}"
 }
 
 # checks if ?autoformat is inside brackets and reports such lines because such usage of autoformat is no longer allowed
