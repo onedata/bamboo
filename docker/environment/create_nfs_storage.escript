@@ -18,7 +18,6 @@ main([Cookie, Node, Name, Version, Volume, Host, StoragePathType]) ->
             <<"version">> => list_to_binary(Version),
             <<"volume">> => list_to_binary(Volume),
             <<"host">> => list_to_binary(Host),
-            <<"skipStorageDetection">> => <<"false">>,
             <<"storagePathType">> => list_to_binary(StoragePathType)
         },
         UserCtx

@@ -24,7 +24,6 @@ main([Cookie, Node, Name, LatencyMin, LatencyMax, TimeoutProbability, Filter,
                 list_to_binary(SimulatedFilesystemParameters),
             <<"simulatedFilesystemGrowSpeed">> =>
                 list_to_binary(SimulatedFilesystemGrowSpeed),
-            <<"skipStorageDetection">> => <<"false">>,
             <<"storagePathType">> => list_to_binary(StoragePathType)
         },
         UserCtx

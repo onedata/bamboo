@@ -3,7 +3,7 @@
 
 -export([main/1]).
 
-main([Cookie, Node, Name, MountPoint, StoragePathType, SkipStorageDetection]) ->
+main([Cookie, Node, Name, MountPoint, StoragePathType]) ->
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
 
@@ -15,7 +15,6 @@ main([Cookie, Node, Name, MountPoint, StoragePathType, SkipStorageDetection]) ->
         <<"posix">>,
         #{
             <<"mountPoint">> => list_to_binary(MountPoint),
-            <<"skipStorageDetection">> => list_to_binary(string:lowercase(SkipStorageDetection)),
             <<"storagePathType">> => list_to_binary(StoragePathType)
         },
         UserCtx

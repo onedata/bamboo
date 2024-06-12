@@ -20,7 +20,6 @@ main([Cookie, Node, Name, ClusterName, MonitorHostname, PoolName, Username,
             <<"clusterName">> => list_to_binary(ClusterName),
             <<"poolName">> => list_to_binary(PoolName),
             <<"blockSize">> => list_to_binary(BlockSize),
-            <<"skipStorageDetection">> => <<"false">>,
             <<"storagePathType">> => list_to_binary(StoragePathType)
         },
         UserCtx

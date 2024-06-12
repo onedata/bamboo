@@ -16,7 +16,6 @@ main([Cookie, Node, Name, Url, CredentialsType, Credentials, StoragePathType]) -
         <<"xrootd">>,
         #{
             <<"url">> => list_to_binary(Url),
-            <<"skipStorageDetection">> => <<"false">>,
             <<"storagePathType">> => list_to_binary(StoragePathType)
         },
         UserCtx

@@ -179,7 +179,7 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
             st_path = storage['name']
             command = ['escript', script_paths['posix'], cookie,
                        first_node, storage['name'], st_path,
-                       'canonical', str(storage.get('readonly', False))]
+                       'canonical']
             assert 0 == docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'ceph':

@@ -23,7 +23,6 @@ main([Cookie, Node, Name, Hostname, Scheme, BucketName, AccessKey, SecretKey,
                 _ -> <<"http">>
             end,
             <<"blockSize">> => list_to_binary(BlockSize),
-            <<"skipStorageDetection">> => <<"false">>,
             <<"storagePathType">> => list_to_binary(StoragePathType)
         },
         UserCtx
