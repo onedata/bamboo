@@ -63,13 +63,13 @@ rest_mocks() -> [
             Binding = req:binding(binding, Req),
             ResponseBody = str_utils:format_bin(
                 "Your request contained:~n" ++
-                    "Host:        ~s~n" ++
-                    "Path:        ~s~n" ++
-                    "Binding:     ~p~n" ++
-                    "Peer:        ~p~n" ++
-                    "ContentType: ~p~n" ++
-                    "Headers:     ~p~n" ++
-                    "Body:        ~p~n",
+                    "Host:        ~ts~n" ++
+                    "Path:        ~ts~n" ++
+                    "Binding:     ~tp~n" ++
+                    "Peer:        ~tp~n" ++
+                    "ContentType: ~tp~n" ++
+                    "Headers:     ~tp~n" ++
+                    "Body:        ~tp~n",
                 [Host, Path, Binding, Peer, ContentType, Headers, ReqBody]),
             {#rest_response{body = ResponseBody, content_type = <<"text/plain">>}, whatever}
         end,

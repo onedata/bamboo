@@ -39,7 +39,7 @@ print_usage() ->
 %%--------------------------------------------------------------------
 -spec pretty_print_entry({Key :: atom(), Value :: term()}) -> ok.
 pretty_print_entry({Key, Value}) ->
-    print("~*s~p", [-?PRINTING_WIDTH, atom_to_list(Key), Value]).
+    print("~*s~tp", [-?PRINTING_WIDTH, atom_to_list(Key), Value]).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -49,7 +49,7 @@ pretty_print_entry({Key, Value}) ->
 -spec pretty_print_entry({Key :: atom(), Value :: term()}, IndentDepth :: non_neg_integer()) -> ok.
 pretty_print_entry({Key, Value}, IndentDepth) ->
     Width = IndentDepth * ?INDENT_WIDTH,
-    print("~*s~*s~p", [Width, "", -(?PRINTING_WIDTH - Width), atom_to_list(Key), Value]).
+    print("~*s~*s~tp", [Width, "", -(?PRINTING_WIDTH - Width), atom_to_list(Key), Value]).
 
 %%--------------------------------------------------------------------
 %% @doc

@@ -142,7 +142,7 @@ main([InputJson, RegisterInOz, SetUpEntities]) ->
             ok ->
                 ok;
             Other1 ->
-                io:format("dev_utils:set_up_users returned: ~p~n",
+                io:format("dev_utils:set_up_users returned: ~tp~n",
                     [Other1]),
                 throw(set_up_users_failed)
         end,
@@ -177,7 +177,7 @@ main([InputJson, RegisterInOz, SetUpEntities]) ->
                     ok ->
                         ok;
                     Other2 ->
-                        io:format("dev_utils:set_up_test_entities returned: ~p~n",
+                        io:format("dev_utils:set_up_test_entities returned: ~tp~n",
                             [Other2]),
                         throw(set_up_test_entities_failed)
                 end,
@@ -187,12 +187,12 @@ main([InputJson, RegisterInOz, SetUpEntities]) ->
         halt(0)
     catch
         T:M:Stk ->
-            io:format("Error in ~s - ~p:~p~n~p~n", [escript:script_name(), T, M, Stk]),
+            io:format("Error in ~ts - ~tp:~tp~n~tp~n", [escript:script_name(), T, M, Stk]),
             halt(1)
     end;
 
 main(_) ->
-    io:format("Usage: ~s <input_json> <register_in_oz> <set_up_test_entities>~n",
+    io:format("Usage: ~ts <input_json> <register_in_oz> <set_up_test_entities>~n",
         [escript:script_name()]),
     halt(0).
 
