@@ -42,9 +42,9 @@ main([ArgsFile]) ->
     catch
         _Type:Error:Stacktrace ->
             try gen_dev_logger:print("Error: ~ts", [Error])
-            catch _:_ -> gen_dev_logger:print("Error: ~p", [Error])
+            catch _:_ -> gen_dev_logger:print("Error: ~tp", [Error])
             end,
-            gen_dev_logger:print("Stacktrace: ~p~n", [Stacktrace]),
+            gen_dev_logger:print("Stacktrace: ~tp~n", [Stacktrace]),
             halt(?EXIT_FAILURE_CODE)
     end;
 main(_) ->
