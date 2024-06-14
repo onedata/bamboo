@@ -21,7 +21,6 @@ main([Cookie, Node, Name, Endpoint, CredentialsType, Credentials,
             <<"verifyServerCertificate">> => list_to_binary(VerifyServerCertificate),
             <<"authorizationHeader">> => list_to_binary(AuthorizationHeader),
             <<"connectionPoolSize">> => list_to_binary(ConnectionPoolSize),
-            <<"skipStorageDetection">> => <<"true">>,
             <<"storagePathType">> => list_to_binary(StoragePathType)
         },
         UserCtx

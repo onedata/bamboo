@@ -20,7 +20,6 @@ main([Cookie, Node, Name, AuthUrl, ContainerName, TenantName, Username, Password
             <<"containerName">> => list_to_binary(ContainerName),
             <<"tenantName">> => list_to_binary(TenantName),
             <<"blockSize">> => list_to_binary(BlockSize),
-            <<"skipStorageDetection">> => <<"false">>,
             <<"storagePathType">> => list_to_binary(StoragePathType)
         },
         UserCtx

@@ -23,7 +23,6 @@ main([Cookie, Node, Name, Endpoint, CredentialsType,
             <<"rangeWriteSupport">> => list_to_binary(RangeWriteSupport),
             <<"connectionPoolSize">> => list_to_binary(ConnectionPoolSize),
             <<"maximumUploadSize">> => list_to_binary(MaximumUploadSize),
-            <<"skipStorageDetection">> => <<"false">>,
             <<"storagePathType">> => list_to_binary(StoragePathType)
         },
         UserCtx

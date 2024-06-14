@@ -21,7 +21,6 @@ main([Cookie, Node, Name, Volume, Hostname, Port, Transport, MountPoint, XlatorO
             <<"transport">> => list_to_binary(Transport),
             <<"mountPoint">> => list_to_binary(MountPoint),
             <<"xlatorOptions">> => list_to_binary(XlatorOptions),
-            <<"skipStorageDetection">> => <<"false">>,
             <<"storagePathType">> => list_to_binary(StoragePathType)
         },
         UserCtx
