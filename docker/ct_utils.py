@@ -228,9 +228,9 @@ def prepare_ct_environment(args):
         "cover": "true" if args.cover else "false",
     }
 
-    pull = not args.no_pull
-    set_image_env_if_defined(env, args.onezone_image, "onezone", pull)
-    set_image_env_if_defined(env, args.oneprovider_image, "oneprovider", pull)
+    force_pull = not args.no_pull
+    set_image_env_if_defined(env, args.onezone_image, "onezone", force_pull)
+    set_image_env_if_defined(env, args.oneprovider_image, "oneprovider", force_pull)
 
     if args.sources_filter:
         env["sources_filters"] = ";".join(args.sources_filter)
@@ -241,13 +241,13 @@ def prepare_ct_environment(args):
     return env
 
 
-def set_image_env_if_defined(env, image, service_name, pull):
+def set_image_env_if_defined(env, image, service_name, force_pull):
     image = image or images_branch_config.resolve_image(service_name)
 
     if image:
         print(f"\n[INFO] Using image {image} for service {service_name}")
 
-        if pull:
+        if force_pull:
             docker.pull_image_with_retries(image)
 
         env[f"{service_name}_image"] = image
