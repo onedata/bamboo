@@ -225,12 +225,12 @@ def prepare_ct_environment(args):
         ),
         "clean_env": "false" if args.no_clean else "true",
         "rsync": "true" if args.rsync else "false",
-        "onezone_image": prepare_image(args.onezone_image, "onezone", not args.no_pull),
-        "oneprovider_image": prepare_image(
-            args.oneprovider_image, "oneprovider", not args.no_pull
-        ),
         "cover": "true" if args.cover else "false",
     }
+
+    force_pull = not args.no_pull
+    set_image_env_if_defined(env, args.onezone_image, "onezone", force_pull)
+    set_image_env_if_defined(env, args.oneprovider_image, "oneprovider", force_pull)
 
     if args.sources_filter:
         env["sources_filters"] = ";".join(args.sources_filter)
@@ -241,16 +241,16 @@ def prepare_ct_environment(args):
     return env
 
 
-def prepare_image(image, service_name, pull):
-    if not image:
-        image = images_branch_config.resolve_image(service_name)
+def set_image_env_if_defined(env, image, service_name, force_pull):
+    image = image or images_branch_config.resolve_image(service_name)
 
-    print(f"\n[INFO] Using image {image} for service {service_name}")
+    if image:
+        print(f"\n[INFO] Using image {image} for service {service_name}")
 
-    if pull:
-        docker.pull_image_with_retries(image)
+        if force_pull:
+            docker.pull_image_with_retries(image)
 
-    return image
+        env[f"{service_name}_image"] = image
 
 
 def find_suite_file(name):
