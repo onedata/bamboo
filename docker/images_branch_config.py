@@ -41,10 +41,14 @@ def resolve_image(service):
     try:
         with open(branch_config_path, 'r') as branch_config_file:
             branch_config = yaml.load(branch_config_file, yaml.Loader)
+
             fallback_branch = branch_config['default']
             fallback_tag = get_branch_tag(fallback_branch)
-            service_branch = branch_config['images'][service]
-            if service_branch == 'current_branch':
+
+            service_branch = branch_config['images'].get(service)
+            if not service_branch:
+                return None
+            elif service_branch == 'current_branch':
                 branch = get_current_branch()
                 branch_tag = get_branch_tag(branch)
             elif service_branch == 'default':
