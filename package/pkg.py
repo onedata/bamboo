@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # coding=utf-8
 """Author: Tomasz Lichon
@@ -104,6 +104,10 @@ REPO_TYPE = {
     'centos-7-x86_64': 'rpm'
 }
 
+CUSTOM_PACKAGE_NAME_FOLDER_MAPPING = {
+    'python3-fs-plugin-onedatafs': 'fs-onedatafs'
+}
+
 # create the top-level parser
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -167,6 +171,10 @@ args = parser.parse_args()
 identity_opt = ['-i', args.identity] if args.identity else []
 
 
+def map_name_to_parent_folder(name):
+    return CUSTOM_PACKAGE_NAME_FOLDER_MAPPING.get(name, name)
+
+
 def cp_or_scp(hostname, identity_opt, source, dest_dir, from_local=True):
     scp_command = ['cp', source, dest_dir]
     if hostname:
@@ -219,7 +227,8 @@ def tar(dir, archive=tempfile.mktemp('.tar.gz')):
 
 def deb_package_path(distro, type, package):
     name = package.split('_')[0]
-    return (os.path.join(DEB_PKG_LOCATION[distro], name[0], name, package),
+    return (os.path.join(DEB_PKG_LOCATION[distro], name[0],
+                         map_name_to_parent_folder(name), package),
             os.path.join(distro, type))
 
 
@@ -240,8 +249,8 @@ def deb_release_package_path(distro, release, type, package):
     elif name.startswith('python3-'):
         first_letter = name[len('python3-')]
 
-    return (os.path.join('apt/ubuntu/{release}/pool/main'.format(release=release),
-                         first_letter, name, package),
+    return (os.path.join(f'apt/ubuntu/{release}/pool/main',
+                         first_letter, map_name_to_parent_folder(name), package),
             os.path.join(distro, type))
 
 
@@ -276,12 +285,13 @@ def push(package_artifact):
 
         # for each distribution inside
         for distro in call(['ls', pkg_dir]).split():
+            distro = distro.decode('utf-8')
             if REPO_TYPE[distro] == 'deb':
                 release = args.release
                 # repository names for deb are in the form
                 # relase-distro, e.g. '1802-xenial'
                 if release:
-                    repo = '{}-{}'.format(release, distro)
+                    repo = f'{release}-{distro}'
                 else:
                     repo = distro
                 # push debs if any were provided
@@ -290,6 +300,7 @@ def push(package_artifact):
                     # Check if binary_dir exists in package
                     execute(['ls', binary_dir])
                     for package in call(['ls', binary_dir]).split():
+                        package = package.decode('utf-8')
                         if release:
                             path = deb_release_package_path(distro, release,
                                                             'binary-amd64', package)
@@ -307,6 +318,7 @@ def push(package_artifact):
                     # Check if source_dir exists in package
                     execute(['ls', source_dir])
                     for package in call(['ls', source_dir]).split():
+                        package = package.decode('utf-8')
                         if release:
                             path = deb_release_package_path(distro, release,
                                                             'source', package)
@@ -348,6 +360,7 @@ def push(package_artifact):
                 for type in ['x86_64', 'SRPMS']:
                     dir = os.path.join(distro_contents, type)
                     for package in call(['ls', dir]).split():
+                        package = package.decode('utf-8')
                         if scl:
                             path = yum_release_package_path(distro, scl, type, package)
                         else:
